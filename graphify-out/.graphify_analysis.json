@@ -1,0 +1,53 @@
+{
+  "communities": {
+    "0": [
+      "testing_run_all_edge_cases_test",
+      "testing_run_all_edge_cases_test_main",
+      "testing_run_all_edge_cases_test_parse_tool_args",
+      "testing_run_all_edge_cases_test_test_interpretation_duel",
+      "testing_run_all_edge_cases_test_test_smart_rewriter",
+      "testing_run_all_edge_cases_test_test_verification_blueprint",
+      "testing_run_all_edge_cases_test_test_xray_extraction"
+    ]
+  },
+  "cohesion": {
+    "0": 0.6666666666666666
+  },
+  "gods": [
+    {
+      "id": "testing_run_all_edge_cases_test_parse_tool_args",
+      "label": "parse_tool_args()",
+      "degree": 5
+    },
+    {
+      "id": "testing_run_all_edge_cases_test_main",
+      "label": "main()",
+      "degree": 5
+    },
+    {
+      "id": "testing_run_all_edge_cases_test_test_xray_extraction",
+      "label": "test_xray_extraction()",
+      "degree": 3
+    },
+    {
+      "id": "testing_run_all_edge_cases_test_test_interpretation_duel",
+      "label": "test_interpretation_duel()",
+      "degree": 3
+    },
+    {
+      "id": "testing_run_all_edge_cases_test_test_smart_rewriter",
+      "label": "test_smart_rewriter()",
+      "degree": 3
+    },
+    {
+      "id": "testing_run_all_edge_cases_test_test_verification_blueprint",
+      "label": "test_verification_blueprint()",
+      "degree": 3
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

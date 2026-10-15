@@ -1,0 +1,256 @@
+[
+  {
+    "scenario": {
+      "id": "SCENARIO-1",
+      "domain": "Automotive / ADAS (Autonomous Emergency Braking)",
+      "requirement": "The collision avoidance radar should detect pedestrians quickly under bad weather conditions and engage brakes smoothly."
+    },
+    "xray": {
+      "latency": 41.767815589904785,
+      "issues": [
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "quickly",
+          "grounded": true,
+          "explanation": "The term 'quickly' is ambiguous and does not provide a specific time frame for detection."
+        },
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "bad weather conditions",
+          "grounded": true,
+          "explanation": "The term 'bad weather conditions' is ambiguous and does not specify the types of weather conditions that the radar should be able to handle."
+        },
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "smoothly",
+          "grounded": true,
+          "explanation": "The term 'smoothly' is ambiguous and does not provide a specific metric for measuring smoothness."
+        },
+        {
+          "type": "Non-Verifiability",
+          "severity": "HIGH",
+          "quote": "The collision avoidance radar should detect pedestrians",
+          "grounded": true,
+          "explanation": "The requirement does not provide a clear test case or metric to verify pedestrian detection."
+        },
+        {
+          "type": "Incompleteness",
+          "severity": "MEDIUM",
+          "quote": "The collision avoidance radar should detect pedestrians quickly under bad weather conditions and engage brakes smoothly",
+          "grounded": true,
+          "explanation": "The requirement does not specify what happens if the radar fails to detect a pedestrian or if the brakes fail to engage smoothly."
+        },
+        {
+          "type": "Non-Atomic",
+          "severity": "LOW",
+          "quote": "The collision avoidance radar should detect pedestrians quickly under bad weather conditions and engage brakes smoothly",
+          "grounded": true,
+          "explanation": "The requirement combines two separate functions: pedestrian detection and brake engagement."
+        }
+      ]
+    },
+    "duel": {
+      "latency": 1.9435451030731201,
+      "data": {}
+    }
+  },
+  {
+    "scenario": {
+      "id": "SCENARIO-2",
+      "domain": "Aerospace & Avionics (Flight Control)",
+      "requirement": "During turbulent flight phases, the rudder actuator shall adjust pitch as appropriate while preventing excessive structural load."
+    },
+    "xray": {
+      "latency": 12.390830278396606,
+      "issues": [
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "as appropriate",
+          "grounded": true,
+          "explanation": "The phrase 'as appropriate' is ambiguous and does not provide clear criteria for adjusting pitch."
+        },
+        {
+          "type": "Non-Verifiability",
+          "severity": "MEDIUM",
+          "quote": "excessive structural load",
+          "grounded": true,
+          "explanation": "The term 'excessive structural load' is not quantifiable and cannot be verified."
+        },
+        {
+          "type": "Incompleteness",
+          "severity": "LOW",
+          "quote": "During turbulent flight phases",
+          "grounded": true,
+          "explanation": "The requirement only addresses turbulent flight phases, but does not consider other flight phases."
+        }
+      ]
+    },
+    "duel": {
+      "latency": 3.2248616218566895,
+      "data": {
+        "interpretation_a": {
+          "title": "Immediate Rudder Adjustment",
+          "stance": "Immediate",
+          "technical_meaning": "The rudder actuator shall adjust pitch as soon as possible during turbulent flight phases.",
+          "downstream_risk": "Excessive structural load may occur if the rudder actuator does not adjust pitch quickly enough."
+        },
+        "interpretation_b": {
+          "title": "Controlled Rudder Adjustment",
+          "stance": "Controlled",
+          "technical_meaning": "The rudder actuator shall adjust pitch in a controlled manner during turbulent flight phases, ensuring a balance between pitch adjustment and structural load prevention.",
+          "downstream_risk": "The rudder actuator may not adjust pitch quickly enough, leading to excessive structural load."
+        },
+        "source_flaw": "Ambiguous requirement",
+        "impact_difference": "Immediate adjustment may lead to better performance, but controlled adjustment may be safer.",
+        "clarification_question": "How can we balance the need for quick pitch adjustment with the need to prevent excessive structural load during turbulent flight phases?"
+      }
+    }
+  },
+  {
+    "scenario": {
+      "id": "SCENARIO-3",
+      "domain": "Medical Device (Infusion Pump)",
+      "requirement": "The insulin delivery system must stop flow immediately if air in line is detected, and alert nursing staff while keeping power usage minimal."
+    },
+    "xray": {
+      "latency": 18.68882656097412,
+      "issues": [
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "while keeping power usage minimal",
+          "grounded": true,
+          "explanation": "The phrase 'keeping power usage minimal' is ambiguous as it does not specify what 'minimal' means in terms of power consumption."
+        },
+        {
+          "type": "Non-Verifiability",
+          "severity": "HIGH",
+          "quote": "immediately",
+          "grounded": true,
+          "explanation": "The term 'immediately' is not verifiable as it does not specify a precise time frame for stopping the insulin flow."
+        },
+        {
+          "type": "Incompleteness",
+          "severity": "MEDIUM",
+          "quote": "alert nursing staff",
+          "grounded": true,
+          "explanation": "The requirement does not specify how the nursing staff will be alerted, e.g., via an alarm, notification, or other means."
+        }
+      ]
+    },
+    "duel": {
+      "latency": 2.560056209564209,
+      "data": {
+        "interpretation_a": {
+          "title": "Immediate Stop",
+          "stance": "Immediate",
+          "technical_meaning": "Stop flow immediately upon air detection",
+          "downstream_risk": "Risk of uncontrolled insulin delivery"
+        },
+        "interpretation_b": {
+          "title": "Controlled Halt",
+          "stance": "Controlled",
+          "technical_meaning": "Halt flow in a controlled manner upon air detection, with a 5-second delay",
+          "downstream_risk": "Risk of controlled insulin delivery delay"
+        },
+        "source_flaw": "Ambiguous requirement",
+        "impact_difference": "Immediate stop vs controlled halt",
+        "clarification_question": "How should the insulin delivery system respond to air in the line?"
+      }
+    }
+  },
+  {
+    "scenario": {
+      "id": "SCENARIO-4",
+      "domain": "Industrial Robotics (Automated Guided Vehicle)",
+      "requirement": "The warehouse AGV shall maintain a safe distance from workers and recalculate path periodically where feasible."
+    },
+    "xray": {
+      "latency": 16.18044900894165,
+      "issues": [
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "safe distance",
+          "grounded": true,
+          "explanation": "The term 'safe distance' is ambiguous and needs further clarification."
+        },
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "where feasible",
+          "grounded": true,
+          "explanation": "The phrase 'where feasible' is ambiguous and needs further clarification."
+        },
+        {
+          "type": "Non-Verifiability",
+          "severity": "MEDIUM",
+          "quote": "recalculate path periodically",
+          "grounded": true,
+          "explanation": "The term 'periodically' is not verifiable and needs further clarification."
+        }
+      ]
+    },
+    "duel": {
+      "latency": 2.1486456394195557,
+      "data": {}
+    }
+  },
+  {
+    "scenario": {
+      "id": "SCENARIO-5",
+      "domain": "Cybersecurity & Fintech (Payment Gateway)",
+      "requirement": "The fraud detection engine should inspect incoming transactions swiftly and reject high-risk transfers under heavy server load."
+    },
+    "xray": {
+      "latency": 16.18001890182495,
+      "issues": [
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "swiftly",
+          "grounded": true,
+          "explanation": "The term 'swiftly' is ambiguous and does not provide a clear definition of the expected response time."
+        },
+        {
+          "type": "Ambiguity",
+          "severity": "MEDIUM",
+          "quote": "high-risk transfers",
+          "grounded": true,
+          "explanation": "The term 'high-risk transfers' is ambiguous and does not provide a clear definition of what constitutes a high-risk transfer."
+        },
+        {
+          "type": "Non-Verifiability",
+          "severity": "HIGH",
+          "quote": "under heavy server load",
+          "grounded": true,
+          "explanation": "The condition 'under heavy server load' is not verifiable as it does not provide a clear definition of what constitutes a 'heavy server load'."
+        }
+      ]
+    },
+    "duel": {
+      "latency": 2.364987373352051,
+      "data": {
+        "interpretation_a": {
+          "title": "Swift Transaction Inspection",
+          "stance": "Immediate",
+          "technical_meaning": "Real-Time",
+          "downstream_risk": "Low-Latency"
+        },
+        "interpretation_b": {
+          "title": "Risk-Aware Transfer Handling",
+          "stance": "Controlled",
+          "technical_meaning": "Level-Triggered",
+          "downstream_risk": "Guaranteed Delivery"
+        },
+        "source_flaw": "Ambiguous Requirement",
+        "impact_difference": "High-Risk Transfers",
+        "clarification_question": "How should the fraud detection engine handle high-risk transfers under heavy server load?"
+      }
+    }
+  }
+]

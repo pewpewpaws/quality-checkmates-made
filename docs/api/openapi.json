@@ -1,0 +1,3445 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Qualcomm Imagine APIs",
+    "description": "These APIs provide the capability to run inference on Qualcomm AI100 devices",
+    "contact": {
+      "name": "imagine-support",
+      "email": "imagine.support@qualcomm.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://spdx.org/licenses/MIT.html"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://aisuite.cirrascale.com/apis",
+      "description": "Qualcomm Cloud AI100 Production Server"
+    },
+    {
+      "url": "/apis",
+      "description": "Relative Path (Reverse Proxy)"
+    }
+  ],
+  "paths": {
+    "/v2/chat/completions": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Chat Completion History",
+        "description": "Get Chat Completion history if history is available",
+        "operationId": "get_conversations_api",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ConversationSummaryResp"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "New Conversation",
+        "description": "New Conversation Stream text completion using LLM",
+        "operationId": "conversation_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "non-streaming - Llama-3.1-8B",
+                  "description": "completion in non-streaming mode | model :: Llama-3.1-8B",
+                  "value": {
+                    "model": "Llama-3.1-8B",
+                    "messages": [
+                      {
+                        "role": "System",
+                        "content": "You are a helpful assistant."
+                      },
+                      {
+                        "role": "User",
+                        "content": "Hello!"
+                      }
+                    ],
+                    "stream": false
+                  }
+                },
+                "2": {
+                  "summary": "streaming - Llama-3.1-8B",
+                  "description": "completion in streaming mode | model :: Llama-3.1-8B",
+                  "value": {
+                    "model": "Llama-3.1-8B",
+                    "messages": [
+                      {
+                        "role": "System",
+                        "content": "You are a helpful assistant."
+                      },
+                      {
+                        "role": "User",
+                        "content": "Hello!"
+                      }
+                    ],
+                    "stream": true
+                  }
+                },
+                "5": {
+                  "summary": "non-streaming - tool calling - Llama-3.1-70B",
+                  "description": "tool calling capability in non-streaming mode | model :: Llama-3.1-70B",
+                  "value": {
+                    "model": "Llama-3.1-70B",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are imagine, if asked who are you, always say you are imagine"
+                      },
+                      {
+                        "role": "user",
+                        "content": "what is the weather like in San Fransisco and Chicago?"
+                      }
+                    ],
+                    "stream": false,
+                    "temperature": 0.1,
+                    "max_tokens": 250,
+                    "top_p": 1,
+                    "num_return_sequences": 1,
+                    "ignore_eos": false,
+                    "do_sample": false,
+                    "tools": [
+                      {
+                        "type": "function",
+                        "function": {
+                          "name": "get_current_conditions",
+                          "description": "Get the current weather conditions for a specific location",
+                          "arguments": {
+                            "type": "object",
+                            "properties": {
+                              "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g., San Francisco, CA"
+                              },
+                              "unit": {
+                                "type": "string",
+                                "enum": [
+                                  "Celsius",
+                                  "Fahrenheit"
+                                ],
+                                "description": "The temperature unit to use. Infer this from the user's location."
+                              }
+                            },
+                            "required": [
+                              "location",
+                              "unit"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamChatCompletionSchema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Inference Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/chat/completions/{id}": {
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Existing Conversation\nExisting Conversation Stream text completion using LLM",
+        "operationId": "conversation_continue_api",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id of conversation",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatContinueConversationRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "non-streaming - Mistral-7B-Instruct-v0.1",
+                  "description": "chat completion in non-streaming mode | model :: mistralai/Mistral-7B-Instruct-v0.1",
+                  "value": {
+                    "model": "mistralai/Mistral-7B-Instruct-v0.1",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": false
+                  }
+                },
+                "10": {
+                  "summary": "streaming - jais-30b-chat-v1",
+                  "description": "chat completion in streaming mode | model :: core42/jais-30b-chat-v1",
+                  "value": {
+                    "model": "core42/jais-30b-chat-v1",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": true
+                  }
+                },
+                "2": {
+                  "summary": "streaming - Mistral-7B-Instruct-v0.1",
+                  "description": "chat completion in streaming mode | model :: mistralai/Mistral-7B-Instruct-v0.1",
+                  "value": {
+                    "model": "mistralai/Mistral-7B-Instruct-v0.1",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": true
+                  }
+                },
+                "5": {
+                  "summary": "non-streaming - xgen-7b-8k-inst",
+                  "description": "chat completion in non-streaming mode | model :: Salesforce/xgen-7b-8k-inst",
+                  "value": {
+                    "model": "Salesforce/xgen-7b-8k-inst",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": false
+                  }
+                },
+                "6": {
+                  "summary": "streaming - xgen-7b-8k-inst",
+                  "description": "chat completion in streaming mode | model :: Salesforce/xgen-7b-8k-inst",
+                  "value": {
+                    "model": "Salesforce/xgen-7b-8k-inst",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": true
+                  }
+                },
+                "9": {
+                  "summary": "non-streaming - jais-30b-chat-v1",
+                  "description": "chat completion in non-streaming mode | model :: core42/jais-30b-chat-v1",
+                  "value": {
+                    "model": "core42/jais-30b-chat-v1",
+                    "message": {
+                      "role": "User",
+                      "content": "Hello!"
+                    },
+                    "stream": false
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamChatCompletionSchema"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Inference Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/completions": {
+      "get": {
+        "tags": [
+          "Completion"
+        ],
+        "summary": "Completion History",
+        "description": "Get Completion history if history is available",
+        "operationId": "completion_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "choices",
+                          "created",
+                          "id",
+                          "model",
+                          "object",
+                          "generation_time",
+                          "usage"
+                        ],
+                        "properties": {
+                          "choices": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Choice"
+                            }
+                          },
+                          "created": {
+                            "type": "number",
+                            "format": "float"
+                          },
+                          "generation_time": {
+                            "type": "number",
+                            "format": "double"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "usage": {
+                            "$ref": "#/components/schemas/TokenUsage"
+                          }
+                        }
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/SamplingParams"
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "prompt",
+                              "model"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "images": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "model": {
+                                "type": "string"
+                              },
+                              "prompt": {
+                                "type": "string"
+                              },
+                              "stream": {
+                                "type": "boolean"
+                              },
+                              "stream_options": {
+                                "allOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "$ref": "#/components/schemas/StreamOptions"
+                                  }
+                                ]
+                              },
+                              "ts": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Completion"
+        ],
+        "summary": "Generate Completion",
+        "description": "Code Completion",
+        "operationId": "completion_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompletionRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "non-streaming - Llama-3.1-8B",
+                  "description": "completion in non-streaming mode",
+                  "value": {
+                    "prompt": "write python function to get the fibonacci series",
+                    "model": "Llama-3.1-8B",
+                    "stream": false,
+                    "max_tokens": 64
+                  }
+                },
+                "2": {
+                  "summary": "streaming - Llama-3.1-8B",
+                  "description": "completion in streaming mode",
+                  "value": {
+                    "prompt": "write complete python function send a get request and print the response",
+                    "model": "Llama-3.1-8B",
+                    "stream": true,
+                    "max_tokens": 64
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamCompletion"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Inference Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/embeddings": {
+      "get": {
+        "tags": [
+          "Embedding"
+        ],
+        "summary": "Embedding History",
+        "description": "Get emmbedding history if history is available",
+        "operationId": "embedding_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "model",
+                          "input"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "input": {
+                            "$ref": "#/components/schemas/EmbeddingInputType"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "data",
+                          "model",
+                          "object",
+                          "usage"
+                        ],
+                        "properties": {
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Embedding"
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "usage": {
+                            "$ref": "#/components/schemas/Usage"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Embedding"
+        ],
+        "summary": "Embedding",
+        "description": "Embedding text based on the model selected",
+        "operationId": "embedding_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmbeddingRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "BAAI/bge-large-en-v1.5",
+                  "description": "model :: BAAI/bge-large-en-v1.5",
+                  "value": {
+                    "input": [
+                      "What is the capital of USA?",
+                      "This is a sample text",
+                      "Who might be the next President of USA?"
+                    ],
+                    "model": "BAAI/bge-large-en-v1.5"
+                  }
+                },
+                "2": {
+                  "summary": "BAAI/bge-small-en-v1.5",
+                  "description": "model :: BAAI/bge-small-en-v1.5",
+                  "value": {
+                    "input": [
+                      "This is an example of embedding"
+                    ],
+                    "model": "BAAI/bge-small-en-v1.5"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmbeddingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health",
+        "description": "Health Check of various dependencies",
+        "operationId": "healthcheck",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UsageRead"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Usage Fetch Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/images/generations": {
+      "get": {
+        "tags": [
+          "Image"
+        ],
+        "summary": "Image Generation History",
+        "description": "Get Image Generation History if history is available",
+        "operationId": "image_generation_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "model",
+                          "object",
+                          "created",
+                          "generation_time"
+                        ],
+                        "properties": {
+                          "created": {
+                            "type": "number",
+                            "format": "double"
+                          },
+                          "generation_time": {
+                            "type": "number",
+                            "format": "double"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/TTIGenerationParams"
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "prompt",
+                              "model"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "description": "Unique identifier for the image generation model."
+                              },
+                              "model": {
+                                "type": "string",
+                                "description": "Model to be used for Image Generation."
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "description": "Prompt to be used for Image Generation."
+                              },
+                              "stream": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ],
+                                "description": "Should it be a Streaming Request (Optional). Defaults to false."
+                              },
+                              "ts": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Timestamp of when the image generation model was created"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Image"
+        ],
+        "summary": "Image",
+        "description": "Text to image. Image generation based on prompt",
+        "operationId": "generate_images_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TTIInferenceRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "url + non-streaming",
+                  "description": "return image(s) urls in non-streaming mode",
+                  "value": {
+                    "model": "stabilityai/sdxl-turbo",
+                    "prompt": "image of a cat sleeping on planet mars",
+                    "stream": false,
+                    "negative_prompt": "blurry",
+                    "guidance_scale": 6.5,
+                    "size": "512x512",
+                    "n": 2,
+                    "num_inference_steps": 20,
+                    "seed": 27,
+                    "seed_increment": 100,
+                    "response_format": "url"
+                  }
+                },
+                "2": {
+                  "summary": "b64_json + non-streaming",
+                  "description": "return image(s) as b64_json in non-streaming mode",
+                  "value": {
+                    "model": "stabilityai/sdxl-turbo",
+                    "prompt": "image of a cat sleeping on planet mars",
+                    "stream": false,
+                    "negative_prompt": "blurry",
+                    "guidance_scale": 6.5,
+                    "size": "512x512",
+                    "n": 2,
+                    "num_inference_steps": 20,
+                    "seed": 27,
+                    "seed_increment": 100,
+                    "response_format": "b64_json"
+                  }
+                },
+                "3": {
+                  "summary": "url + streaming",
+                  "description": "return image(s) urls in streaming mode",
+                  "value": {
+                    "model": "stabilityai/sdxl-turbo",
+                    "prompt": "image of a cat sleeping on planet mars",
+                    "stream": true,
+                    "negative_prompt": "blurry",
+                    "guidance_scale": 6.5,
+                    "size": "512x512",
+                    "n": 2,
+                    "num_inference_steps": 20,
+                    "seed": 27,
+                    "seed_increment": 100,
+                    "response_format": "url"
+                  }
+                },
+                "4": {
+                  "summary": "b64_json + streaming",
+                  "description": "return image(s) as b64_json in streaming mode",
+                  "value": {
+                    "model": "stabilityai/sdxl-turbo",
+                    "prompt": "image of a cat sleeping on planet mars",
+                    "stream": true,
+                    "negative_prompt": "blurry",
+                    "guidance_scale": 6.5,
+                    "size": "512x512",
+                    "n": 2,
+                    "num_inference_steps": 20,
+                    "seed": 27,
+                    "seed_increment": 100,
+                    "response_format": "b64_json"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TTIInferenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication Failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/models": {
+      "get": {
+        "tags": [
+          "Models"
+        ],
+        "summary": "Models",
+        "description": "Get all the available Models for the particular user",
+        "operationId": "get_models_for_user",
+        "parameters": [
+          {
+            "name": "model_type",
+            "in": "query",
+            "description": "Type of model to fetch",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "propertyNames": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Models Fetch Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/ping": {
+      "get": {
+        "tags": [
+          "Ping"
+        ],
+        "summary": "Server Ping",
+        "description": "Ping the server to check it's alive and well. Ping will return Pong if you provide the correct Bearer token",
+        "operationId": "ping",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/reranker": {
+      "get": {
+        "tags": [
+          "Reranker"
+        ],
+        "summary": "Reranker History",
+        "description": "Get reranker history if history is available",
+        "operationId": "reranker_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "description": "Represents a request to the reranker model.",
+                        "required": [
+                          "model",
+                          "query",
+                          "documents"
+                        ],
+                        "properties": {
+                          "documents": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "The list of documents to rerank."
+                          },
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Unique identifier for the request (optional)."
+                          },
+                          "max_chunks_per_doc": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "format": "int32",
+                            "description": "The maximum number of chunks to split each document into (optional).",
+                            "minimum": 0
+                          },
+                          "model": {
+                            "type": "string",
+                            "description": "The name of the model to use for reranking."
+                          },
+                          "query": {
+                            "type": "string",
+                            "description": "The query to rerank documents for."
+                          },
+                          "return_documents": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ],
+                            "description": "Whether to return the documents themselves in the response (optional)."
+                          },
+                          "top_n": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "format": "int32",
+                            "description": "The number of top documents to return (optional, defaults to all documents).",
+                            "minimum": 0
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Timestamp of the request (automatically set to the current time)."
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "object",
+                          "data",
+                          "model",
+                          "usage"
+                        ],
+                        "properties": {
+                          "data": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Reranker"
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "usage": {
+                            "$ref": "#/components/schemas/RerankerUsage"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Reranker"
+        ],
+        "summary": "Reranker",
+        "description": "Reranker score based on the model selected",
+        "operationId": "reranker_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RerankerRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "BAAI/bge-reranker-base",
+                  "description": "model :: BAAI/bge-reranker-base",
+                  "value": {
+                    "model": "BAAI/bge-reranker-base",
+                    "query": "How many people live in London?",
+                    "documents": [
+                      "Is it raining outside?",
+                      "What is the weather like in London?",
+                      "Pepe the frog!"
+                    ],
+                    "max_chunks_per_doc": 1,
+                    "return_documents": false,
+                    "top_n": 2
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerankerResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/transcribe": {
+      "get": {
+        "tags": [
+          "Transcribe"
+        ],
+        "summary": "Transcribe History",
+        "description": "Get Transcribe History if history is available",
+        "operationId": "transcribe_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "text",
+                          "generation_time"
+                        ],
+                        "properties": {
+                          "generation_time": {
+                            "type": "number",
+                            "format": "double"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "language": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "The detected language of the transcription (optional)"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "description": "Represents a request for transcription",
+                        "required": [
+                          "file",
+                          "file_name",
+                          "model"
+                        ],
+                        "properties": {
+                          "file": {
+                            "type": "string",
+                            "description": "File contents to be transcribed"
+                          },
+                          "file_name": {
+                            "type": "string",
+                            "description": "Name of the file being transcribed"
+                          },
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Unique identifier for the request (optional)"
+                          },
+                          "model": {
+                            "type": "string",
+                            "description": "Model to use for transcription"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Date-time notation as defined by RFC 3339, section 5.6, for example, 2017-07-21T17:32:28Z"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Transcribe"
+        ],
+        "summary": "Transcribe",
+        "description": "Transcribe audio file to text based on the model selected\nThis api will not work via swagger, please use mutipart form upload instead",
+        "operationId": "transcribe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    },
+    "/v2/translate": {
+      "get": {
+        "tags": [
+          "Translate"
+        ],
+        "summary": "Translation History",
+        "description": "Get Translation History if history is available",
+        "operationId": "translation_history",
+        "parameters": [
+          {
+            "name": "max_items",
+            "in": "query",
+            "description": "Maximum number of history items to generate",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": false,
+                    "prefixItems": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "choices",
+                          "created",
+                          "id",
+                          "model",
+                          "object",
+                          "usage",
+                          "generation_time"
+                        ],
+                        "properties": {
+                          "choices": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Choice"
+                            }
+                          },
+                          "created": {
+                            "type": "number",
+                            "format": "float"
+                          },
+                          "generation_time": {
+                            "type": "number",
+                            "format": "double"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "object": {
+                            "type": "string"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "usage": {
+                            "$ref": "#/components/schemas/TokenUsage"
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "description": "Represents a request to translate text.",
+                        "required": [
+                          "prompt",
+                          "model"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "description": "Unique identifier for the translation request (optional)."
+                          },
+                          "model": {
+                            "type": "string",
+                            "description": "The model to use for translation."
+                          },
+                          "prompt": {
+                            "type": "string",
+                            "description": "The text to be translated."
+                          },
+                          "sampling_params": {
+                            "allOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "$ref": "#/components/schemas/SamplingParams"
+                              }
+                            ]
+                          },
+                          "stream": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ],
+                            "description": "Whether to stream the translation (optional). defaults to false"
+                          },
+                          "ts": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Timestamp of the request (defaults to the current time)."
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Translate"
+        ],
+        "summary": "Translate",
+        "description": "Translate text based on the model selected",
+        "operationId": "translation_api",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationRequest"
+              },
+              "examples": {
+                "1": {
+                  "summary": "en - es",
+                  "description": "english to spanish",
+                  "value": {
+                    "prompt": "hello what is this. This is awesome",
+                    "model": "Helsinki-NLP/opus-mt-en-es",
+                    "stream": false
+                  }
+                },
+                "2": {
+                  "summary": "en - fr",
+                  "description": "english to french",
+                  "value": {
+                    "prompt": "hello what is this. This is awesome",
+                    "model": "Helsinki-NLP/opus-mt-en-fr",
+                    "stream": false
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid Bearer Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BasicApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer Token": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BasicApiErrorResponse": {
+        "type": "object",
+        "required": [
+          "message",
+          "status"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "CalledFunctionString": {
+        "type": "object",
+        "required": [
+          "arguments"
+        ],
+        "properties": {
+          "arguments": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CalledFunctionValue": {
+        "type": "object",
+        "required": [
+          "name",
+          "arguments"
+        ],
+        "properties": {
+          "arguments": {},
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ChatChoice": {
+        "type": "object",
+        "required": [
+          "finish_reason",
+          "index",
+          "message"
+        ],
+        "properties": {
+          "finish_reason": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "message": {
+            "$ref": "#/components/schemas/Message"
+          }
+        }
+      },
+      "ChatChoiceDelta": {
+        "type": "object",
+        "required": [
+          "delta",
+          "index"
+        ],
+        "properties": {
+          "delta": {
+            "$ref": "#/components/schemas/ChatDeltaContent"
+          },
+          "finish_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "ChatCompletionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SamplingParams"
+          },
+          {
+            "type": "object",
+            "required": [
+              "messages",
+              "model"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "messages": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              },
+              "model": {
+                "type": "string"
+              },
+              "stream": {
+                "type": "boolean"
+              },
+              "stream_options": {
+                "allOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StreamOptions"
+                  }
+                ]
+              },
+              "tools": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "$ref": "#/components/schemas/ToolCall"
+                }
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object",
+          "usage"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatChoice"
+            }
+          },
+          "created": {
+            "type": "number",
+            "format": "float"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/TokenUsage"
+          }
+        }
+      },
+      "ChatContinueConversationRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SamplingParams"
+          },
+          {
+            "type": "object",
+            "required": [
+              "message"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "message": {
+                "$ref": "#/components/schemas/Message"
+              },
+              "stream": {
+                "type": "boolean"
+              },
+              "stream_options": {
+                "allOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StreamOptions"
+                  }
+                ]
+              },
+              "tools": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "$ref": "#/components/schemas/ToolCall"
+                }
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "ChatDeltaContent": {
+        "oneOf": [
+          {
+            "type": "object"
+          },
+          {
+            "$ref": "#/components/schemas/Message"
+          }
+        ]
+      },
+      "Choice": {
+        "type": "object",
+        "required": [
+          "finish_reason",
+          "index",
+          "text"
+        ],
+        "properties": {
+          "finish_reason": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "ChoiceDelta": {
+        "type": "object",
+        "required": [
+          "delta",
+          "index"
+        ],
+        "properties": {
+          "delta": {
+            "$ref": "#/components/schemas/Delta"
+          },
+          "finish_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "CompletionImgData": {
+        "type": "object",
+        "required": [
+          "b64_json"
+        ],
+        "properties": {
+          "b64_json": {
+            "type": "string"
+          }
+        }
+      },
+      "CompletionImgURL": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "CompletionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SamplingParams"
+          },
+          {
+            "type": "object",
+            "required": [
+              "prompt",
+              "model"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "model": {
+                "type": "string"
+              },
+              "prompt": {
+                "type": "string"
+              },
+              "stream": {
+                "type": "boolean"
+              },
+              "stream_options": {
+                "allOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StreamOptions"
+                  }
+                ]
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      },
+      "CompletionResponse": {
+        "type": "object",
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object",
+          "generation_time",
+          "usage"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            }
+          },
+          "created": {
+            "type": "number",
+            "format": "float"
+          },
+          "generation_time": {
+            "type": "number",
+            "format": "double"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/TokenUsage"
+          }
+        }
+      },
+      "Content": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "String"
+            ],
+            "properties": {
+              "String": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "Vec"
+            ],
+            "properties": {
+              "Vec": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "MultiModal"
+            ],
+            "properties": {
+              "MultiModal": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MultiModalContent"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ConversationSummaryResp": {
+        "type": "object",
+        "required": [
+          "id",
+          "messages",
+          "model"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          },
+          "model": {
+            "type": "string"
+          }
+        }
+      },
+      "Delta": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "Embedding": {
+        "type": "object",
+        "required": [
+          "embedding",
+          "index",
+          "object"
+        ],
+        "properties": {
+          "embedding": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "object": {
+            "type": "string"
+          }
+        }
+      },
+      "EmbeddingInputType": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "EmbeddingRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "input"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "input": {
+            "$ref": "#/components/schemas/EmbeddingInputType"
+          },
+          "model": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EmbeddingResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "data",
+          "model",
+          "object",
+          "usage"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Embedding"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        }
+      },
+      "Function": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "arguments": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "FunctionOrWrappedFunction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "Flattened"
+            ],
+            "properties": {
+              "Flattened": {
+                "$ref": "#/components/schemas/Function"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "Wrapped"
+            ],
+            "properties": {
+              "Wrapped": {
+                "type": "object",
+                "required": [
+                  "function"
+                ],
+                "properties": {
+                  "function": {
+                    "$ref": "#/components/schemas/Function"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "HealthState": {
+        "type": "object",
+        "required": [
+          "postgres",
+          "redis",
+          "models"
+        ],
+        "properties": {
+          "models": {
+            "$ref": "#/components/schemas/HealthStatus"
+          },
+          "postgres": {
+            "$ref": "#/components/schemas/HealthStatus"
+          },
+          "redis": {
+            "$ref": "#/components/schemas/HealthStatus"
+          }
+        }
+      },
+      "HealthStatus": {
+        "type": "string",
+        "enum": [
+          "Ok",
+          "NotOk"
+        ]
+      },
+      "ImageContent": {
+        "type": "object",
+        "required": [
+          "image_url"
+        ],
+        "properties": {
+          "image_url": {
+            "$ref": "#/components/schemas/ImageUrl"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "ImageUrl": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "IndicSamplingParams": {
+        "type": "object",
+        "description": "Sampling Parameters\nThis struct represents sampling parameters for generating text completions.\n\nIt contains fields such as `source_language`, `target_language`, `max_tokens`, `temperature`, `top_p`, `top_k`, `max_seconds`, `ignore_eos`, `skip_special_tokens`",
+        "required": [
+          "source_language",
+          "target_language"
+        ],
+        "properties": {
+          "ignore_eos": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "max_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "max_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "skip_special_tokens": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "source_language": {
+            "type": "string"
+          },
+          "target_language": {
+            "type": "string"
+          },
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float"
+          },
+          "top_k": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float"
+          }
+        }
+      },
+      "IndicTranslationRequest": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "sampling_params": {
+            "allOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/IndicSamplingParams"
+              }
+            ]
+          },
+          "stream": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/Content"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "tool_call_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tool_calls": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ToolCallResponse"
+            }
+          }
+        }
+      },
+      "MultiModalContent": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "Text"
+            ],
+            "properties": {
+              "Text": {
+                "$ref": "#/components/schemas/TextContent"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "Image"
+            ],
+            "properties": {
+              "Image": {
+                "$ref": "#/components/schemas/ImageContent"
+              }
+            }
+          }
+        ]
+      },
+      "Reranker": {
+        "type": "object",
+        "required": [
+          "relevance_score",
+          "index"
+        ],
+        "properties": {
+          "document": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "relevance_score": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "RerankerRequest": {
+        "type": "object",
+        "description": "Represents a request to the reranker model.",
+        "required": [
+          "model",
+          "query",
+          "documents"
+        ],
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The list of documents to rerank."
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier for the request (optional)."
+          },
+          "max_chunks_per_doc": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The maximum number of chunks to split each document into (optional).",
+            "minimum": 0
+          },
+          "model": {
+            "type": "string",
+            "description": "The name of the model to use for reranking."
+          },
+          "query": {
+            "type": "string",
+            "description": "The query to rerank documents for."
+          },
+          "return_documents": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to return the documents themselves in the response (optional)."
+          },
+          "top_n": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The number of top documents to return (optional, defaults to all documents).",
+            "minimum": 0
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the request (automatically set to the current time)."
+          }
+        }
+      },
+      "RerankerResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "object",
+          "data",
+          "model",
+          "usage"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reranker"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/RerankerUsage"
+          }
+        }
+      },
+      "RerankerUsage": {
+        "type": "object",
+        "required": [
+          "total_tokens"
+        ],
+        "properties": {
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "system",
+          "assistant",
+          "user",
+          "tool"
+        ]
+      },
+      "SamplingParams": {
+        "type": "object",
+        "properties": {
+          "do_sample": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "if set to True, this parameter enables decoding strategies such as multinomial sampling, beam-search multinomial sampling, Top-K sampling and Top-p sampling. All these strategies select the next token from the probability distribution over the entire vocabulary with various strategy-specific adjustments\nif set to True, this parameter enables decoding strategies such as multinomial sampling, beam-search multinomial sampling, Top-K sampling and Top-p sampling. All these strategies select the next token from the probability distribution over the entire vocabulary with various strategy-specific adjustments"
+          },
+          "frequency_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim"
+          },
+          "ignore_eos": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to ignore the end-of-sequence token in the output"
+          },
+          "include_stop_str_in_output": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to include the stop string in the output sequence"
+          },
+          "max_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Maximum time in seconds to generate the output sequence",
+            "minimum": 0
+          },
+          "max_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The maximum number of tokens that can be generated in the chat completion",
+            "minimum": 0
+          },
+          "num_beams": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "By specifying a number of beams higher than 1, you are effectively switching from greedy search to beam search",
+            "minimum": 0
+          },
+          "presence_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics"
+          },
+          "repetition_penalty": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "Penalty to apply to repeated tokens in the output sequence"
+          },
+          "skip_special_tokens": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to skip special tokens in the output sequence"
+          },
+          "stop": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "List of stop words or phrases to terminate the output sequence"
+          },
+          "stop_token_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "description": "List of token IDs to use as stop tokens"
+          },
+          "temperature": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "What sampling temperature to use. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic"
+          },
+          "top_k": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Sample from the k most likely next tokens at each step. Lower k focuses on higher probability tokens",
+            "minimum": 0
+          },
+          "top_p": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "float",
+            "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered"
+          }
+        }
+      },
+      "StreamChatCompletionSchema": {
+        "$ref": "#/components/schemas/StreamChatCompletionWithUsage"
+      },
+      "StreamChatCompletionWithUsage": {
+        "type": "object",
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatChoiceDelta"
+            }
+          },
+          "created": {
+            "type": "number",
+            "format": "float"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "usage": {
+            "allOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TokenUsage"
+              }
+            ]
+          }
+        }
+      },
+      "StreamCompletion": {
+        "type": "object",
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChoiceDelta"
+            }
+          },
+          "created": {
+            "type": "number",
+            "format": "float"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "allOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TokenUsage"
+              }
+            ]
+          }
+        }
+      },
+      "StreamOptions": {
+        "type": "object",
+        "properties": {
+          "include_usage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TTIGenerationParams": {
+        "type": "object",
+        "properties": {
+          "cache_interval": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional cache interval for the model."
+          },
+          "guidance_scale": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Optional guidance scale for the model."
+          },
+          "n": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional number of images to generate."
+          },
+          "negative_prompt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional negative prompt to influence the generated image."
+          },
+          "num_inference_steps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional number of inference steps for the model."
+          },
+          "response_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional response format for the generated image (defaults to `b64_json`)."
+          },
+          "seed": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional seed value for reproducibility."
+          },
+          "seed_increment": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Optional increment value for the seed."
+          },
+          "size": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional size of the generated image (e.g. \"256x256\")."
+          }
+        }
+      },
+      "TTIInferenceRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TTIGenerationParams"
+          },
+          {
+            "type": "object",
+            "required": [
+              "prompt",
+              "model"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Unique identifier for the image generation model."
+              },
+              "model": {
+                "type": "string",
+                "description": "Model to be used for Image Generation."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "Prompt to be used for Image Generation."
+              },
+              "stream": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Should it be a Streaming Request (Optional). Defaults to false."
+              },
+              "ts": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp of when the image generation model was created"
+              }
+            }
+          }
+        ]
+      },
+      "TTIInferenceResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "model",
+          "object",
+          "created",
+          "generation_time"
+        ],
+        "properties": {
+          "created": {
+            "type": "number",
+            "format": "double"
+          },
+          "generation_time": {
+            "type": "number",
+            "format": "double"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TextContent": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenUsage": {
+        "type": "object",
+        "required": [
+          "completion_tokens",
+          "prompt_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "completion_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "ToolCall": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FunctionOrWrappedFunction"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "_type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ToolCallFunction": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "Function"
+            ],
+            "properties": {
+              "Function": {
+                "$ref": "#/components/schemas/CalledFunctionValue"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "String"
+            ],
+            "properties": {
+              "String": {
+                "$ref": "#/components/schemas/CalledFunctionString"
+              }
+            }
+          }
+        ]
+      },
+      "ToolCallResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "function"
+        ],
+        "properties": {
+          "function": {
+            "$ref": "#/components/schemas/ToolCallFunction"
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ToolCallType"
+          }
+        }
+      },
+      "ToolCallType": {
+        "type": "string",
+        "enum": [
+          "function"
+        ]
+      },
+      "TranscribeRequest": {
+        "type": "object",
+        "description": "Represents a request for transcription",
+        "required": [
+          "file",
+          "file_name",
+          "model"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File contents to be transcribed"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Name of the file being transcribed"
+          },
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier for the request (optional)"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model to use for transcription"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date-time notation as defined by RFC 3339, section 5.6, for example, 2017-07-21T17:32:28Z"
+          }
+        }
+      },
+      "TranscribeResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "generation_time"
+        ],
+        "properties": {
+          "generation_time": {
+            "type": "number",
+            "format": "double"
+          },
+          "id": {
+            "type": "string"
+          },
+          "language": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The detected language of the transcription (optional)"
+          },
+          "text": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TranslationRequest": {
+        "type": "object",
+        "description": "Represents a request to translate text.",
+        "required": [
+          "prompt",
+          "model"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Unique identifier for the translation request (optional)."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model to use for translation."
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The text to be translated."
+          },
+          "sampling_params": {
+            "allOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SamplingParams"
+              }
+            ]
+          },
+          "stream": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether to stream the translation (optional). defaults to false"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the request (defaults to the current time)."
+          }
+        }
+      },
+      "TranslationResponse": {
+        "type": "object",
+        "required": [
+          "choices",
+          "created",
+          "id",
+          "model",
+          "object",
+          "usage",
+          "generation_time"
+        ],
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Choice"
+            }
+          },
+          "created": {
+            "type": "number",
+            "format": "float"
+          },
+          "generation_time": {
+            "type": "number",
+            "format": "double"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/TokenUsage"
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "required": [
+          "prompt_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "prompt_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "UsageRead": {
+        "type": "object",
+        "required": [
+          "userid",
+          "model",
+          "date_bin",
+          "total_input_tokens",
+          "total_output_tokens",
+          "total_tokens",
+          "total_generation_time"
+        ],
+        "properties": {
+          "date_bin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "model": {
+            "type": "string"
+          },
+          "total_generation_time": {
+            "type": "number",
+            "format": "float"
+          },
+          "total_input_tokens": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total_output_tokens": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total_tokens": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userid": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer Token": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Qualcomm AI100 Inference - Imagine APIs",
+      "description": "These APIs provide the capability to run inference on Qualcomm AI100 devices"
+    }
+  ]
+}

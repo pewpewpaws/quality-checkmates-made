@@ -1,0 +1,95 @@
+[
+  {
+    "id": "REQ-001",
+    "text": "The device should start quickly. The device must store diagnostic logs.",
+    "expected_issues": [
+      {
+        "issue_type": "Ambiguity",
+        "evidence_quote": "quickly",
+        "severity": "Major"
+      },
+      {
+        "issue_type": "Non-atomic",
+        "evidence_quote": "The device should start quickly. The device must store diagnostic logs.",
+        "severity": "Major"
+      }
+    ],
+    "expected_tbd_rewrite_fields": ["startup time", "diagnostic log retention or format"],
+    "duel_target": false
+  },
+  {
+    "id": "REQ-002",
+    "text": "The application should provide excellent performance and be user-friendly under normal load.",
+    "expected_issues": [
+      {
+        "issue_type": "Unverifiability",
+        "evidence_quote": "excellent performance",
+        "severity": "Blocker"
+      },
+      {
+        "issue_type": "Ambiguity",
+        "evidence_quote": "user-friendly",
+        "severity": "Major"
+      },
+      {
+        "issue_type": "Incompleteness",
+        "evidence_quote": "normal load",
+        "severity": "Major"
+      }
+    ],
+    "expected_tbd_rewrite_fields": ["performance metric", "latency threshold", "load parameters"],
+    "duel_target": false
+  },
+  {
+    "id": "REQ-003",
+    "text": "The system shall retain recent diagnostic logs.",
+    "expected_issues": [
+      {
+        "issue_type": "Ambiguity",
+        "evidence_quote": "recent",
+        "severity": "Major"
+      }
+    ],
+    "duel_target": true,
+    "expected_duel_interpretations": [
+      "Time-based retention (e.g. past 24 hours)",
+      "Count-based retention (e.g. latest 1,000 entries)"
+    ]
+  },
+  {
+    "id": "REQ-004",
+    "text": "The device shall transmit cloud telemetry every five seconds during normal operation.",
+    "expected_issues": [],
+    "conflict_with": "REQ-005",
+    "conflict_reason": "Contradictory network behavior under the same normal operation context."
+  },
+  {
+    "id": "REQ-005",
+    "text": "The device shall make no external network transmissions during normal operation.",
+    "expected_issues": [],
+    "conflict_with": "REQ-004",
+    "conflict_reason": "Direct contradiction with REQ-004 cloud telemetry transmission."
+  },
+  {
+    "id": "REQ-006",
+    "text": "The system shall be robust and recover gracefully after unexpected power loss [TBD: recovery time].",
+    "expected_issues": [
+      {
+        "issue_type": "Ambiguity",
+        "evidence_quote": "robust",
+        "severity": "Major"
+      },
+      {
+        "issue_type": "Unverifiability",
+        "evidence_quote": "recover gracefully",
+        "severity": "Blocker"
+      },
+      {
+        "issue_type": "Placeholder",
+        "evidence_quote": "[TBD: recovery time]",
+        "severity": "Minor"
+      }
+    ],
+    "duel_target": false
+  }
+]

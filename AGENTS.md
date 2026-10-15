@@ -5,6 +5,7 @@
 > - [`documentation.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/documentation.md) — Documentation-first policy & mapping guide
 > - [`project_standards.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/project_standards.md) — Qualcomm AI 100 directives, zero-fabrication & governance
 > - [`brutal_candor.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/brutal_candor.md) — Radical candor & objective evaluation filter for all ideas
+> - [`git_workflow.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/git_workflow.md) — Commit-after-every-change policy (Strictly local, no push)
 
 ---
 

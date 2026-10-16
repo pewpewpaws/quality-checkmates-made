@@ -163,7 +163,7 @@ async def extract_semantic_chunk(
 
     formatted_docs = []
     for rel_path, content in chunk_files:
-        truncated_content = content[:8000]  # Cap per document to fit comfortable prompt budget
+        truncated_content = content[:3500]  # Optimal token budget for high-density extraction
         formatted_docs.append(f"<document path=\"{rel_path}\">\n{truncated_content}\n</document>")
 
     user_prompt = (
@@ -191,7 +191,18 @@ async def extract_semantic_chunk(
         latency = time.time() - t0
         data = parse_tool_call_args(resp.choices[0].message)
         nodes = data.get("nodes", [])
+        if isinstance(nodes, str):
+            try:
+                nodes = json.loads(nodes)
+            except Exception:
+                nodes = []
         edges = data.get("edges", [])
+        if isinstance(edges, str):
+            try:
+                edges = json.loads(edges)
+            except Exception:
+                edges = []
+
         usage = getattr(resp, "usage", None)
         in_tok = getattr(usage, "prompt_tokens", 0) if usage else 0
         out_tok = getattr(usage, "completion_tokens", 0) if usage else 0
@@ -199,12 +210,20 @@ async def extract_semantic_chunk(
         # Post-process and ensure consistent attributes
         valid_nodes = []
         for n in nodes:
-            nid = n.get("id", "").lower().replace("-", "_").replace(" ", "_")
+            if isinstance(n, str):
+                try:
+                    n = json.loads(n)
+                except Exception:
+                    n = {"id": n, "label": n}
+            if not isinstance(n, dict):
+                continue
+            raw_id = n.get("id") or n.get("name") or n.get("label") or ""
+            nid = str(raw_id).lower().replace("-", "_").replace(" ", "_")
             if not nid:
                 continue
             valid_nodes.append({
                 "id": nid,
-                "label": n.get("label", nid),
+                "label": str(n.get("label") or n.get("name") or nid),
                 "file_type": n.get("file_type", "document"),
                 "source_file": n.get("source_file", chunk_files[0][0]),
                 "source_location": None,
@@ -217,8 +236,15 @@ async def extract_semantic_chunk(
 
         valid_edges = []
         for e in edges:
-            src = e.get("source", "").lower().replace("-", "_").replace(" ", "_")
-            tgt = e.get("target", "").lower().replace("-", "_").replace(" ", "_")
+            if isinstance(e, str):
+                try:
+                    e = json.loads(e)
+                except Exception:
+                    continue
+            if not isinstance(e, dict):
+                continue
+            src = str(e.get("source", "")).lower().replace("-", "_").replace(" ", "_")
+            tgt = str(e.get("target", "")).lower().replace("-", "_").replace(" ", "_")
             if not src or not tgt:
                 continue
             valid_edges.append({
@@ -275,13 +301,27 @@ async def label_communities_cirrascale(
             temperature=0.0
         )
         data = parse_tool_call_args(resp.choices[0].message)
-        labels_list = data.get("labels", [])
+        labels_raw = data.get("labels", [])
+        if isinstance(labels_raw, str):
+            try:
+                labels_raw = json.loads(labels_raw)
+            except Exception:
+                labels_raw = []
+
         result = {}
-        for item in labels_list:
-            cid = item.get("community_id")
-            name = item.get("name")
-            if cid is not None and name:
-                result[int(cid)] = name
+        if isinstance(labels_raw, dict):
+            for k, v in labels_raw.items():
+                try:
+                    result[int(k)] = str(v)
+                except Exception:
+                    pass
+        elif isinstance(labels_raw, list):
+            for item in labels_raw:
+                if isinstance(item, dict):
+                    cid = item.get("community_id")
+                    name = item.get("name")
+                    if cid is not None and name:
+                        result[int(cid)] = str(name)
 
         # Fill any missing
         for cid in communities.keys():
@@ -345,8 +385,8 @@ async def main():
         except Exception:
             pass
 
-    # Group into 6 coherent chunks
-    chunk_size = 5
+    # Group into dense, focused chunks of 3 documents each
+    chunk_size = 3
     chunks = [all_semantic_docs[i:i + chunk_size] for i in range(0, len(all_semantic_docs), chunk_size)]
     print(f"   Grouped {len(all_semantic_docs)} documents into {len(chunks)} chunks.")
 

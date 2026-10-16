@@ -283,3 +283,72 @@ curl -X POST "https://aisuite.cirrascale.com/apis/v2/reranker" \
   ]
 }
 ```
+
+---
+
+# Requirement Quality Copilot (FastAPI) Backend Endpoints
+
+REST API endpoints provided by the local FastAPI service (`http://localhost:8000`).
+
+## 1. System Health & Qualcomm AI100 Ping
+* **Method**: `GET`
+* **Path**: `/health`
+* **Response**:
+```json
+{
+  "backend": "healthy",
+  "qualcomm_ai100": {
+    "status": "ok",
+    "mode": "live",
+    "message": "pong"
+  },
+  "active_requirements_count": 4
+}
+```
+
+## 2. Ingestion & Document Parsing
+* **Method**: `POST`
+* **Path**: `/api/parse/text`
+* **Payload**: `{"text": "1. The BMS shall monitor cell voltage every 50ms...", "category": "Automotive"}`
+* **Response**: Returns parsed atomic `RequirementStatement` objects with format detection (`numbered_list`, `req_tags`, etc.).
+
+* **Method**: `POST`
+* **Path**: `/api/parse/file`
+* **Payload**: `multipart/form-data` with `file` (CSV, TXT, PDF).
+
+## 3. Requirements & Dual-Key Governance
+* **Method**: `GET /api/requirements`: List all requirements.
+* **Method**: `POST /api/requirements`: Create requirement.
+* **Method**: `GET /api/requirements/{id}`: Fetch single requirement.
+* **Method**: `PUT /api/requirements/{id}`: Update requirement.
+* **Method**: `DELETE /api/requirements/{id}`: Delete requirement.
+* **Method**: `POST /api/requirements/{id}/sign-off`: Dual-Key state transition.
+  * **Payload (PM Stage)**:
+    ```json
+    {
+      "action": "provisional_pm",
+      "pm_author": "Alice PM",
+      "pm_target_val": "250 ms"
+    }
+    ```
+    Sets status to `🟡 PROVISIONAL_PM`.
+  * **Payload (Systems Lead Stage)**:
+    ```json
+    {
+      "action": "lock_baseline",
+      "tech_lead_approver": "Bob Systems Lead",
+      "hardware_rationale": "Matches CAN-FD 500kbps bus cycle allowance"
+    }
+    ```
+    Sets status to `🟢 LOCKED_BASELINE`.
+
+## 4. AI Quality Pipelines (Qualcomm Cloud AI 100)
+* **Method**: `POST /api/analysis/xray`:
+  * Detects flaws using `Llama-3.3-70B` tool calling (`submit_xray_issues`).
+  * Returns exact grounded evidence quotes.
+* **Method**: `POST /api/analysis/duel`:
+  * Stages 2 competing plausible interpretations using `Llama-3.1-8B` (`submit_interpretation_duel`).
+* **Method**: `POST /api/analysis/rewrite`:
+  * Generates zero-fabrication EARS rewrites preserving `[TBD: ...]` tokens and smart suggested defaults (`submit_rewritten_requirements`).
+* **Method**: `POST /api/analysis/blueprint`:
+  * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint`).

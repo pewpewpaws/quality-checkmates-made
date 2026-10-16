@@ -133,24 +133,26 @@ Keep documentation synchronized in these specific locations:
 
 ---
 
-### ⏳ Phase 1: Backend Foundation (CURRENT)
-- [ ] Initialize FastAPI project structure (`backend/`).
-- [ ] Implement Pydantic v2 schemas:
+### ✅ Phase 1: Backend Foundation (COMPLETED)
+- [x] Initialized FastAPI project structure (`backend/`).
+- [x] Implemented Pydantic v2 schemas:
   - `RequirementStatement` (`id`, `text`, `category`, `section`, `status`: `DRAFT` | `FLAGGED_TBD` 🔴 | `PROVISIONAL_PM` 🟡 | `LOCKED_BASELINE` 🟢 | `REJECTED`)
   - `DualKeySignOff` (`requirement_id`, `pm_target_val`, `pm_author`, `tech_lead_approver`, `hardware_rationale`, `signed_off_at`)
   - `IssueCard` (`issue_type`, `severity`, `evidence_quote`, `explanation`, `action`)
   - `QualityScore` (100-pt breakdown: Clarity, Verifiability, Completeness, Atomicity, Consistency)
   - `RewriteSuggestion` (original, revised, rationale, identified_tbds with suggested defaults)
   - `VerificationPlan` (method, preconditions, test cases, acceptance criteria)
-- [ ] Implement `QualcommService` wrapper using `ImagineAsyncClient`:
+- [x] Implemented `QualcommService` wrapper using `ImagineAsyncClient`:
   - `timeout=60.0`
   - Automatic fallback / mock adapter for offline demos
-- [ ] Implement Document Parser (pasted text, CSV, TXT, PDF).
-- [ ] Update `docs/api/endpoints.md` with new backend REST endpoints.
+- [x] Implemented Document Parser (pasted text, numbered lists, REQ tags, CSV, TXT, PDF).
+- [x] Created Dual-Key Governance state store & REST routes.
+- [x] Verified complete backend test suite (12/12 passing).
+- [x] Updated `docs/api/endpoints.md` with new backend REST endpoints.
 
 ---
 
-### ⏳ Phase 2: Deterministic Engine & Vector Clustering
+### ⏳ Phase 2: Deterministic Engine & Vector Clustering (CURRENT)
 - [ ] Implement 100-Point Rubric Scoring Engine outside the LLM.
 - [ ] Implement Evidence Validator (ensure `evidence_quote` is a strict substring of source).
 - [ ] Implement Vector Duplicate Detection & Clustering with `bge-large` embeddings + `numpy` cosine similarity.

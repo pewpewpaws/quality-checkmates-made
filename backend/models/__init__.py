@@ -1,4 +1,5 @@
 from backend.models.schemas import (
+    UserRole,
     RequirementStatus,
     IssueSeverity,
     IssueType,
@@ -17,12 +18,18 @@ from backend.models.schemas import (
     SignOffActionRequest,
     ProjectDocumentContext,
     ProjectContext,
+    ProjectWorkspace,
+    ProjectCreateRequest,
+    ProjectUpdateRequest,
+    ProjectLockRequest,
+    ProjectSummary,
     ChatMessageItem,
     ChatRequirementRequest,
     ChatRequirementResponse,
 )
 
 __all__ = [
+    "UserRole",
     "RequirementStatus",
     "IssueSeverity",
     "IssueType",
@@ -41,6 +48,11 @@ __all__ = [
     "SignOffActionRequest",
     "ProjectDocumentContext",
     "ProjectContext",
+    "ProjectWorkspace",
+    "ProjectCreateRequest",
+    "ProjectUpdateRequest",
+    "ProjectLockRequest",
+    "ProjectSummary",
     "ChatMessageItem",
     "ChatRequirementRequest",
     "ChatRequirementResponse",

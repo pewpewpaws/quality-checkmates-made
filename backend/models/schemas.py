@@ -1,7 +1,14 @@
+import uuid
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field
+
+
+class UserRole(str, Enum):
+    PRODUCT_MANAGER = "product_manager"
+    SYSTEMS_ENGINEER = "systems_engineer"
+    EXECUTIVE = "executive"
 
 
 class RequirementStatus(str, Enum):
@@ -121,6 +128,7 @@ class VerificationPlan(BaseModel):
 
 class RequirementStatement(BaseModel):
     id: str = Field(..., description="Unique requirement ID (e.g., REQ-001)")
+    project_id: str = Field(default="default_project", description="Associated Project Workspace ID")
     text: str = Field(..., description="Source or rewritten requirement text")
     category: Optional[str] = Field(None, description="Functional domain or category")
     section: Optional[str] = Field(None, description="Source document section or module")
@@ -142,6 +150,7 @@ class RequirementStatement(BaseModel):
 class DocumentParseRequest(BaseModel):
     text: Optional[str] = Field(None, description="Raw text or markdown content to parse")
     category: Optional[str] = Field(None, description="Optional default category for parsed items")
+    project_id: Optional[str] = Field("default_project", description="Target project workspace ID")
 
 
 class DocumentParseResponse(BaseModel):
@@ -159,10 +168,58 @@ class SignOffActionRequest(BaseModel):
 
 
 class ProjectDocumentContext(BaseModel):
+    id: str = Field(default_factory=lambda: f"DOC-{uuid.uuid4().hex[:6].upper()}", description="Unique document ID")
     title: str = Field(..., description="Document name or section title")
     content: str = Field(..., description="Full text or architectural overview")
     category: str = Field("General", description="System domain or engineering domain")
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    version: int = Field(1, description="Document revision counter")
+
+
+class ProjectWorkspace(BaseModel):
+    project_id: str = Field(..., description="Unique workspace identifier slug, e.g. 'proj-ev-bms'")
+    project_name: str = Field(..., description="Project designation, e.g. 'Next-Gen 800V EV BMS'")
+    domain: str = Field(..., description="Industry domain, e.g. 'Automotive Powertrain', 'Medical Device'")
+    description: str = Field(..., description="High-level engineering summary and safety constraints")
+    is_locked: bool = Field(False, description="Whether architecture charter and boundaries are frozen")
+    locked_at: Optional[datetime] = Field(None, description="Timestamp when architecture was locked")
+    locked_by: Optional[str] = Field(None, description="Persona or user who locked the project")
+    documents: List[ProjectDocumentContext] = Field(default_factory=list, description="Attached project architecture documents")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ProjectCreateRequest(BaseModel):
+    project_id: str = Field(..., description="Unique project slug (alphanumeric, hyphens, underscores)")
+    project_name: str = Field(..., description="Human-readable project title")
+    domain: str = Field(..., description="Industry or engineering domain")
+    description: str = Field(..., description="High-level architectural description and constraints")
+
+
+class ProjectUpdateRequest(BaseModel):
+    project_name: Optional[str] = None
+    domain: Optional[str] = None
+    description: Optional[str] = None
+
+
+class ProjectLockRequest(BaseModel):
+    is_locked: bool = Field(..., description="True to lock, False to unlock")
+    locked_by: Optional[str] = Field(None, description="User/Persona requesting the lock state change")
+
+
+class ProjectSummary(BaseModel):
+    project_id: str
+    project_name: str
+    domain: str
+    description: str
+    is_locked: bool
+    total_requirements: int
+    locked_baseline_count: int
+    provisional_pm_count: int
+    flagged_tbd_count: int
+    total_documents: int
+    created_at: datetime
+    updated_at: datetime
 
 
 class ProjectContext(BaseModel):
@@ -171,6 +228,7 @@ class ProjectContext(BaseModel):
     domain: str = Field(..., description="Industry domain, e.g. 'Automotive Powertrain', 'Medical Device'")
     description: str = Field(..., description="High-level engineering summary and safety constraints")
     documents: List[ProjectDocumentContext] = Field(default_factory=list)
+    is_locked: bool = Field(False, description="Whether project boundaries are locked")
 
 
 class ChatMessageItem(BaseModel):

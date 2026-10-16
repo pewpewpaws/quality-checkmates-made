@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from typing import Optional, List
 from backend.models.schemas import (
     ProjectContext,
     ProjectDocumentContext,
     ChatRequirementRequest,
     ChatRequirementResponse,
-    RequirementStatement
+    RequirementStatement,
+    UserRole
 )
+from backend.api.deps import require_write_permission
 from backend.services.qualcomm_service import QualcommService
 from backend.services.document_parser import DocumentParser
 from backend.services.storage import store
@@ -25,9 +27,18 @@ async def get_project_context(project_id: str = "default_project"):
 
 
 @router.post("/context", response_model=ProjectContext)
-async def update_project_context(payload: ProjectContext):
-    """Set or update project documentation context and engineering safety constraints."""
-    return store.set_project_context(payload)
+async def update_project_context(
+    payload: ProjectContext,
+    role: UserRole = Depends(require_write_permission)
+):
+    """
+    Set or update project documentation context and engineering safety constraints.
+    Restricted: Executives have read-only access.
+    """
+    try:
+        return store.set_project_context(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=423, detail=str(e))
 
 
 @router.post("/context/document", response_model=ProjectContext)
@@ -36,10 +47,12 @@ async def upload_context_document(
     category: str = Form("Architecture"),
     project_id: str = Form("default_project"),
     file: Optional[UploadFile] = File(None),
-    text: Optional[str] = Form(None)
+    text: Optional[str] = Form(None),
+    role: UserRole = Depends(require_write_permission)
 ):
     """
     Attach an architectural document or charter file (TXT, CSV, PDF, or raw text) to the project context.
+    Restricted: Executives have read-only access. Frozen if project is locked (HTTP 423).
     """
     content = ""
     if file:
@@ -62,24 +75,32 @@ async def upload_context_document(
         content=content,
         category=category
     )
-    return store.add_document_to_context(project_id, doc)
+    try:
+        return store.add_document_to_context(project_id, doc)
+    except ValueError as e:
+        raise HTTPException(status_code=423, detail=str(e))
 
 
 @router.post("/message", response_model=ChatRequirementResponse)
-async def chat_synthesize_requirements(payload: ChatRequirementRequest):
+async def chat_synthesize_requirements(
+    payload: ChatRequirementRequest,
+    role: UserRole = Depends(require_write_permission)
+):
     """
     Conversational Copilot: Product Manager types plain-language ideas/requirements.
     Copilot synthesizes formal, EARS-compliant requirements grounded in uploaded project documentation,
     preserving [TBD: ...] placeholders with Smart Suggested Defaults.
+    Restricted: Executives have read-only access.
     """
-    ctx = store.get_project_context(payload.project_id or "default_project")
+    target_project = payload.project_id or "default_project"
+    ctx = store.get_project_context(target_project)
     context_str = ""
     if ctx:
         doc_summaries = "\n---\n".join([f"[{d.title} ({d.category})]:\n{d.content}" for d in ctx.documents])
         context_str = f"Project: {ctx.project_name}\nDomain: {ctx.domain}\nDescription: {ctx.description}\n\nDocuments:\n{doc_summaries}"
 
     history_dicts = [{"role": m.role, "content": m.content} for m in payload.conversation_history]
-    next_idx = len(store.get_all()) + 1
+    next_idx = len(store.get_all(project_id=target_project)) + 1
 
     agent_reply, reqs, grounding = await qualcomm.generate_requirements_from_chat(
         pm_message=payload.message,
@@ -89,7 +110,9 @@ async def chat_synthesize_requirements(payload: ChatRequirementRequest):
     )
 
     if payload.save_to_store and reqs:
-        store.bulk_add(reqs)
+        for r in reqs:
+            r.project_id = target_project
+        store.bulk_add(reqs, project_id=target_project)
 
     return ChatRequirementResponse(
         agent_reply=agent_reply,

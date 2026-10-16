@@ -30,6 +30,7 @@ Most AI projects at hackathons make the fatal mistake of building a **generic ch
 | **5. Qualcomm Official RAG Architecture** | Uses Qualcomm's official SDK RAG pattern (`ImagineEmbeddings` + `ChromaDB` / vector store with `bge-large-en-v1.5`). | Conforms 100% to Qualcomm's official `rag_with_chromadb` specification for maximum judge alignment and hackathon scoring. |
 | **6. Strict Zero-Fabrication Directives** | If a metric is unstated, the system strictly outputs `[TBD: <parameter>]`. | Never hallucinates a fake latency or fake capacity limit. |
 | **7. Dual-Key Governance State Machine** | Solves the classic PM vs Systems Engineer disconnect; provides a 3-state sign-off lifecycle (Red 🔴 $\to$ Yellow 🟡 $\to$ Green 🟢). | Prevents unfeasible requirements from reaching code: PMs set provisional targets, but only Tech Leads can execute final sign-off. |
+| **8. Multi-Project Workspaces & Hierarchical Executive RBAC** | Enterprise multi-tenancy with 3-tier persona filters (`PM`, `Systems Engineer`, `Executive`). | Shield leadership from messy, unvetted drafts (executives only see provisional/locked baselines); enables architectural boundary freezing to halt scope creep. |
 
 
 ---

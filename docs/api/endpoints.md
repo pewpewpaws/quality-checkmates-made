@@ -309,17 +309,46 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
 ## 2. Ingestion & Document Parsing
 * **Method**: `POST`
 * **Path**: `/api/parse/text`
-* **Payload**: `{"text": "1. The BMS shall monitor cell voltage every 50ms...", "category": "Automotive"}`
+* **Headers**: `X-User-Role: product_manager | systems_engineer` (Executives rejected with 403)
+* **Payload**: `{"text": "1. The BMS shall monitor cell voltage every 50ms...", "category": "Automotive", "project_id": "default_project"}`
 * **Response**: Returns parsed atomic `RequirementStatement` objects with format detection (`numbered_list`, `req_tags`, etc.).
 
 * **Method**: `POST`
 * **Path**: `/api/parse/file`
-* **Payload**: `multipart/form-data` with `file` (CSV, TXT, PDF).
+* **Headers**: `X-User-Role: product_manager | systems_engineer`
+* **Payload**: `multipart/form-data` with `file` (CSV, TXT, PDF), `category`, and `project_id`.
 
-## 3. Requirements & Dual-Key Governance
-* **Method**: `GET /api/requirements`: List all requirements.
-* **Method**: `POST /api/requirements`: Create requirement.
-* **Method**: `GET /api/requirements/{id}`: Fetch single requirement.
+## 3. Multi-Project Workspaces & Context Management
+* **Method**: `GET /api/projects`: List all project workspaces with aggregated sign-off counters and total requirements.
+* **Method**: `POST /api/projects`: Create a new project workspace namespace (Isolated context and requirements).
+  * **Payload**:
+    ```json
+    {
+      "project_id": "proj-ev-bms",
+      "project_name": "Next-Gen 800V EV Powertrain & BMS",
+      "domain": "Automotive Systems (ISO 26262)",
+      "description": "800V silicon-carbide traction inverter and battery management system."
+    }
+    ```
+* **Method**: `GET /api/projects/{project_id}`: Retrieve workspace detail and attached architectural charter documents.
+* **Method**: `PUT /api/projects/{project_id}`: Update project metadata. Fails with HTTP 423 if boundary is locked.
+* **Method**: `DELETE /api/projects/{project_id}`: Delete workspace and all contained requirements and documents.
+* **Method**: `POST /api/projects/{project_id}/lock`: Lock or unlock architecture boundary and charter.
+  * **Payload**: `{"is_locked": true, "locked_by": "Chief Systems Architect"}`
+  * When locked, documents and architecture metadata cannot be modified (HTTP 423 Locked).
+* **Method**: `GET /api/projects/{project_id}/documents`: List all architectural charter documents.
+* **Method**: `POST /api/projects/{project_id}/documents`: Add/upload charter document (multipart form or text). Fails if locked (423).
+* **Method**: `DELETE /api/projects/{project_id}/documents/{doc_id}`: Delete charter document. Fails if locked (423).
+
+## 4. Requirements & Dual-Key Governance (with 3-Tier Enterprise Persona RBAC)
+* **Headers**: `X-User-Role: product_manager | systems_engineer | executive` (or query param `?role=...`).
+* **Persona Filter Behavior**:
+  * 👔 `product_manager`: Full authoring access across all states (`DRAFT`, `FLAGGED_TBD`, `PROVISIONAL_PM`, `LOCKED_BASELINE`). Can set provisional targets (`provisional_pm`). Cannot lock baseline (403).
+  * 🛠️ `systems_engineer`: Full engineering inspection. Can grant technical sign-off (`lock_baseline`), flag TBD, or reject. Cannot author provisional targets (403).
+  * 🎖️ `executive`: Strictly read-only (all mutations yield 403). Filtered visibility lens: only sees PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) requirements; raw drafts and unresolved TBDs are shielded from view.
+* **Method**: `GET /api/requirements?project_id={id}`: List requirements (filtered by persona).
+* **Method**: `POST /api/requirements`: Create requirement (Executives prohibited).
+* **Method**: `GET /api/requirements/{id}?project_id={id}`: Fetch single requirement (403 if executive attempts to view unapproved draft/TBD).
 * **Method**: `PUT /api/requirements/{id}`: Update requirement.
 * **Method**: `DELETE /api/requirements/{id}`: Delete requirement.
 * **Method**: `POST /api/requirements/{id}/sign-off`: Dual-Key state transition.
@@ -331,7 +360,7 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
       "pm_target_val": "250 ms"
     }
     ```
-    Sets status to `🟡 PROVISIONAL_PM`.
+    Sets status to `🟡 PROVISIONAL_PM`. (Requires PM persona).
   * **Payload (Systems Lead Stage)**:
     ```json
     {
@@ -340,9 +369,9 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
       "hardware_rationale": "Matches CAN-FD 500kbps bus cycle allowance"
     }
     ```
-    Sets status to `🟢 LOCKED_BASELINE`.
+    Sets status to `🟢 LOCKED_BASELINE`. (Requires Systems Engineer persona).
 
-## 4. AI Quality Pipelines (Qualcomm Cloud AI 100)
+## 5. AI Quality Pipelines (Qualcomm Cloud AI 100)
 * **Method**: `POST /api/analysis/xray`:
   * Detects flaws using `Llama-3.3-70B` tool calling (`submit_xray_issues`).
   * Returns exact grounded evidence quotes.
@@ -353,13 +382,13 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
 * **Method**: `POST /api/analysis/blueprint`:
   * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint`).
 
-## 5. Conversational Requirement Copilot & Project Context
+## 6. Conversational Requirement Copilot & Project Context
 * **Method**: `GET /api/chat/context`:
   * Returns active project context (name, domain, architectural summary, and attached documents).
 * **Method**: `POST /api/chat/context`:
-  * Updates or creates project context.
+  * Updates or creates project context. Frozen if boundary is locked (423).
 * **Method**: `POST /api/chat/context/document`:
-  * Multipart upload or raw text attachment of architectural charter documents (TXT, CSV, PDF).
+  * Multipart upload or raw text attachment of architectural charter documents (TXT, CSV, PDF). Frozen if boundary is locked (423).
 * **Method**: `POST /api/chat/message`:
   * Conversational AI endpoint where Product Managers speak in informal, plain English.
   * Formulates formal, atomic EARS requirements strictly grounded in the project context with zero-fabrication `[TBD]` preservation and smart suggested defaults.
@@ -373,3 +402,4 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
       "conversation_history": []
     }
     ```
+

@@ -1,3 +1,4 @@
+import uuid
 from typing import Dict, List, Optional
 from datetime import datetime
 from backend.models.schemas import (
@@ -5,23 +6,29 @@ from backend.models.schemas import (
     RequirementStatus,
     DualKeySignOff,
     ProjectContext,
-    ProjectDocumentContext
+    ProjectDocumentContext,
+    ProjectWorkspace,
+    ProjectSummary,
+    UserRole
 )
 
 
 class RequirementStore:
     """
-    High-performance in-memory requirement baseline store with Dual-Key state governance
-    and Project Context grounding for conversational AI agent workflows.
+    High-performance in-memory requirement baseline store with Multi-Project isolation,
+    Dual-Key state governance, and Hierarchical Executive RBAC filters.
     """
 
     def __init__(self):
-        self._items: Dict[str, RequirementStatement] = {}
-        self._project_contexts: Dict[str, ProjectContext] = {}
+        # Multi-Project Store Namespaces:
+        # _projects maps project_id -> ProjectWorkspace
+        self._projects: Dict[str, ProjectWorkspace] = {}
+        # _requirements maps project_id -> Dict[req_id, RequirementStatement]
+        self._requirements: Dict[str, Dict[str, RequirementStatement]] = {}
         self._init_default_project()
 
     def _init_default_project(self):
-        default_ctx = ProjectContext(
+        default_workspace = ProjectWorkspace(
             project_id="default_project",
             project_name="Next-Gen 800V EV Powertrain & BMS",
             domain="Automotive Systems (ISO 26262 / ASIL-D)",
@@ -30,8 +37,10 @@ class RequirementStore:
                 "Supports 350kW DC fast charging, liquid glycol thermal loop, CAN-FD bus (500 kbps nominal, 2 Mbps data), "
                 "and strict ASIL-D high-voltage disconnect within 10ms of pyrotechnic fuse or crash trigger."
             ),
+            is_locked=False,
             documents=[
                 ProjectDocumentContext(
+                    id="DOC-BMS-001",
                     title="BMS Architectural Safety Charter",
                     content=(
                         "Operating envelope: 2.8V to 4.25V per NMC cell. "
@@ -42,52 +51,327 @@ class RequirementStore:
                 )
             ]
         )
-        self._project_contexts[default_ctx.project_id] = default_ctx
+        self._projects[default_workspace.project_id] = default_workspace
+        if default_workspace.project_id not in self._requirements:
+            self._requirements[default_workspace.project_id] = {}
 
-    def get_project_context(self, project_id: str = "default_project") -> Optional[ProjectContext]:
-        return self._project_contexts.get(project_id) or self._project_contexts.get("default_project")
+    # ==========================================
+    # Project Workspaces CRUD & Boundary Locking
+    # ==========================================
 
-    def set_project_context(self, context: ProjectContext) -> ProjectContext:
-        self._project_contexts[context.project_id] = context
-        return context
+    def create_project(
+        self,
+        project_id: str,
+        project_name: str,
+        domain: str,
+        description: str
+    ) -> ProjectWorkspace:
+        if project_id in self._projects:
+            raise ValueError(f"Project workspace '{project_id}' already exists.")
+        
+        workspace = ProjectWorkspace(
+            project_id=project_id,
+            project_name=project_name,
+            domain=domain,
+            description=description,
+            is_locked=False,
+            documents=[]
+        )
+        self._projects[project_id] = workspace
+        self._requirements[project_id] = {}
+        return workspace
 
-    def add_document_to_context(self, project_id: str, doc: ProjectDocumentContext) -> ProjectContext:
-        ctx = self.get_project_context(project_id)
-        if not ctx:
-            ctx = ProjectContext(
-                project_id=project_id,
-                project_name=f"Project {project_id}",
-                domain="Embedded Systems",
-                description="Custom user uploaded project context"
+    def list_projects(self) -> List[ProjectSummary]:
+        summaries = []
+        for pid, ws in self._projects.items():
+            req_dict = self._requirements.get(pid, {})
+            locked_count = sum(1 for r in req_dict.values() if r.status == RequirementStatus.LOCKED_BASELINE)
+            prov_count = sum(1 for r in req_dict.values() if r.status == RequirementStatus.PROVISIONAL_PM)
+            tbd_count = sum(1 for r in req_dict.values() if r.status == RequirementStatus.FLAGGED_TBD)
+            
+            summaries.append(
+                ProjectSummary(
+                    project_id=ws.project_id,
+                    project_name=ws.project_name,
+                    domain=ws.domain,
+                    description=ws.description,
+                    is_locked=ws.is_locked,
+                    total_requirements=len(req_dict),
+                    locked_baseline_count=locked_count,
+                    provisional_pm_count=prov_count,
+                    flagged_tbd_count=tbd_count,
+                    total_documents=len(ws.documents),
+                    created_at=ws.created_at,
+                    updated_at=ws.updated_at
+                )
             )
-            self._project_contexts[project_id] = ctx
-        ctx.documents.append(doc)
-        return ctx
+        return summaries
 
-    def get_all(self) -> List[RequirementStatement]:
-        return list(self._items.values())
+    def get_project(self, project_id: str) -> Optional[ProjectWorkspace]:
+        return self._projects.get(project_id)
 
-    def get_by_id(self, req_id: str) -> Optional[RequirementStatement]:
-        return self._items.get(req_id)
+    def update_project(
+        self,
+        project_id: str,
+        project_name: Optional[str] = None,
+        domain: Optional[str] = None,
+        description: Optional[str] = None
+    ) -> Optional[ProjectWorkspace]:
+        ws = self._projects.get(project_id)
+        if not ws:
+            return None
+        if ws.is_locked:
+            raise ValueError(f"Project '{project_id}' architecture boundary is locked. Metadata modifications are frozen.")
+        
+        if project_name is not None:
+            ws.project_name = project_name
+        if domain is not None:
+            ws.domain = domain
+        if description is not None:
+            ws.description = description
+        
+        ws.updated_at = datetime.utcnow()
+        return ws
 
-    def upsert(self, item: RequirementStatement) -> RequirementStatement:
-        item.updated_at = datetime.utcnow()
-        self._items[item.id] = item
-        return item
-
-    def bulk_add(self, items: List[RequirementStatement]) -> List[RequirementStatement]:
-        for item in items:
-            self.upsert(item)
-        return items
-
-    def delete(self, req_id: str) -> bool:
-        if req_id in self._items:
-            del self._items[req_id]
+    def delete_project(self, project_id: str) -> bool:
+        if project_id in self._projects:
+            del self._projects[project_id]
+            if project_id in self._requirements:
+                del self._requirements[project_id]
             return True
         return False
 
-    def clear(self):
-        self._items.clear()
+    def lock_project(
+        self,
+        project_id: str,
+        is_locked: bool,
+        locked_by: Optional[str] = None
+    ) -> Optional[ProjectWorkspace]:
+        ws = self._projects.get(project_id)
+        if not ws:
+            return None
+        
+        ws.is_locked = is_locked
+        ws.locked_at = datetime.utcnow() if is_locked else None
+        ws.locked_by = locked_by if is_locked else None
+        ws.updated_at = datetime.utcnow()
+        return ws
+
+    # ==========================================
+    # Project Documents CRUD
+    # ==========================================
+
+    def add_document(self, project_id: str, doc: ProjectDocumentContext) -> ProjectWorkspace:
+        ws = self._projects.get(project_id)
+        if not ws:
+            ws = self.create_project(
+                project_id=project_id,
+                project_name=f"Project {project_id}",
+                domain="Embedded Systems",
+                description="Auto-created project workspace"
+            )
+        if ws.is_locked:
+            raise ValueError(f"Project '{project_id}' architecture boundary is locked. Document modifications are frozen.")
+        
+        ws.documents.append(doc)
+        ws.updated_at = datetime.utcnow()
+        return ws
+
+    def get_documents(self, project_id: str) -> List[ProjectDocumentContext]:
+        ws = self._projects.get(project_id)
+        return ws.documents if ws else []
+
+    def update_document(
+        self,
+        project_id: str,
+        doc_id: str,
+        title: Optional[str] = None,
+        content: Optional[str] = None,
+        category: Optional[str] = None
+    ) -> Optional[ProjectDocumentContext]:
+        ws = self._projects.get(project_id)
+        if not ws:
+            return None
+        if ws.is_locked:
+            raise ValueError(f"Project '{project_id}' architecture boundary is locked. Document modifications are frozen.")
+        
+        for d in ws.documents:
+            if d.id == doc_id or d.title == doc_id:
+                if title is not None:
+                    d.title = title
+                if content is not None:
+                    d.content = content
+                if category is not None:
+                    d.category = category
+                d.version += 1
+                d.uploaded_at = datetime.utcnow()
+                ws.updated_at = datetime.utcnow()
+                return d
+        return None
+
+    def delete_document(self, project_id: str, doc_id: str) -> bool:
+        ws = self._projects.get(project_id)
+        if not ws:
+            return False
+        if ws.is_locked:
+            raise ValueError(f"Project '{project_id}' architecture boundary is locked. Document modifications are frozen.")
+        
+        initial_len = len(ws.documents)
+        ws.documents = [d for d in ws.documents if d.id != doc_id and d.title != doc_id]
+        if len(ws.documents) < initial_len:
+            ws.updated_at = datetime.utcnow()
+            return True
+        return False
+
+    # Backward-compatible Context Helpers
+    def get_project_context(self, project_id: str = "default_project") -> Optional[ProjectContext]:
+        ws = self._projects.get(project_id) or self._projects.get("default_project")
+        if not ws:
+            return None
+        return ProjectContext(
+            project_id=ws.project_id,
+            project_name=ws.project_name,
+            domain=ws.domain,
+            description=ws.description,
+            documents=ws.documents,
+            is_locked=ws.is_locked
+        )
+
+    def set_project_context(self, context: ProjectContext) -> ProjectContext:
+        ws = self._projects.get(context.project_id)
+        if ws:
+            if ws.is_locked:
+                raise ValueError(f"Project '{context.project_id}' architecture boundary is locked.")
+            ws.project_name = context.project_name
+            ws.domain = context.domain
+            ws.description = context.description
+            ws.documents = context.documents
+            ws.is_locked = context.is_locked
+            ws.updated_at = datetime.utcnow()
+        else:
+            ws = ProjectWorkspace(
+                project_id=context.project_id,
+                project_name=context.project_name,
+                domain=context.domain,
+                description=context.description,
+                is_locked=context.is_locked,
+                documents=context.documents
+            )
+            self._projects[context.project_id] = ws
+            if context.project_id not in self._requirements:
+                self._requirements[context.project_id] = {}
+        return context
+
+    def add_document_to_context(self, project_id: str, doc: ProjectDocumentContext) -> ProjectContext:
+        self.add_document(project_id, doc)
+        return self.get_project_context(project_id)
+
+    # ==========================================
+    # Requirement Statements with RBAC & Isolation
+    # ==========================================
+
+    def get_all(
+        self,
+        project_id: Optional[str] = "default_project",
+        role: UserRole = UserRole.PRODUCT_MANAGER
+    ) -> List[RequirementStatement]:
+        results: List[RequirementStatement] = []
+        if project_id:
+            req_dict = self._requirements.get(project_id, {})
+            results = list(req_dict.values())
+        else:
+            for req_dict in self._requirements.values():
+                results.extend(req_dict.values())
+        
+        # Hierarchical Executive RBAC Filter:
+        # Executives are shielded from raw DRAFT or FLAGGED_TBD requirements.
+        # They only see PM-Approved (PROVISIONAL_PM 🟡) or Signed-off (LOCKED_BASELINE 🟢) baselines.
+        if role == UserRole.EXECUTIVE:
+            results = [
+                r for r in results
+                if r.status in (RequirementStatus.PROVISIONAL_PM, RequirementStatus.LOCKED_BASELINE)
+            ]
+        
+        return results
+
+    def get_by_id(
+        self,
+        req_id: str,
+        project_id: Optional[str] = None,
+        role: UserRole = UserRole.PRODUCT_MANAGER
+    ) -> Optional[RequirementStatement]:
+        found: Optional[RequirementStatement] = None
+        if project_id and project_id in self._requirements:
+            found = self._requirements[project_id].get(req_id)
+        else:
+            # Search across all project namespaces
+            for req_dict in self._requirements.values():
+                if req_id in req_dict:
+                    found = req_dict[req_id]
+                    break
+        
+        if not found:
+            return None
+        
+        # Executive visibility shield
+        if role == UserRole.EXECUTIVE and found.status not in (
+            RequirementStatus.PROVISIONAL_PM,
+            RequirementStatus.LOCKED_BASELINE
+        ):
+            return None
+        
+        return found
+
+    def upsert(
+        self,
+        item: RequirementStatement,
+        project_id: Optional[str] = None
+    ) -> RequirementStatement:
+        target_project = project_id or item.project_id or "default_project"
+        if target_project not in self._requirements:
+            self._requirements[target_project] = {}
+        if target_project not in self._projects:
+            # Auto-register workspace container
+            self._projects[target_project] = ProjectWorkspace(
+                project_id=target_project,
+                project_name=f"Project {target_project}",
+                domain="Embedded Systems",
+                description="Auto-created workspace namespace"
+            )
+        
+        item.project_id = target_project
+        item.updated_at = datetime.utcnow()
+        self._requirements[target_project][item.id] = item
+        return item
+
+    def bulk_add(
+        self,
+        items: List[RequirementStatement],
+        project_id: Optional[str] = None
+    ) -> List[RequirementStatement]:
+        for item in items:
+            self.upsert(item, project_id=project_id)
+        return items
+
+    def delete(self, req_id: str, project_id: Optional[str] = None) -> bool:
+        if project_id and project_id in self._requirements:
+            if req_id in self._requirements[project_id]:
+                del self._requirements[project_id][req_id]
+                return True
+            return False
+        
+        for req_dict in self._requirements.values():
+            if req_id in req_dict:
+                del req_dict[req_id]
+                return True
+        return False
+
+    def clear(self, project_id: Optional[str] = None):
+        if project_id and project_id in self._requirements:
+            self._requirements[project_id].clear()
+        elif project_id is None:
+            for req_dict in self._requirements.values():
+                req_dict.clear()
 
     def apply_dual_key_transition(
         self,
@@ -97,8 +381,9 @@ class RequirementStore:
         pm_target_val: Optional[str] = None,
         tech_lead_approver: Optional[str] = None,
         hardware_rationale: Optional[str] = None,
+        project_id: Optional[str] = None
     ) -> Optional[RequirementStatement]:
-        item = self.get_by_id(req_id)
+        item = self.get_by_id(req_id, project_id=project_id)
         if not item:
             return None
 
@@ -110,7 +395,6 @@ class RequirementStore:
             sign_off.state = RequirementStatus.PROVISIONAL_PM
             item.status = RequirementStatus.PROVISIONAL_PM
         elif action == "lock_baseline":
-            # Only allow locking baseline if provisional PM exists or is provided
             sign_off.tech_lead_approver = tech_lead_approver or "Lead Systems Engineer"
             sign_off.hardware_rationale = hardware_rationale or "Validated against hardware envelope"
             sign_off.signed_off_at = datetime.utcnow()
@@ -126,6 +410,8 @@ class RequirementStore:
         item.sign_off = sign_off
         item.version += 1
         item.updated_at = datetime.utcnow()
+        # Save back in appropriate namespace
+        self.upsert(item, project_id=item.project_id)
         return item
 
 

@@ -161,18 +161,18 @@ Keep documentation synchronized in these specific locations:
 
 ---
 
-### ⏳ Phase 1.5: Multi-Project Workspaces & Hierarchical Executive RBAC (CURRENT)
-- [ ] Implement Multi-Project Store Namespaces (`projects: Dict[str, ProjectWorkspace]`) isolating context, documents, and requirement IDs per project.
-- [ ] Implement Manual Project Context CRUD (PMs can manually draft, edit, and lock architecture boundaries & charter documents).
-- [ ] Implement 3-Tier Enterprise Persona Filter:
+### ✅ Phase 1.5: Multi-Project Workspaces & Hierarchical Executive RBAC (COMPLETED)
+- [x] Implemented Multi-Project Store Namespaces (`projects: Dict[str, ProjectWorkspace]`) isolating context, documents, and requirement IDs per project.
+- [x] Implemented Manual Project Context CRUD & Boundary Locking (`/api/projects` endpoints, documents CRUD, architecture charter freezing with HTTP 423 enforcement).
+- [x] Implemented 3-Tier Enterprise Persona Filter:
   - 👔 `Product Manager`: Unrestricted authoring across all states (`DRAFT`, `FLAGGED_TBD`, `PROVISIONAL_PM`, `LOCKED_BASELINE`).
   - 🛠️ `Lead Systems Engineer`: Technical sign-off gate (`PROVISIONAL_PM` $\to$ `LOCKED_BASELINE`).
   - 🎖️ `Senior Manager / Executive`: Strict read-only lens restricted exclusively to PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) documents, shielding leadership from raw drafts.
-- [ ] Add automated test suite verifying cross-project isolation and executive visibility restrictions.
+- [x] Added automated test suite verifying cross-project isolation, executive visibility shielding, and dual-key RBAC separation of duties (31/31 passing tests).
 
 ---
 
-### ⏳ Phase 2: Deterministic Engine & Vector Clustering
+### ⏳ Phase 2: Deterministic Engine & Vector Clustering (CURRENT)
 - [ ] Implement 100-Point Rubric Scoring Engine outside the LLM.
 - [ ] Implement Evidence Validator (ensure `evidence_quote` is a strict substring of source).
 - [ ] Implement Vector Duplicate Detection & Clustering with `bge-large` embeddings + `numpy` cosine similarity.

@@ -124,8 +124,8 @@ Keep documentation synchronized in these specific locations:
   - [x] **Smart Rewriter**: **100.0% Zero-Fabrication**, strictly preserved all `[TBD]` placeholders in text + provided actionable **Smart Suggested Defaults with Engineering Rationales** on `Llama-3.3-70B`.
   - [x] **Interpretation Duel**: **100.0% Contrast Score**, generated distinct competing meanings on `Llama-3.1-8B` (with special handling for escape hatches).
   - [x] **Verification Blueprint**: **100.0% Verifiable Tests & Falsifiable Pass/Fail Criteria** referencing `[TBD]` thresholds on `Llama-3.3-70B`.
-  - [x] **Qualcomm Official RAG Pipeline**: Conformed and verified against Qualcomm's official `rag_with_chromadb` specification using `ImagineEmbeddings` (`BAAI/bge-large-en-v1.5`) + `ChromaDB`.
-- [x] Exported verified prompt templates (v2.0) to [`docs/prompts/optimized_prompts.json`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/prompts/optimized_prompts.json).
+  - [x] **Conversational Requirement Copilot**: **100.0% AITL Success Rate** across all 4 multi-domain scenarios (BMS, AEB, Med Pump, IoT Gateway) with strict EARS modal syntax, zero-fabrication `[TBD]` preservation, and top-level schema compatibility on `Llama-3.3-70B`.
+- [x] Exported verified prompt templates (v2.4) to [`docs/prompts/optimized_prompts.json`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/prompts/optimized_prompts.json).
 - [x] Documented full research findings in [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md).
 
 

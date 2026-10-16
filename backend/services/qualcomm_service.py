@@ -36,6 +36,42 @@ def parse_tool_args(raw_args: str) -> Dict[str, Any]:
     return data
 
 
+def extract_chat_data(msg) -> Dict[str, Any]:
+    """Robustly extract tool call or JSON parameters from Qualcomm Cloud AI 100 response."""
+    if getattr(msg, "tool_calls", None) and len(msg.tool_calls) > 0:
+        tc = msg.tool_calls[0]
+        raw = tc.function.arguments if hasattr(tc, "function") else str(tc)
+        data = parse_tool_args(raw)
+        if isinstance(data.get("requirements"), str):
+            try:
+                data["requirements"] = json.loads(data["requirements"])
+            except Exception:
+                pass
+        return data
+
+    content = msg.content or ""
+    if "{" in content:
+        try:
+            start = content.find("{")
+            end = content.rfind("}")
+            blob = content[start:end+1]
+            if "<|eom_id|>" in blob:
+                blob = blob.split("<|eom_id|>")[0].strip()
+            blob = blob.replace(r"\'", "'")
+            data = json.loads(blob)
+            if "parameters" in data:
+                data = data["parameters"]
+            if isinstance(data.get("requirements"), str):
+                try:
+                    data["requirements"] = json.loads(data["requirements"])
+                except Exception:
+                    pass
+            return data
+        except Exception:
+            pass
+    return {}
+
+
 # --- Qualcomm AI100 Tool Definitions ---
 
 TOOL_XRAY = [{
@@ -208,28 +244,28 @@ TOOL_CHAT = [{
                     "items": {
                         "type": "object",
                         "properties": {
-                            "text": {"type": "string", "description": "Strict EARS statement preserving [TBD: parameter_name]"},
+                            "text": {"type": "string", "description": "Strict EARS statement containing at least one [TBD: parameter_name] placeholder"},
                             "category": {"type": "string"},
-                            "section": {"type": "string"},
-                            "identified_tbds": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "parameter_name": {"type": "string"},
-                                        "suggested_value": {"type": "string"},
-                                        "rationale": {"type": "string"},
-                                        "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]}
-                                    },
-                                    "required": ["parameter_name", "suggested_value", "rationale", "confidence"]
-                                }
-                            }
+                            "section": {"type": "string"}
                         },
-                        "required": ["text", "category", "section", "identified_tbds"]
+                        "required": ["text", "category", "section"]
+                    }
+                },
+                "identified_tbds": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "parameter_name": {"type": "string"},
+                            "suggested_value": {"type": "string"},
+                            "rationale": {"type": "string"},
+                            "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]}
+                        },
+                        "required": ["parameter_name", "suggested_value", "rationale", "confidence"]
                     }
                 }
             },
-            "required": ["agent_reply", "context_grounding", "requirements"]
+            "required": ["agent_reply", "context_grounding", "requirements", "identified_tbds"]
         }
     }
 }]
@@ -507,16 +543,20 @@ class QualcommService:
             return self._mock_chat_requirements(pm_message, project_context, next_req_index)
 
         system_prompt = (
-            "You are the Requirement Quality Copilot, an enterprise AI Systems Engineering Architect. "
-            "A Product Manager is talking to you in plain, informal English. "
-            "Your job is to translate their request into formal, atomic, unambiguous EARS requirements (ISO/IEC/IEEE 29148 standard) "
-            "strictly grounded in the provided Project Documentation Context.\n\n"
+            "You are the Requirement Quality Copilot, a Principal Systems Engineering Architect conforming to ISO/IEC/IEEE 29148 and EARS syntax. "
+            "A Product Manager is communicating with you in plain, conversational, informal English. "
+            "Your objective is to translate their request into formal, atomic, verifiable requirements strictly grounded in the provided Project Documentation Context.\n\n"
             f"PROJECT CONTEXT & ENGINEERING CHARTER:\n{project_context}\n\n"
-            "STRICT ZERO-FABRICATION DIRECTIVE:\n"
-            "1. NEVER hardcode assumed numerical thresholds in the requirement text.\n"
-            "2. Preserve all unstated metrics as `[TBD: <parameter_name_and_unit>]`.\n"
-            "3. Propose SMART SUGGESTED DEFAULTS in `identified_tbds` grounded in the Project Context or engineering standards.\n"
-            "4. Provide a friendly conversational `agent_reply` explaining your engineering rationale to the PM.\n"
+            "CRITICAL MANDATES:\n"
+            "1. ZERO-FABRICATION RULE: NEVER hardcode assumed numbers, durations, or limits in requirement text. "
+            "Every requirement statement MUST parameterize every unstated metric, threshold, duration, or subjective quality (e.g. 'loudly', 'quickly', 'promptly') as: `[TBD: <parameter_name_and_unit>]`. Every requirement text MUST contain at least one `[TBD: ...]` token.\n"
+            "2. SMART SUGGESTED DEFAULTS: For each `[TBD]` token, you MUST propose a realistic default in `identified_tbds` "
+            "citing specific numbers or baselines directly from the Project Context or relevant safety standards.\n"
+            "3. ATOMIC DECOMPOSITION: Decompose multiple distinct actions, safeguards, or alerts into separate atomic requirements with distinct functional categories. Every single requirement MUST have its own `identified_tbds`.\n"
+            "4. STRICT EARS SYNTAX: Use mandatory modal verb 'shall' (e.g. 'When <trigger>, the system shall <action>'). "
+            "Never retain weak conversational phrasing ('should', 'we need to', 'make sure').\n"
+            "5. CONVERSATIONAL EXPLANATION: In `agent_reply`, explain your engineering rationale directly to the PM, "
+            "referencing why specific thresholds were flagged as [TBD] and which project charter constraints were applied.\n"
             "Call submit_chat_requirements."
         )
 
@@ -535,21 +575,28 @@ class QualcommService:
                 tools=TOOL_CHAT,
                 temperature=0.1
             )
-            tc = resp.choices[0].message.tool_calls[0]
-            data = parse_tool_args(tc.function.arguments)
+            msg = resp.choices[0].message
+            data = extract_chat_data(msg)
 
             agent_reply = data.get("agent_reply", "I have structured your request into formal requirements.")
             grounding = data.get("context_grounding", "Grounded in Project Context.")
             raw_reqs = data.get("requirements", [])
+            top_tbds = data.get("identified_tbds", [])
 
             req_statements = []
             for idx, r in enumerate(raw_reqs, start=next_req_index):
+                statement_text = r.get("text", "")
+                tbds_source = r.get("identified_tbds", [])
+                if not tbds_source:
+                    matched = [t for t in top_tbds if t.get("parameter_name", "") in statement_text]
+                    tbds_source = matched if matched else top_tbds
+
                 tbds = []
-                for t in r.get("identified_tbds", []):
+                for t in tbds_source:
                     tbds.append(TbdDefault(
                         parameter_name=t.get("parameter_name", "parameter_limit"),
-                        suggested_value=t.get("suggested_value", "100 ms"),
-                        rationale=t.get("rationale", "Standard engineering baseline"),
+                        suggested_value=str(t.get("suggested_value", "100 ms")),
+                        engineering_rationale=t.get("rationale", t.get("engineering_rationale", "Standard engineering baseline")),
                         confidence=t.get("confidence", "MEDIUM") if t.get("confidence") in ["HIGH", "MEDIUM", "LOW"] else "MEDIUM"
                     ))
                 statement_text = r.get("text", "")

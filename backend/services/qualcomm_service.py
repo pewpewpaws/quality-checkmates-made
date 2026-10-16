@@ -143,7 +143,7 @@ TOOL_REWRITER = [{
     "type": "function",
     "function": {
         "name": "submit_rewritten_requirements",
-        "description": "Submit rewritten EARS requirements and smart suggested defaults for TBDs.",
+        "description": "Submit rewritten EARS requirements containing [TBD: ...] placeholders.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -153,12 +153,10 @@ TOOL_REWRITER = [{
                     "items": {
                         "type": "object",
                         "properties": {
-                            "id_suffix": {"type": "string"},
-                            "pattern": {"type": "string"},
-                            "statement": {"type": "string"},
+                            "statement": {"type": "string", "description": "EARS statement strictly containing [TBD: <parameter>] tokens for all thresholds"},
                             "rationale": {"type": "string"}
                         },
-                        "required": ["id_suffix", "pattern", "statement", "rationale"]
+                        "required": ["statement", "rationale"]
                     }
                 },
                 "identified_tbds": {
@@ -167,12 +165,11 @@ TOOL_REWRITER = [{
                         "type": "object",
                         "properties": {
                             "parameter_name": {"type": "string"},
-                            "placeholder": {"type": "string"},
                             "suggested_value": {"type": "string"},
                             "engineering_rationale": {"type": "string"},
                             "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]}
                         },
-                        "required": ["parameter_name", "placeholder", "suggested_value", "engineering_rationale", "confidence"]
+                        "required": ["parameter_name", "suggested_value", "engineering_rationale", "confidence"]
                     }
                 }
             },
@@ -291,10 +288,11 @@ class QualcommService:
             return {"status": "ok", "mode": "mock", "message": "Qualcomm AI 100 Mock Adapter Active"}
         try:
             res = await self.client.ping()
-            return {"status": "ok", "mode": "live", "message": res.get("message", "pong")}
+            msg = getattr(res, "message", "pong") if not isinstance(res, dict) else res.get("message", "pong")
+            return {"status": "ok", "mode": "live", "message": msg}
         except Exception as e:
-            logger.warning(f"Qualcomm API ping failed: {e}. Falling back to mock adapter.")
-            return {"status": "degraded", "mode": "fallback_mock", "error": str(e)}
+            logger.error(f"Qualcomm API ping failed: {e}")
+            raise RuntimeError(f"Qualcomm API ping failed: {e}") from e
 
     async def extract_xray_issues(self, req_text: str) -> List[IssueCard]:
         """Extract requirement defects using Llama-3.3-70B tool calling."""
@@ -340,8 +338,8 @@ class QualcommService:
                 ))
             return cards
         except Exception as e:
-            logger.warning(f"Live X-Ray extraction failed: {e}. Using fallback mock adapter.")
-            return self._mock_xray_issues(req_text)
+            logger.error(f"Live X-Ray extraction failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 X-Ray extraction error: {e}") from e
 
     async def stage_interpretation_duel(self, req_text: str) -> InterpretationDuel:
         """Formulate two competing technical interpretations using Llama-3.1-8B."""
@@ -389,8 +387,8 @@ class QualcommService:
                 )
             )
         except Exception as e:
-            logger.warning(f"Live Interpretation Duel failed: {e}. Using fallback mock adapter.")
-            return self._mock_interpretation_duel(req_text)
+            logger.error(f"Live Interpretation Duel failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Duel error: {e}") from e
 
     async def rewrite_with_smart_defaults(self, req_text: str) -> RewriteSuggestion:
         """Rewrite requirement preserving [TBD: ...] placeholders and suggesting defaults."""
@@ -398,13 +396,13 @@ class QualcommService:
             return self._mock_rewrite(req_text)
 
         system_prompt = (
-            "You are a Principal Systems Engineer rewriting requirements into strict EARS and ISO/IEC/IEEE 29148 standard.\n"
-            "CRITICAL ZERO-FABRICATION & SMART SUGGESTION DIRECTIVE:\n"
+            "You are a Principal Systems Engineer rewriting requirements into strict EARS and ISO/IEC/IEEE 29148 standard.\n\n"
+            "CRITICAL ZERO-FABRICATION MANDATE:\n"
             "1. NEVER invent or hardcode numerical values, time durations, or limits directly in the statement text.\n"
-            "2. Every unstated or subjective metric MUST be parameterized in the statement as: `[TBD: <parameter_name_and_unit>]`.\n"
-            "3. For EACH [TBD] parameter, propose a SMART SUGGESTED DEFAULT in `identified_tbds` citing industry standard rationale.\n"
-            "4. Decompose non-atomic statements into multiple requirements.\n"
-            "5. Always call submit_rewritten_requirements."
+            "2. You MUST replace every subjective or unstated threshold (such as 'quickly', 'critical temperature', 'power') in the statement with an explicit placeholder: `[TBD: <parameter_name_and_unit>]`.\n"
+            "3. Every statement MUST contain at least one `[TBD: ...]` token (e.g. 'When temperature exceeds [TBD: critical_temperature_degC], the module shall reduce power by [TBD: power_reduction_percent] within [TBD: response_time_ms].').\n"
+            "4. For each [TBD] token, propose a SMART SUGGESTED DEFAULT in identified_tbds.\n"
+            "Call submit_rewritten_requirements."
         )
 
         try:
@@ -445,8 +443,8 @@ class QualcommService:
                 identified_tbds=identified
             )
         except Exception as e:
-            logger.warning(f"Live Rewriter failed: {e}. Using fallback mock adapter.")
-            return self._mock_rewrite(req_text)
+            logger.error(f"Live Rewriter failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Rewriter error: {e}") from e
 
     async def generate_verification_blueprint(self, req_text: str) -> VerificationPlan:
         """Generate test cases and falsifiable acceptance criteria using Llama-3.3-70B."""
@@ -495,8 +493,8 @@ class QualcommService:
                 }
             )
         except Exception as e:
-            logger.warning(f"Live Verification Blueprint failed: {e}. Using fallback mock adapter.")
-            return self._mock_verification_blueprint(req_text)
+            logger.error(f"Live Verification Blueprint failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Blueprint error: {e}") from e
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate dense vector embeddings using BAAI/bge-large-en-v1.5."""
@@ -512,21 +510,20 @@ class QualcommService:
             return vectors
 
         try:
-            res = await self.client.embeddings(
-                model=settings.MODEL_EMBEDDING,
-                input=texts
-            )
-            return [item.embedding for item in res.data]
-        except Exception as e:
-            logger.warning(f"Live Embeddings failed: {e}. Using deterministic fallback.")
-            import numpy as np
-            vectors = []
+            results = []
             for t in texts:
-                np.random.seed(abs(hash(t)) % (2**32))
-                v = np.random.normal(0, 1, 1024)
-                v = v / np.linalg.norm(v)
-                vectors.append(v.tolist())
-            return vectors
+                res = await self.client.embeddings(
+                    text=t,
+                    model=settings.MODEL_EMBEDDING
+                )
+                emb = getattr(res, "first_embedding", None)
+                if not emb and getattr(res, "data", None):
+                    emb = res.data[0].embedding
+                results.append(emb)
+            return results
+        except Exception as e:
+            logger.error(f"Live Embeddings failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Embeddings error: {e}") from e
 
     async def generate_requirements_from_chat(
         self,
@@ -615,8 +612,8 @@ class QualcommService:
                 ))
             return agent_reply, req_statements, grounding
         except Exception as e:
-            logger.warning(f"Live Chat synthesis failed: {e}. Using fallback mock adapter.")
-            return self._mock_chat_requirements(pm_message, project_context, next_req_index)
+            logger.error(f"Live Chat synthesis failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Chat synthesis error: {e}") from e
 
     # --- Fallback Mock Generators (Stage Pitch Resilience) ---
 

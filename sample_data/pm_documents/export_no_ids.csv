@@ -1,0 +1,5 @@
+requirement,module,section
+The infotainment display shall render rear camera stream within 500ms of reverse gear engagement,Cockpit,Camera Section
+The audio controller should mute media playback upon incoming eCall notification,Audio,Safety Section
+The navigation engine must cache offline map tiles for frequently traveled routes,Navigation,Map Section
+The voice assistant shall process speech commands locally when cellular connectivity is unavailable,AI Engine,Speech Section

@@ -1,0 +1,10 @@
+# Feature Brief: Smart Charging Scheduler
+Author: Elena Rostova
+Target Release: v3.4
+
+Acceptance Criteria:
+- The mobile app shall display real-time state of charge when connected via Bluetooth Low Energy.
+- The charging controller should automatically throttle charging current if pack temperature exceeds 45 degrees Celsius.
+- The system must resume nominal charge rate within 60 seconds of temperature returning to safe limits.
+- The backend shall calculate estimated time to full charge and push notifications to the owner.
+- The vehicle should minimize grid load spikes during peak tariff hours where appropriate.

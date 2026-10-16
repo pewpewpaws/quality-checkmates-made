@@ -1,0 +1,9 @@
+# Product Feature Specification: Connected Fleet Telematics
+Author: Marcus Vance (Principal Product Manager)
+Date: October 2026
+Status: In Review
+Scope: Global Fleet Vehicles
+
+The in-vehicle telematics box shall capture CAN bus frames continuously during vehicle operation. It should forward critical fault alerts to the cloud within [TBD: alert_latency_ms]. All outgoing payload data must be encrypted with AES-256 before transmission.
+
+The telematics gateway shall buffer telemetry messages locally if LTE connection drops. Upon reconnection, the system should flush the telemetry queue without dropping high-priority crash telemetry. The gateway must also maintain safe thermal operation where feasible.

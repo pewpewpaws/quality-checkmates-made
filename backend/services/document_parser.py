@@ -5,30 +5,40 @@ from typing import List, Tuple
 from pypdf import PdfReader
 from backend.models.schemas import RequirementStatement, RequirementStatus
 
+MODAL_PATTERN = re.compile(
+    r'\b(shall|should|must|will|may|can|needs to|is required to|are required to)\b',
+    re.IGNORECASE
+)
+
+METADATA_PREFIXES = (
+    'author:', 'author', 'date:', 'date', 'version:', 'version', 'status:', 'status',
+    'target release:', 'target release', 'overview:', 'overview', 'scope:', 'scope',
+    'title:', 'title', 'document:', 'attendees:', 'reviewed by:'
+)
+
 
 class DocumentParser:
     """
-    Robust ingestion parser for requirement specifications.
-    Extracts atomic requirement statements from Raw Text, Numbered Lists, CSV, TXT, and PDF.
+    Enterprise-grade ingestion parser for requirement specifications.
+    Extracts atomic requirements from:
+    1. Explicit tags (REQ-001, SYS-REQ-02)
+    2. Markdown tables (| Component | Obligation |)
+    3. Numbered lists (1. The system shall...)
+    4. Bulleted lists (- The system must..., * The device should...)
+    5. Unnumbered narrative prose / paragraphs (split on sentence boundaries with modal verbs)
+    6. CSV and PDF files (with or without IDs)
     """
 
     @staticmethod
     def parse_text(text: str, default_category: str = "Functional") -> Tuple[List[RequirementStatement], str]:
-        """
-        Parses pasted text or plain string input.
-        Detects requirement patterns:
-        - Pattern 1: Explicit labels e.g. 'REQ-001: The system shall...'
-        - Pattern 2: Numbered lists e.g. '1. The system shall...' or '1) The system shall...'
-        - Pattern 3: Bullet points or line-by-line 'The system shall...'
-        - Fallback: Paragraph splitting
-        """
-        clean_text = text.strip()
+        # Normalize various Unicode and PDF bullet characters to standard markdown dash
+        clean_text = re.sub(r'[\x7f\u2022\u2023\u25e6\u2043\u2219\uf0b7]', '- ', text).strip()
         if not clean_text:
             return [], "empty"
 
         requirements: List[RequirementStatement] = []
 
-        # 1. Check for explicit REQ tags (e.g., REQ-01, REQ_001, REQ-MED-01, SYS-REQ-02)
+        # 1. Explicit REQ tags (e.g. REQ-01, REQ_001, REQ-MED-01, SYS-REQ-02)
         req_pattern = re.compile(
             r'(?:\[?((?:REQ|SYS|SPEC|SRS)[-_]?[A-Za-z0-9_-]*\d+)\]?[:\.\s]+)(.+?)(?=(?:\[?(?:REQ|SYS|SPEC|SRS)[-_]?[A-Za-z0-9_-]*\d+\]?[:\.\s]+)|\Z)',
             re.IGNORECASE | re.DOTALL
@@ -48,7 +58,39 @@ class DocumentParser:
                     )
             return requirements, "req_tags"
 
-        # 2. Check for numbered lists (e.g., "1. The system...", "1) The system...")
+        # 2. Markdown Tables (| Col 1 | Col 2 |)
+        table_lines = [l.strip() for l in clean_text.splitlines() if l.strip().startswith('|') and l.strip().endswith('|')]
+        if len(table_lines) >= 2:
+            header_cols = [c.strip().lower() for c in table_lines[0].split('|')[1:-1]]
+            start_row = 1
+            if len(table_lines) >= 3 and ('---' in table_lines[1] or '-|-' in table_lines[1]):
+                start_row = 2
+            req_col_idx = next(
+                (i for i, h in enumerate(header_cols) if any(k in h for k in ["requirement", "statement", "description", "obligation", "text"])),
+                1 if len(header_cols) > 1 else 0
+            )
+            cat_col_idx = next(
+                (i for i, h in enumerate(header_cols) if any(k in h for k in ["component", "module", "category", "subsystem"])),
+                None
+            )
+            for idx, line in enumerate(table_lines[start_row:], start=1):
+                cols = [c.strip() for c in line.split('|')[1:-1]]
+                if len(cols) > req_col_idx:
+                    statement_text = cols[req_col_idx]
+                    cat = cols[cat_col_idx] if (cat_col_idx is not None and len(cols) > cat_col_idx) else default_category
+                    if len(statement_text) > 10:
+                        requirements.append(
+                            RequirementStatement(
+                                id=f"REQ-{idx:03d}",
+                                text=statement_text,
+                                category=cat,
+                                status=RequirementStatus.DRAFT
+                            )
+                        )
+            if requirements:
+                return requirements, "markdown_table"
+
+        # 3. Numbered lists (e.g. "1. The system...", "1) The system...")
         numbered_pattern = re.compile(
             r'(?:^|\n)\s*(?:\d+[\.\)])\s*(.+?)(?=(?:\n\s*\d+[\.\)])|\Z)',
             re.DOTALL
@@ -68,10 +110,60 @@ class DocumentParser:
                     )
             return requirements, "numbered_list"
 
-        # 3. Check for lines containing modal verbs or bullet points
-        lines = [line.strip().lstrip("-*•> ") for line in clean_text.splitlines() if line.strip()]
-        valid_lines = [l for l in lines if len(l) > 15]
+        # 4. Bullet points (e.g. "- The system...", "* The device...", "• ...")
+        bullet_lines = []
+        for line in clean_text.splitlines():
+            sline = line.strip()
+            if sline.startswith(('-', '*', '•', '>')):
+                cleaned_line = sline.lstrip('-*•> ').strip()
+                if len(cleaned_line) > 15:
+                    bullet_lines.append(cleaned_line)
 
+        if len(bullet_lines) >= 2:
+            for idx, line in enumerate(bullet_lines, start=1):
+                requirements.append(
+                    RequirementStatement(
+                        id=f"REQ-{idx:03d}",
+                        text=line,
+                        category=default_category,
+                        status=RequirementStatus.DRAFT
+                    )
+                )
+            return requirements, "bulleted_list"
+
+        # 5. Narrative Prose Paragraphs (detect requirement sentences by modal verbs)
+        paragraphs = [p.strip() for p in clean_text.split('\n\n') if p.strip()]
+        narrative_reqs = []
+        for p in paragraphs:
+            # Skip titles, markdown headers, and metadata lines
+            if p.startswith('#') or p.lower().startswith(METADATA_PREFIXES):
+                continue
+            
+            # Split paragraph into sentences on period/exclamation followed by space and uppercase
+            sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', p.replace('\n', ' '))
+            for s in sentences:
+                clean_s = s.strip()
+                if MODAL_PATTERN.search(clean_s) and len(clean_s) > 15:
+                    narrative_reqs.append(clean_s)
+
+        if narrative_reqs:
+            for idx, stmt in enumerate(narrative_reqs, start=1):
+                requirements.append(
+                    RequirementStatement(
+                        id=f"REQ-{idx:03d}",
+                        text=stmt,
+                        category=default_category,
+                        status=RequirementStatus.DRAFT
+                    )
+                )
+            return requirements, "narrative_prose"
+
+        # 6. Fallback: line-delimited valid lines
+        lines = [line.strip().lstrip("-*•> ") for line in clean_text.splitlines() if line.strip()]
+        valid_lines = [
+            l for l in lines 
+            if len(l) > 15 and not l.startswith('#') and not l.lower().startswith(METADATA_PREFIXES)
+        ]
         if valid_lines:
             for idx, line in enumerate(valid_lines, start=1):
                 requirements.append(
@@ -84,7 +176,7 @@ class DocumentParser:
                 )
             return requirements, "line_delimited"
 
-        # Fallback: single requirement
+        # Final Fallback: single requirement block
         requirements.append(
             RequirementStatement(
                 id="REQ-001",
@@ -99,29 +191,27 @@ class DocumentParser:
     def parse_csv(content_bytes: bytes, default_category: str = "Functional") -> List[RequirementStatement]:
         """
         Parses CSV data containing requirement records.
-        Dynamically detects ID, text, category, and section columns.
+        Supports CSVs with or without ID columns.
         """
         text_stream = io.StringIO(content_bytes.decode("utf-8", errors="replace"))
         reader = csv.DictReader(text_stream)
 
-        # Normalize column names for flexible matching
         if not reader.fieldnames:
             return []
 
         field_map = {name.lower().strip(): name for name in reader.fieldnames}
-        id_col = next((field_map[k] for k in ["id", "req_id", "req id", "key", "identifier"] if k in field_map), None)
-        text_col = next((field_map[k] for k in ["text", "requirement", "description", "statement", "summary", "req_text"] if k in field_map), None)
-        cat_col = next((field_map[k] for k in ["category", "type", "module", "component"] if k in field_map), None)
-        sec_col = next((field_map[k] for k in ["section", "source", "document", "chapter"] if k in field_map), None)
+        id_col = next((field_map[k] for k in ["id", "req_id", "req id", "key", "identifier", "issue key"] if k in field_map), None)
+        text_col = next((field_map[k] for k in ["text", "requirement", "description", "statement", "summary", "req_text", "obligation"] if k in field_map), None)
+        cat_col = next((field_map[k] for k in ["category", "type", "module", "component", "subsystem"] if k in field_map), None)
+        sec_col = next((field_map[k] for k in ["section", "source", "document", "chapter", "epic"] if k in field_map), None)
 
         requirements: List[RequirementStatement] = []
         for idx, row in enumerate(reader, start=1):
             req_text = (row.get(text_col) or "").strip() if text_col else ""
             if not req_text:
-                # If no explicit text column matched, concatenate row values
                 req_text = " ".join([v for v in row.values() if v and len(v) > 10]).strip()
 
-            if not req_text:
+            if not req_text or len(req_text) < 10:
                 continue
 
             req_id = (row.get(id_col) or "").strip() if id_col else f"REQ-{idx:03d}"
@@ -144,6 +234,7 @@ class DocumentParser:
     def parse_pdf(content_bytes: bytes, default_category: str = "Functional") -> Tuple[List[RequirementStatement], str]:
         """
         Extracts textual content from a PDF document and parses requirement statements.
+        Handles both numbered and unnumbered PDF documents.
         """
         stream = io.BytesIO(content_bytes)
         reader = PdfReader(stream)

@@ -1,0 +1,14 @@
+# Product Requirement Document (PRD): Next-Gen EV Battery Management System (BMS)
+Author: Sarah Jenkins (Lead Product Manager, Powertrain)
+Target Release: Q3 2027
+Status: Draft Review
+
+1. Overview
+The BMS oversees high-voltage pack safety, thermal balancing, and vehicle telemetry.
+
+2. Functional Requirements
+1. The BMS shall monitor all individual cell voltages every 50ms and report anomalies immediately.
+2. The thermal management system should quickly cool the pack when temperature exceeds normal limits.
+3. The battery contactors shall disconnect high voltage within [TBD: disconnect_time_ms] upon crash detection.
+4. The system shall periodically upload battery state-of-health telemetry to the cloud where feasible.
+5. The BMS shall calculate remaining state-of-charge with high accuracy and update the digital instrument cluster.

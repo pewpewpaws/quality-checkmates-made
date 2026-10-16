@@ -1,0 +1,6 @@
+req_id,requirement,category,section
+REQ-IOT-101,The edge gateway shall buffer telemetry messages locally if cloud connection drops,IoT Edge,Section 3.1
+REQ-IOT-102,The system should transmit sensor readings quickly to avoid cloud queue congestion,IoT Ingestion,Section 3.2
+REQ-IOT-103,The device shall compress payload packets using zstandard where feasible,Networking,Section 4.1
+REQ-IOT-104,The gateway shall reboot into recovery mode if watchdog fails to kick within 10 seconds,Firmware,Section 5.0
+REQ-IOT-105,The gateway must support user-friendly remote diagnosis and zero-trust mutual TLS,Security,Section 6.2

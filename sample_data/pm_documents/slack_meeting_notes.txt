@@ -1,0 +1,9 @@
+# PM Sync Notes: Advanced Driver Assistance System (ADAS)
+Date: October 16, 2026
+Attendees: PM, Systems Architect, Safety Engineer
+
+Action items and agreed requirements:
+- The forward camera system shall detect pedestrians within 80 meters under clear daylight.
+- The radar sensor should minimize false positive emergency braking interventions.
+- The steering actuator shall deliver haptic lane-drift warning within 150ms of lane crossing.
+- The system must periodically calibrate extrinsic sensor alignment when the car travels straight.

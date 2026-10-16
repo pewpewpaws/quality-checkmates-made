@@ -28,13 +28,13 @@ class DocumentParser:
 
         requirements: List[RequirementStatement] = []
 
-        # 1. Check for explicit REQ tags (e.g., REQ-01, REQ_001, [REQ-1])
+        # 1. Check for explicit REQ tags (e.g., REQ-01, REQ_001, REQ-MED-01, SYS-REQ-02)
         req_pattern = re.compile(
-            r'(?:\[?(REQ[-_]?\d+)\]?[:\.\s]+)(.+?)(?=(?:\[?REQ[-_]?\d+\]?[:\.\s]+)|\Z)',
+            r'(?:\[?((?:REQ|SYS|SPEC|SRS)[-_]?[A-Za-z0-9_-]*\d+)\]?[:\.\s]+)(.+?)(?=(?:\[?(?:REQ|SYS|SPEC|SRS)[-_]?[A-Za-z0-9_-]*\d+\]?[:\.\s]+)|\Z)',
             re.IGNORECASE | re.DOTALL
         )
         matches = req_pattern.findall(clean_text)
-        if matches and len(matches) > 1:
+        if matches and len(matches) >= 1:
             for tag, body in matches:
                 req_text = body.strip().replace("\n", " ")
                 if req_text:

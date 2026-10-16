@@ -107,23 +107,41 @@ TOOL_COMMUNITY_LABELING = [{
 
 
 def parse_tool_call_args(msg: Any) -> Dict[str, Any]:
-    """Extract tool arguments or embedded JSON from Imagine API response."""
+    """Extract tool arguments or embedded JSON from Imagine API response, unpacking stringified arrays."""
+    data = {}
     if getattr(msg, "tool_calls", None) and len(msg.tool_calls) > 0:
         tc = msg.tool_calls[0]
         raw = tc.function.arguments if hasattr(tc, "function") else str(tc)
         try:
-            return json.loads(raw)
+            data = json.loads(raw) if isinstance(raw, str) else raw
         except Exception:
-            pass
-    content = getattr(msg, "content", "") or ""
-    if "{" in content:
-        start = content.find("{")
-        end = content.rfind("}")
+            data = {}
+    elif getattr(msg, "content", None):
+        content = msg.content
+        if "{" in content:
+            start = content.find("{")
+            end = content.rfind("}")
+            try:
+                data = json.loads(content[start:end+1])
+            except Exception:
+                data = {}
+
+    if isinstance(data, str):
         try:
-            return json.loads(content[start:end+1])
+            data = json.loads(data)
         except Exception:
-            pass
-    return {}
+            return {}
+
+    if isinstance(data, dict):
+        if "parameters" in data and isinstance(data["parameters"], dict):
+            data = data["parameters"]
+        for k, v in list(data.items()):
+            if isinstance(v, str) and (v.strip().startswith("[") or v.strip().startswith("{")):
+                try:
+                    data[k] = json.loads(v)
+                except Exception:
+                    pass
+    return data if isinstance(data, dict) else {}
 
 
 def normalize_id(stem: str, entity: str) -> str:

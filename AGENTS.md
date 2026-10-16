@@ -101,6 +101,7 @@ Keep documentation synchronized in these specific locations:
 | **Rubric Scoring & Math** | [`docs/project/architecture.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/project/architecture.md) |
 | **Feature Priorities & Milestones** | [`docs/PROJECT_DOCUMENTATION.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/PROJECT_DOCUMENTATION.md) & [`AGENTS.md`](file:///home/anair/Desktop/Coding/Oi-Thon/AGENTS.md) |
 | **Model Configs / Benchmarks** | [`docs/models/benchmark_results.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/models/benchmark_results.md) |
+| **Empirical Research & Phase Findings** | [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md) & [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md) |
 | **Pitch Strategy, Differentiators & Ideas** | [`HACKATHON.md`](file:///home/anair/Desktop/Coding/Oi-Thon/HACKATHON.md) |
 
 ---
@@ -147,8 +148,10 @@ Keep documentation synchronized in these specific locations:
   - Automatic fallback / mock adapter for offline demos
 - [x] Implemented Document Parser (pasted text, numbered lists, REQ tags, CSV, TXT, PDF).
 - [x] Created Dual-Key Governance state store & REST routes.
-- [x] Verified complete backend test suite (12/12 passing).
+- [x] Verified complete backend test suite (26/26 passing across all endpoints, parsers, and governance schemas).
+- [x] Integrated Conversational Requirement Copilot grounded in uploaded Project Context with 100.0% AITL validation.
 - [x] Updated `docs/api/endpoints.md` with new backend REST endpoints.
+- [x] Documented complete architecture & benchmarks in [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md).
 
 ---
 

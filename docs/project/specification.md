@@ -1,6 +1,6 @@
 # PSE-01 Feature Specification & Priorities
 
-Feature specifications extracted from `Requirement_Quality_Copilot_Feature_Guide.pdf`.
+Feature specifications extracted from [`docs/reference/Requirement_Quality_Copilot_Feature_Guide.pdf`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/reference/Requirement_Quality_Copilot_Feature_Guide.pdf).
 
 ---
 

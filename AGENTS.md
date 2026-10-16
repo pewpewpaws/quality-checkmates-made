@@ -56,7 +56,7 @@
 
 * **Package & Environment Manager**: `/home/anair/.local/bin/uv`
 * **Python Version**: CPython 3.11+ in `.venv`
-* **Qualcomm SDK**: `imagine-sdk` (v0.4.2) installed locally via `uv pip install ./imagine_sdk-0.4.2-py3-none-any.whl`
+* **Qualcomm SDK**: `imagine-sdk` (v0.4.2) installed locally via `uv pip install ./libs/imagine_sdk-0.4.2-py3-none-any.whl`
 * **Backend**: FastAPI with async handlers (`ImagineAsyncClient` with `timeout=60.0`)
 * **Data Schemas**: Pydantic v2 models
 
@@ -109,10 +109,10 @@ Keep documentation synchronized in these specific locations:
 ## 5. Living Implementation Tracker
 
 ### ✅ Phase 0: Discovery & Setup (COMPLETED)
-- [x] Analyzed problem statement (`Requirement_Quality_Copilot_Feature_Guide.pdf`).
+- [x] Analyzed problem statement (`docs/reference/Requirement_Quality_Copilot_Feature_Guide.pdf`).
 - [x] Tested Qualcomm Imagine API & Imagine SDK connectivity with live API key.
 - [x] Benchmarked all active models on Qualcomm AI100 cluster.
-- [x] Setup `.venv` using `uv` and installed `imagine_sdk-0.4.2-py3-none-any.whl`.
+- [x] Setup `.venv` using `uv` and installed `libs/imagine_sdk-0.4.2-py3-none-any.whl`.
 - [x] Built modular Markdown documentation in `docs/` (`api/`, `sdk/`, `models/`, `project/`, `scripts/`).
 
 ---

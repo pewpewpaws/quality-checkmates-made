@@ -8,7 +8,7 @@ The Qualcomm Imagine SDK includes built-in LangChain wrapper classes for chat mo
 
 Install the SDK with the LangChain extra:
 ```bash
-uv pip install "./imagine_sdk-0.4.2-py3-none-any.whl[langchain]"
+uv pip install "./libs/imagine_sdk-0.4.2-py3-none-any.whl[langchain]"
 ```
 
 ---

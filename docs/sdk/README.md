@@ -17,16 +17,16 @@ uv venv
 source .venv/bin/activate
 
 # 3. Install wheel
-uv pip install ./imagine_sdk-0.4.2-py3-none-any.whl
+uv pip install ./libs/imagine_sdk-0.4.2-py3-none-any.whl
 ```
 
 ### Optional Extras:
 ```bash
 # With LangChain support:
-uv pip install "./imagine_sdk-0.4.2-py3-none-any.whl[langchain]"
+uv pip install "./libs/imagine_sdk-0.4.2-py3-none-any.whl[langchain]"
 
 # With CrewAI support:
-uv pip install "./imagine_sdk-0.4.2-py3-none-any.whl[crewai]"
+uv pip install "./libs/imagine_sdk-0.4.2-py3-none-any.whl[crewai]"
 ```
 
 ---

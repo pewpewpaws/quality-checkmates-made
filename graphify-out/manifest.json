@@ -282,10 +282,10 @@
     "semantic_hash": "a7dbd8ed0d2932548b5c278b003937fc"
   },
   "sample_data/pm_documents/prd_ev_battery_system.txt": {
-    "mtime": 1792160955.5908728,
-    "seen": 1792179091.5241494,
-    "ast_hash": "45decc7d567c05396f4a834fcb63d4de",
-    "semantic_hash": "45decc7d567c05396f4a834fcb63d4de"
+    "mtime": 1792184574.104358,
+    "seen": 1792184694.91111,
+    "ast_hash": "e4c5cdbe22949f7881fcaee56fefdec5",
+    "semantic_hash": ""
   },
   "sample_data/pm_documents/requirements_matrix.md": {
     "mtime": 1792161177.9941833,
@@ -375,6 +375,18 @@
     "mtime": 1792184386.8053584,
     "seen": 1792184394.565731,
     "ast_hash": "a44584fb613b03dec1018018a0630a0e",
+    "semantic_hash": ""
+  },
+  "scripts/test_sample_file_audit.py": {
+    "mtime": 1792184609.3725119,
+    "seen": 1792184694.9110794,
+    "ast_hash": "2cafe7f83ee1c20e7c94016ce86422dd",
+    "semantic_hash": ""
+  },
+  "sample_data/pm_documents/quality_stress_sample.txt": {
+    "mtime": 1792184586.015406,
+    "seen": 1792184694.9111109,
+    "ast_hash": "3db9cee4d6ec5bbbf2c67c986a097d18",
     "semantic_hash": ""
   }
 }

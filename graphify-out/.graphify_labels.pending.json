@@ -14,7 +14,7 @@
   "21": "get_project",
   "22": "RequirementStatus",
   "23": "delete_project",
-  "24": ".find_duplicates",
+  "24": "qualcomm_service.py",
   "25": "get_project_context",
-  "26": "clean_test_workspaces"
+  "26": "test_context_and_duplicates.py"
 }

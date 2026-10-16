@@ -12,3 +12,8 @@ The BMS oversees high-voltage pack safety, thermal balancing, and vehicle teleme
 3. The battery contactors shall disconnect high voltage within [TBD: disconnect_time_ms] upon crash detection.
 4. The system shall periodically upload battery state-of-health telemetry to the cloud where feasible.
 5. The BMS shall calculate remaining state-of-charge with high accuracy and update the digital instrument cluster.
+6. The BMS shall monitor all individual cell voltages every 50ms and report anomalies immediately.
+7. The accumulator management subsystem shall measure each series cell potential at 50ms periodic intervals and report out-of-range readings to the main ECU.
+8. Upon impact or crash detection, the battery contactors shall remain energized and closed to supply continuous auxiliary steering and hazard lighting.
+9. The system shall maintain complete offline isolation and transmit zero cloud telemetry under any circumstances during vehicle operation.
+10. The cabin ambient footwell LED lighting shall illuminate in amber whenever any passenger door is opened.

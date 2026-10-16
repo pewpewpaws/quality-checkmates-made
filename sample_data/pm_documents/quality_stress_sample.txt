@@ -1,0 +1,21 @@
+# Autonomous Flight Control & Avionics Specification (DO-178C Level A)
+Document ID: SPEC-UAV-2027-V2
+Classification: Project Engineering Charter
+
+## Section 1: Navigation & Lost-Link Management
+[REQ-NAV-001] Upon loss of primary C2 datalink for greater than 3.0 seconds, the flight management system shall initiate automated return-to-launch (RTL) navigation.
+[REQ-NAV-002] The GPS navigation receiver shall maintain positional fix accuracy within [TBD: gps_accuracy_horizontal_m] during active waypoint guidance.
+[REQ-NAV-003] Upon loss of primary C2 datalink for greater than 3.0 seconds, the flight management system shall initiate automated return-to-launch (RTL) navigation.
+[REQ-NAV-004] If ground station telemetry uplink drops for more than 3000ms, the autopilot computer shall execute an autonomous return-to-base flight trajectory.
+[REQ-NAV-005] If primary command and control link is interrupted for more than 3 seconds, the aircraft shall maintain current heading and altitude to attempt link re-acquisition.
+
+## Section 2: Power & Electrical Distribution
+[REQ-PWR-001] In the event of primary generator failure, the auxiliary battery shall power critical flight avionics for at least [TBD: backup_battery_endurance_min].
+[REQ-PWR-002] If bus voltage drops below 22.0V, the electrical power system shall immediately shed non-essential payload heaters and cabin lighting.
+[REQ-PWR-003] If bus voltage drops below 22.0V, the power distribution unit shall maintain full continuous power to payload heaters and cabin lighting to prevent instrument freezing.
+
+## Section 3: Telemetry & Payload
+[REQ-TEL-001] The telemetry transponder shall broadcast vehicle GPS coordinates, altitude, and airspeed to the ground station every 250ms.
+[REQ-TEL-002] The telemetry subsystem shall transmit aircraft state vectors including latitude, longitude, barometric altitude, and indicated airspeed across radio datalink at 250ms periodic intervals.
+[REQ-TEL-003] The aircraft shall operate in stealth radio silence with all RF transmitters powered off during active mission legs.
+[REQ-ENV-001] The cabin air circulation fan shall maintain interior electronics bay ventilation at 15 CFM.

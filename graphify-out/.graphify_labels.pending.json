@@ -1,10 +1,20 @@
 {
+  "0": "routes_requirements.py",
   "3": "main.py",
-  "11": "storage.py",
+  "11": "test_chat_copilot.py",
   "12": "test_live_duplicates_conflicts.py",
   "13": "test_rbac_and_workspaces.py",
-  "14": "qualcomm_service.py",
+  "14": "storage.py",
   "15": "test_api.py",
-  "16": "test_context_and_duplicates.py",
-  "17": "1. Feature Priority Breakdown"
+  "16": "UserRole",
+  "17": "1. Feature Priority Breakdown",
+  "18": "2. Multi-Domain Scenario Breakdown",
+  "19": "chat_synthesize_requirements",
+  "20": "dual_key_sign_off",
+  "21": "get_project",
+  "22": "RequirementStatus",
+  "23": "delete_project",
+  "24": ".find_duplicates",
+  "25": "get_project_context",
+  "26": "clean_test_workspaces"
 }

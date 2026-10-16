@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # Operational configuration
     MOCK_MODE: bool = False
-    TIMEOUT_SECONDS: float = 60.0
+    TIMEOUT_SECONDS: float = 120.0
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     

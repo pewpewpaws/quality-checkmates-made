@@ -1,0 +1,67 @@
+[
+  {
+    "scenario": "Scenario 1: Automotive EV Powertrain & BMS (ISO 26262 ASIL-D)",
+    "exact_pass": true,
+    "semantic_score": 0.7904,
+    "control_score": 0.0,
+    "semantic_pass": true,
+    "conflict_pass": true,
+    "conflict_type": "Direct Contradiction",
+    "severity": "BLOCKER",
+    "reconciliation": "Reconcile the conflict by revising one of the requirements to ensure consistent behavior.",
+    "emb_time_s": 3.86,
+    "conflict_time_s": 68.38
+  },
+  {
+    "scenario": "Scenario 2: Medical Infusion Pump & Fluidics (IEC 62304 / ISO 14971)",
+    "exact_pass": true,
+    "semantic_score": 0.829,
+    "control_score": 0.0,
+    "semantic_pass": true,
+    "conflict_pass": true,
+    "conflict_type": "Direct Contradiction",
+    "severity": "BLOCKER",
+    "reconciliation": "Reconcile the conflict by revising one of the requirements to ensure consistent behavior in response to downstream fluid line occlusion.",
+    "emb_time_s": 3.95,
+    "conflict_time_s": 13.1
+  },
+  {
+    "scenario": "Scenario 3: Aerospace Autonomous UAV Flight Controller (DO-178C / DO-254)",
+    "exact_pass": true,
+    "semantic_score": 0.7568,
+    "control_score": 0.0,
+    "semantic_pass": true,
+    "conflict_pass": true,
+    "conflict_type": "Direct Contradiction",
+    "severity": "BLOCKER",
+    "reconciliation": "Reconcile the two requirements by choosing one course of action or defining conditions under which each action is taken.",
+    "emb_time_s": 4.18,
+    "conflict_time_s": 19.87
+  },
+  {
+    "scenario": "Scenario 4: Industrial IoT Edge Gateway (IEC 62443 / ISA-95)",
+    "exact_pass": true,
+    "semantic_score": 0.7933,
+    "control_score": 0.0,
+    "semantic_pass": true,
+    "conflict_pass": true,
+    "conflict_type": "Operational Incompatibility",
+    "severity": "BLOCKER",
+    "reconciliation": "Reconcile the conflict by either removing the zero-trust air-gapped isolation requirement or modifying the target requirement to use a different communication method.",
+    "emb_time_s": 3.96,
+    "conflict_time_s": 15.16
+  },
+  {
+    "scenario": "Scenario 5: Automotive ADAS & Autonomous Braking (ISO 22839 / EARS)",
+    "exact_pass": true,
+    "semantic_score": 0.0,
+    "control_score": 0.0,
+    "semantic_pass": false,
+    "conflict_pass": true,
+    "conflict_type": "Direct Contradiction",
+    "severity": "BLOCKER",
+    "reconciliation": "Reconcile the two requirements by determining the correct deceleration value or adding conditions to differentiate when each should be applied.",
+    "emb_time_s": 4.17,
+    "conflict_time_s": 72.4
+  }
+]

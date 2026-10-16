@@ -686,42 +686,48 @@ class QualcommService:
             f"Perform deep logical consistency analysis and submit any detected conflicts."
         )
 
-        try:
-            messages = [
-                ChatMessage(role="system", content=system_prompt),
-                ChatMessage(role="user", content=user_content)
-            ]
-            response = await self.client.chat(
-                messages=messages,
-                model=settings.MODEL_REASONING,
-                tools=TOOL_CONFLICT_RADAR,
-                temperature=0.0
-            )
-
-            data = extract_chat_data(response)
-            raw_conflicts = data.get("conflicts", [])
-            conflicts: List[RequirementConflictCard] = []
-            for item in raw_conflicts:
-                conflicts.append(
-                    RequirementConflictCard(
-                        req_id_a=item.get("req_id_a", target_req.id),
-                        req_id_b=item.get("req_id_b", "UNKNOWN"),
-                        conflict_type=item.get("conflict_type", "Direct Contradiction"),
-                        severity=item.get("severity", "BLOCKER"),
-                        conflicting_quote_a=item.get("conflicting_quote_a", target_req.text),
-                        conflicting_quote_b=item.get("conflicting_quote_b", ""),
-                        explanation=item.get("explanation", "Opposing requirements detected."),
-                        reconciliation_suggestion=item.get("reconciliation_suggestion", "Disambiguate operating modes.")
-                    )
+        for attempt in range(2):
+            try:
+                messages = [
+                    ChatMessage(role="system", content=system_prompt),
+                    ChatMessage(role="user", content=user_content)
+                ]
+                response = await self.client.chat(
+                    messages=messages,
+                    model=settings.MODEL_REASONING,
+                    tools=TOOL_CONFLICT_RADAR,
+                    temperature=0.0
                 )
 
-            return ConflictRadarResponse(
-                total_conflicts_found=len(conflicts),
-                conflicts=conflicts
-            )
-        except Exception as e:
-            logger.error(f"Live Conflict Radar failed: {e}")
-            raise RuntimeError(f"Qualcomm AI100 Conflict Radar error: {e}") from e
+                data = extract_chat_data(response)
+                raw_conflicts = data.get("conflicts", [])
+                conflicts: List[RequirementConflictCard] = []
+                for item in raw_conflicts:
+                    conflicts.append(
+                        RequirementConflictCard(
+                            req_id_a=item.get("req_id_a", target_req.id),
+                            req_id_b=item.get("req_id_b", "UNKNOWN"),
+                            conflict_type=item.get("conflict_type", "Direct Contradiction"),
+                            severity=item.get("severity", "BLOCKER"),
+                            conflicting_quote_a=item.get("conflicting_quote_a", target_req.text),
+                            conflicting_quote_b=item.get("conflicting_quote_b", ""),
+                            explanation=item.get("explanation", "Opposing requirements detected."),
+                            reconciliation_suggestion=item.get("reconciliation_suggestion", "Disambiguate operating modes.")
+                        )
+                    )
+
+                return ConflictRadarResponse(
+                    total_conflicts_found=len(conflicts),
+                    conflicts=conflicts
+                )
+            except Exception as e:
+                if attempt == 0:
+                    logger.warning(f"Conflict Radar attempt 1 failed ({e}), retrying in 2s...")
+                    await asyncio.sleep(2)
+                    continue
+                logger.error(f"Live Conflict Radar failed after retry: {e}")
+                raise RuntimeError(f"Qualcomm AI100 Conflict Radar error: {e}") from e
+
 
     async def detect_project_conflicts(
         self,

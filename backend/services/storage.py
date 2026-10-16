@@ -1,4 +1,7 @@
 import uuid
+import json
+import sqlite3
+from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
 from backend.models.schemas import (
@@ -12,20 +15,79 @@ from backend.models.schemas import (
     UserRole
 )
 
+DEFAULT_DB_PATH = Path(__file__).parent.parent / "data" / "quality_copilot.db"
+
 
 class RequirementStore:
     """
-    High-performance in-memory requirement baseline store with Multi-Project isolation,
-    Dual-Key state governance, and Hierarchical Executive RBAC filters.
+    High-performance in-memory requirement baseline store with SQLite write-through persistence,
+    Multi-Project isolation, Dual-Key state governance, and Hierarchical Executive RBAC filters.
+    
+    Reads hit the in-memory cache for 0ms instantaneous response.
+    Writes persist transactionally to local SQLite for offline stage durability.
     """
 
-    def __init__(self):
-        # Multi-Project Store Namespaces:
-        # _projects maps project_id -> ProjectWorkspace
+    def __init__(self, db_path: Optional[str | Path] = None):
+        self.db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
         self._projects: Dict[str, ProjectWorkspace] = {}
-        # _requirements maps project_id -> Dict[req_id, RequirementStatement]
         self._requirements: Dict[str, Dict[str, RequirementStatement]] = {}
-        self._init_default_project()
+        
+        self._init_db()
+        self._load_from_db()
+
+    def _get_connection(self) -> sqlite3.Connection:
+        if str(self.db_path) != ":memory:":
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def _init_db(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS projects (
+                    project_id TEXT PRIMARY KEY,
+                    data TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS requirements (
+                    id TEXT NOT NULL,
+                    project_id TEXT NOT NULL,
+                    data TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    PRIMARY KEY (id, project_id)
+                );
+            """)
+            conn.commit()
+
+    def _load_from_db(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            # 1. Load Projects
+            cursor.execute("SELECT project_id, data FROM projects")
+            rows = cursor.fetchall()
+            for row in rows:
+                ws = ProjectWorkspace.model_validate_json(row["data"])
+                self._projects[ws.project_id] = ws
+                if ws.project_id not in self._requirements:
+                    self._requirements[ws.project_id] = {}
+
+            # 2. Load Requirements
+            cursor.execute("SELECT id, project_id, data FROM requirements")
+            req_rows = cursor.fetchall()
+            for row in req_rows:
+                req = RequirementStatement.model_validate_json(row["data"])
+                target_pid = req.project_id or "default_project"
+                if target_pid not in self._requirements:
+                    self._requirements[target_pid] = {}
+                self._requirements[target_pid][req.id] = req
+
+        # If database is fresh and has no projects, initialize default baseline
+        if "default_project" not in self._projects:
+            self._init_default_project()
 
     def _init_default_project(self):
         default_workspace = ProjectWorkspace(
@@ -54,6 +116,70 @@ class RequirementStore:
         self._projects[default_workspace.project_id] = default_workspace
         if default_workspace.project_id not in self._requirements:
             self._requirements[default_workspace.project_id] = {}
+        self._persist_project_db(default_workspace)
+
+    # ==========================================
+    # Database Persistence Helpers (Write-Through)
+    # ==========================================
+
+    def _persist_project_db(self, ws: ProjectWorkspace):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR REPLACE INTO projects (project_id, data, updated_at) VALUES (?, ?, ?)",
+                (ws.project_id, ws.model_dump_json(), ws.updated_at.isoformat())
+            )
+            conn.commit()
+
+    def _delete_project_db(self, project_id: str):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM projects WHERE project_id = ?", (project_id,))
+            cursor.execute("DELETE FROM requirements WHERE project_id = ?", (project_id,))
+            conn.commit()
+
+    def _persist_requirement_db(self, item: RequirementStatement):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT OR REPLACE INTO requirements (id, project_id, data, updated_at) VALUES (?, ?, ?, ?)",
+                (item.id, item.project_id, item.model_dump_json(), item.updated_at.isoformat())
+            )
+            conn.commit()
+
+    def _persist_requirements_bulk_db(self, items: List[RequirementStatement]):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            records = [
+                (item.id, item.project_id, item.model_dump_json(), item.updated_at.isoformat())
+                for item in items
+            ]
+            cursor.executemany(
+                "INSERT OR REPLACE INTO requirements (id, project_id, data, updated_at) VALUES (?, ?, ?, ?)",
+                records
+            )
+            conn.commit()
+
+    def _delete_requirement_db(self, req_id: str, project_id: Optional[str] = None):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            if project_id:
+                cursor.execute(
+                    "DELETE FROM requirements WHERE id = ? AND project_id = ?",
+                    (req_id, project_id)
+                )
+            else:
+                cursor.execute("DELETE FROM requirements WHERE id = ?", (req_id,))
+            conn.commit()
+
+    def _clear_requirements_db(self, project_id: Optional[str] = None):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            if project_id:
+                cursor.execute("DELETE FROM requirements WHERE project_id = ?", (project_id,))
+            else:
+                cursor.execute("DELETE FROM requirements")
+            conn.commit()
 
     # ==========================================
     # Project Workspaces CRUD & Boundary Locking
@@ -79,6 +205,7 @@ class RequirementStore:
         )
         self._projects[project_id] = workspace
         self._requirements[project_id] = {}
+        self._persist_project_db(workspace)
         return workspace
 
     def list_projects(self) -> List[ProjectSummary]:
@@ -131,6 +258,7 @@ class RequirementStore:
             ws.description = description
         
         ws.updated_at = datetime.utcnow()
+        self._persist_project_db(ws)
         return ws
 
     def delete_project(self, project_id: str) -> bool:
@@ -138,6 +266,7 @@ class RequirementStore:
             del self._projects[project_id]
             if project_id in self._requirements:
                 del self._requirements[project_id]
+            self._delete_project_db(project_id)
             return True
         return False
 
@@ -155,6 +284,7 @@ class RequirementStore:
         ws.locked_at = datetime.utcnow() if is_locked else None
         ws.locked_by = locked_by if is_locked else None
         ws.updated_at = datetime.utcnow()
+        self._persist_project_db(ws)
         return ws
 
     # ==========================================
@@ -175,6 +305,7 @@ class RequirementStore:
         
         ws.documents.append(doc)
         ws.updated_at = datetime.utcnow()
+        self._persist_project_db(ws)
         return ws
 
     def get_documents(self, project_id: str) -> List[ProjectDocumentContext]:
@@ -206,6 +337,7 @@ class RequirementStore:
                 d.version += 1
                 d.uploaded_at = datetime.utcnow()
                 ws.updated_at = datetime.utcnow()
+                self._persist_project_db(ws)
                 return d
         return None
 
@@ -220,6 +352,7 @@ class RequirementStore:
         ws.documents = [d for d in ws.documents if d.id != doc_id and d.title != doc_id]
         if len(ws.documents) < initial_len:
             ws.updated_at = datetime.utcnow()
+            self._persist_project_db(ws)
             return True
         return False
 
@@ -260,6 +393,7 @@ class RequirementStore:
             self._projects[context.project_id] = ws
             if context.project_id not in self._requirements:
                 self._requirements[context.project_id] = {}
+        self._persist_project_db(ws)
         return context
 
     def add_document_to_context(self, project_id: str, doc: ProjectDocumentContext) -> ProjectContext:
@@ -332,16 +466,19 @@ class RequirementStore:
             self._requirements[target_project] = {}
         if target_project not in self._projects:
             # Auto-register workspace container
-            self._projects[target_project] = ProjectWorkspace(
+            ws = ProjectWorkspace(
                 project_id=target_project,
                 project_name=f"Project {target_project}",
                 domain="Embedded Systems",
                 description="Auto-created workspace namespace"
             )
+            self._projects[target_project] = ws
+            self._persist_project_db(ws)
         
         item.project_id = target_project
         item.updated_at = datetime.utcnow()
         self._requirements[target_project][item.id] = item
+        self._persist_requirement_db(item)
         return item
 
     def bulk_add(
@@ -349,29 +486,50 @@ class RequirementStore:
         items: List[RequirementStatement],
         project_id: Optional[str] = None
     ) -> List[RequirementStatement]:
+        target_project = project_id or "default_project"
         for item in items:
-            self.upsert(item, project_id=project_id)
+            item.project_id = target_project
+            item.updated_at = datetime.utcnow()
+            if target_project not in self._requirements:
+                self._requirements[target_project] = {}
+            self._requirements[target_project][item.id] = item
+        
+        if target_project not in self._projects:
+            ws = ProjectWorkspace(
+                project_id=target_project,
+                project_name=f"Project {target_project}",
+                domain="Embedded Systems",
+                description="Auto-created workspace namespace"
+            )
+            self._projects[target_project] = ws
+            self._persist_project_db(ws)
+
+        self._persist_requirements_bulk_db(items)
         return items
 
     def delete(self, req_id: str, project_id: Optional[str] = None) -> bool:
         if project_id and project_id in self._requirements:
             if req_id in self._requirements[project_id]:
                 del self._requirements[project_id][req_id]
+                self._delete_requirement_db(req_id, project_id)
                 return True
             return False
         
-        for req_dict in self._requirements.values():
+        for pid, req_dict in self._requirements.items():
             if req_id in req_dict:
                 del req_dict[req_id]
+                self._delete_requirement_db(req_id, pid)
                 return True
         return False
 
     def clear(self, project_id: Optional[str] = None):
         if project_id and project_id in self._requirements:
             self._requirements[project_id].clear()
+            self._clear_requirements_db(project_id)
         elif project_id is None:
             for req_dict in self._requirements.values():
                 req_dict.clear()
+            self._clear_requirements_db()
 
     def apply_dual_key_transition(
         self,
@@ -410,7 +568,7 @@ class RequirementStore:
         item.sign_off = sign_off
         item.version += 1
         item.updated_at = datetime.utcnow()
-        # Save back in appropriate namespace
+        # Save back in appropriate namespace and persist
         self.upsert(item, project_id=item.project_id)
         return item
 

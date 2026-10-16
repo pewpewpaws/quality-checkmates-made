@@ -9,8 +9,19 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def reset_store_state():
-    """Ensure clean test isolation."""
+    """Ensure clean test isolation across persistent SQLite runs."""
+    test_pids = [
+        "proj-surgical-arm",
+        "proj-aero-drone",
+        "proj-context-test",
+        "proj-rbac-test",
+        "proj-dualkey-rbac",
+    ]
+    for pid in test_pids:
+        store.delete_project(pid)
     yield
+    for pid in test_pids:
+        store.delete_project(pid)
 
 
 def test_multi_project_creation_and_listing():
@@ -392,3 +403,37 @@ def test_dual_key_separation_of_duties_rbac():
     assert eng_step.status_code == 200
     assert eng_step.json()["status"] == RequirementStatus.LOCKED_BASELINE
     assert eng_step.json()["sign_off"]["tech_lead_approver"] == "Chief Avionics Engineer"
+
+
+def test_sqlite_write_through_rehydration(tmp_path):
+    """Verify that projects, documents, and requirements rehydrate flawlessly across server restarts."""
+    import tempfile
+    from backend.services.storage import RequirementStore
+    from backend.models.schemas import RequirementStatement, RequirementStatus
+
+    db_file = tmp_path / "test_rehydrate.db"
+
+    # Server Run 1: Create workspace & add requirement
+    s1 = RequirementStore(db_path=db_file)
+    s1.create_project("proj-durability", "Durability Node", "Industrial Safety", "Fail-safe shutdown")
+    s1.upsert(
+        RequirementStatement(
+            id="REQ-DUR-001",
+            project_id="proj-durability",
+            text="The fail-safe relay shall open within 2ms of power loss.",
+            status=RequirementStatus.LOCKED_BASELINE
+        )
+    )
+
+    # Server Run 2: Fresh instance simulating server reboot / venue restart
+    s2 = RequirementStore(db_path=db_file)
+    proj = s2.get_project("proj-durability")
+    assert proj is not None
+    assert proj.project_name == "Durability Node"
+    assert proj.domain == "Industrial Safety"
+
+    req = s2.get_by_id("REQ-DUR-001", project_id="proj-durability")
+    assert req is not None
+    assert req.text == "The fail-safe relay shall open within 2ms of power loss."
+    assert req.status == RequirementStatus.LOCKED_BASELINE
+

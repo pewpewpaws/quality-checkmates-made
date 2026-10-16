@@ -108,9 +108,9 @@
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
-    "mtime": 1792177549.7106378,
-    "seen": 1792177810.38232,
-    "ast_hash": "c467c10cf4e91ed0e81aee11c23be572",
+    "mtime": 1792178031.6445854,
+    "seen": 1792178122.8166938,
+    "ast_hash": "ec25c39f7fb18fc10746e49d13d1d478",
     "semantic_hash": ""
   },
   "backend/tests/test_api.py": {
@@ -342,9 +342,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_rbac_and_workspaces.py": {
-    "mtime": 1792177725.065332,
-    "seen": 1792177810.3823254,
-    "ast_hash": "b3b66b758bbf3bcb6c98246d6ce7bbff",
+    "mtime": 1792178100.1187372,
+    "seen": 1792178122.8167012,
+    "ast_hash": "ec4e03acea6b3d4105f1c2f11aab267a",
     "semantic_hash": ""
   }
 }

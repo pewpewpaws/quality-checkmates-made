@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
@@ -105,6 +106,46 @@ class InterpretationDuel(BaseModel):
     flaw_type: str = Field(..., description="Underlying defect causing ambiguity")
     card_a: DuelCard
     card_b: DuelCard
+
+
+class SemanticDuplicateMatch(BaseModel):
+    req_id_a: str
+    req_id_b: str
+    text_a: str
+    text_b: str
+    similarity_score: float = Field(..., description="Cosine similarity score (0.0 to 1.0)")
+    match_type: Literal["EXACT", "NEURAL_SEMANTIC", "LEXICAL_NEAR"]
+    explanation: str = Field(..., description="Why these two statements are duplicates")
+
+
+class ConflictType(str, Enum):
+    DIRECT_CONTRADICTION = "Direct Contradiction"
+    TIMING_MISMATCH = "Timing Mismatch"
+    RESOURCE_CONTENTION = "Resource Contention"
+    OPERATIONAL_INCOMPATIBILITY = "Operational Incompatibility"
+
+
+class RequirementConflictCard(BaseModel):
+    req_id_a: str
+    req_id_b: str
+    conflict_type: str = Field(..., description="Classification of conflict")
+    severity: Literal["BLOCKER", "MAJOR", "MINOR"] = "BLOCKER"
+    conflicting_quote_a: str = Field(..., description="Quote or obligation from Req A")
+    conflicting_quote_b: str = Field(..., description="Quote or obligation from Req B")
+    explanation: str = Field(..., description="Detailed systems engineering explanation of the clash")
+    reconciliation_suggestion: str = Field(..., description="How to resolve or clarify the conflict")
+
+
+class ConflictRadarRequest(BaseModel):
+    project_id: Optional[str] = "default_project"
+    target_req_id: Optional[str] = None
+    target_text: Optional[str] = None
+    candidate_requirements: Optional[List[RequirementStatement]] = None
+
+
+class ConflictRadarResponse(BaseModel):
+    total_conflicts_found: int
+    conflicts: List[RequirementConflictCard]
 
 
 class TestCase(BaseModel):

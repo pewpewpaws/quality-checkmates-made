@@ -428,6 +428,8 @@ class RequirementStore:
         
         return results
 
+    list_all = get_all
+
     def get_by_id(
         self,
         req_id: str,

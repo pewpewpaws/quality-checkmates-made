@@ -6,12 +6,23 @@ from backend.models.schemas import (
     InterpretationDuel,
     RewriteSuggestion,
     VerificationPlan,
+    RequirementStatement,
+    SemanticDuplicateMatch,
+    ConflictRadarRequest,
+    ConflictRadarResponse,
 )
 from backend.services.qualcomm_service import QualcommService
 from backend.services.storage import store
 
 router = APIRouter(prefix="/api/analysis", tags=["Qualcomm AI100 Quality Pipelines"])
 qualcomm = QualcommService()
+
+
+class SemanticDuplicateRequest(BaseModel):
+    project_id: Optional[str] = "default_project"
+    requirements: Optional[List[RequirementStatement]] = None
+    similarity_threshold: float = Field(0.85, ge=0.5, le=1.0)
+
 
 
 class AnalysisRequest(BaseModel):
@@ -97,3 +108,45 @@ async def generate_blueprint(payload: AnalysisRequest):
             store.upsert(req)
 
     return blueprint
+
+
+@router.post("/conflicts", response_model=ConflictRadarResponse)
+async def analyze_conflicts(payload: ConflictRadarRequest):
+    """
+    Detect logical, timing, or operational contradictions between a requirement and candidate requirements using Llama-3.3-70B.
+    """
+    candidates = payload.candidate_requirements or []
+    target_req = None
+
+    if payload.target_req_id:
+        target_req = store.get_by_id(payload.target_req_id, project_id=payload.project_id)
+        if not target_req:
+            raise HTTPException(status_code=404, detail=f"Target requirement '{payload.target_req_id}' not found.")
+    elif payload.target_text:
+        target_req = RequirementStatement(
+            id="REQ-TARGET",
+            text=payload.target_text.strip(),
+            category="Target Requirement"
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Either 'target_req_id' or 'target_text' must be provided.")
+
+    if not candidates and payload.project_id:
+        all_proj_reqs = store.list_all(project_id=payload.project_id)
+        candidates = [r for r in all_proj_reqs if r.id != target_req.id]
+
+    return await qualcomm.detect_conflicts(target_req, candidates)
+
+
+@router.post("/semantic-duplicates", response_model=List[SemanticDuplicateMatch])
+async def analyze_semantic_duplicates(payload: SemanticDuplicateRequest):
+    """
+    Detect semantically equivalent requirements using BAAI/bge-large-en-v1.5 dense vector embeddings.
+    """
+    reqs = payload.requirements
+    if not reqs and payload.project_id:
+        reqs = store.list_all(project_id=payload.project_id)
+    if not reqs or len(reqs) < 2:
+        return []
+    return await qualcomm.find_semantic_duplicates(reqs, similarity_threshold=payload.similarity_threshold)
+

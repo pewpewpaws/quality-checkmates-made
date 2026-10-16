@@ -14,6 +14,9 @@ from backend.models.schemas import (
     TestCase,
     RequirementStatement,
     RequirementStatus,
+    SemanticDuplicateMatch,
+    RequirementConflictCard,
+    ConflictRadarResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,6 +41,9 @@ def parse_tool_args(raw_args: str) -> Dict[str, Any]:
 
 def extract_chat_data(msg) -> Dict[str, Any]:
     """Robustly extract tool call or JSON parameters from Qualcomm Cloud AI 100 response."""
+    if hasattr(msg, "choices") and len(msg.choices) > 0:
+        msg = msg.choices[0].message
+
     if getattr(msg, "tool_calls", None) and len(msg.tool_calls) > 0:
         tc = msg.tool_calls[0]
         raw = tc.function.arguments if hasattr(tc, "function") else str(tc)
@@ -216,6 +222,60 @@ TOOL_BLUEPRINT = [{
                 }
             },
             "required": ["verification_method", "preconditions", "positive_test_case", "negative_boundary_test_case", "acceptance_criteria"]
+        }
+    }
+}]
+
+TOOL_CONFLICT_RADAR = [{
+    "type": "function",
+    "function": {
+        "name": "submit_conflict_analysis",
+        "description": "Report logical contradictions, opposing obligations, or physical incompatibilities between requirement statements.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "conflicts": {
+                    "type": "array",
+                    "description": "List of detected requirement conflicts. Empty if requirements are mutually compatible.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "req_id_a": {"type": "string", "description": "ID of first requirement"},
+                            "req_id_b": {"type": "string", "description": "ID of second requirement"},
+                            "conflict_type": {
+                                "type": "string",
+                                "enum": [
+                                    "Direct Contradiction",
+                                    "Timing Mismatch",
+                                    "Resource Contention",
+                                    "Operational Incompatibility"
+                                ],
+                                "description": "Category of technical conflict"
+                            },
+                            "severity": {
+                                "type": "string",
+                                "enum": ["BLOCKER", "MAJOR", "MINOR"],
+                                "description": "Impact of conflict on system safety and architecture"
+                            },
+                            "conflicting_quote_a": {"type": "string", "description": "Verbatim quote or obligation from first requirement"},
+                            "conflicting_quote_b": {"type": "string", "description": "Verbatim quote or obligation from second requirement"},
+                            "explanation": {"type": "string", "description": "Systems engineering rationale detailing the mutual incompatibility"},
+                            "reconciliation_suggestion": {"type": "string", "description": "Concrete proposal to reconcile or disambiguate the conflict"}
+                        },
+                        "required": [
+                            "req_id_a",
+                            "req_id_b",
+                            "conflict_type",
+                            "severity",
+                            "conflicting_quote_a",
+                            "conflicting_quote_b",
+                            "explanation",
+                            "reconciliation_suggestion"
+                        ]
+                    }
+                }
+            },
+            "required": ["conflicts"]
         }
     }
 }]
@@ -528,6 +588,193 @@ class QualcommService:
         except Exception as e:
             logger.error(f"Live Embeddings failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 Embeddings error: {e}") from e
+
+    async def find_semantic_duplicates(
+        self,
+        requirements: List[RequirementStatement],
+        similarity_threshold: float = 0.85
+    ) -> List[SemanticDuplicateMatch]:
+        """
+        Detect semantically duplicate requirement statements using BAAI/bge-large-en-v1.5
+        1024-dimensional dense vector embeddings and pairwise cosine similarity.
+        """
+        if len(requirements) < 2:
+            return []
+
+        texts = [r.text for r in requirements]
+        vectors = await self.generate_embeddings(texts)
+
+        import numpy as np
+        vec_arr = np.array(vectors, dtype=np.float32)
+        norms = np.linalg.norm(vec_arr, axis=1, keepdims=True)
+        norms[norms == 0] = 1e-10
+        norm_vecs = vec_arr / norms
+
+        sim_matrix = np.dot(norm_vecs, norm_vecs.T)
+        matches: List[SemanticDuplicateMatch] = []
+        n = len(requirements)
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                score = float(sim_matrix[i, j])
+                if score >= similarity_threshold:
+                    is_exact_text = requirements[i].text.strip().lower() == requirements[j].text.strip().lower()
+                    if is_exact_text or score >= 0.999:
+                        m_type = "EXACT"
+                        explanation = f"Exact text collision detected with cosine identity {score:.4f}."
+                    else:
+                        m_type = "NEURAL_SEMANTIC"
+                        explanation = (
+                            f"Neural semantic similarity score of {score:.3f} indicates equivalent systems engineering intent "
+                            f"and obligations across differing vocabulary."
+                        )
+                    matches.append(
+                        SemanticDuplicateMatch(
+                            req_id_a=requirements[i].id,
+                            req_id_b=requirements[j].id,
+                            text_a=requirements[i].text,
+                            text_b=requirements[j].text,
+                            similarity_score=round(score, 4),
+                            match_type=m_type,
+                            explanation=explanation
+                        )
+                    )
+
+        matches.sort(key=lambda m: m.similarity_score, reverse=True)
+        return matches
+
+    async def detect_conflicts(
+        self,
+        target_req: RequirementStatement,
+        candidate_reqs: List[RequirementStatement]
+    ) -> ConflictRadarResponse:
+        """
+        Analyze a target requirement against candidate requirements for logical contradictions,
+        timing mismatches, resource contentions, or operational incompatibilities using Llama-3.3-70B.
+        """
+        valid_candidates = [c for c in candidate_reqs if c.id != target_req.id]
+        if not valid_candidates:
+            return ConflictRadarResponse(total_conflicts_found=0, conflicts=[])
+
+        if self.mock_mode:
+            return self._mock_detect_conflicts(target_req, valid_candidates)
+
+        candidate_list_text = "\n".join(
+            [f"- [{c.id}]: \"{c.text}\"" for c in valid_candidates]
+        )
+
+        system_prompt = (
+            "You are the Conflict Radar agent of the Requirement Quality Copilot, a Lead Safety and Systems Architect. "
+            "Your task is to analyze a TARGET REQUIREMENT against a list of CANDIDATE REQUIREMENTS in the specification.\n\n"
+            "You must detect:\n"
+            "1. 'Direct Contradiction': Opposing behaviors, inverted conditions, or contradictory actions in identical operational modes.\n"
+            "2. 'Timing Mismatch': Mutually incompatible timing tolerances, latencies, or response budgets.\n"
+            "3. 'Resource Contention': Mutually exclusive competition for actuators, buses, or memory without arbitration.\n"
+            "4. 'Operational Incompatibility': Incompatible lifecycle state transitions or impossible co-requisites.\n\n"
+            "CRITICAL CONSTRAINTS:\n"
+            "- Extract exact verbatim quotes for 'conflicting_quote_a' (from target) and 'conflicting_quote_b' (from candidate).\n"
+            "- Classify severity as 'BLOCKER', 'MAJOR', or 'MINOR'.\n"
+            "- If requirements are mutually compatible or orthogonal, return an empty 'conflicts' array.\n"
+            "- Always call the 'submit_conflict_analysis' tool."
+        )
+
+        user_content = (
+            f"TARGET REQUIREMENT:\n"
+            f"[{target_req.id}]: \"{target_req.text}\"\n\n"
+            f"CANDIDATE REQUIREMENTS TO CHECK AGAINST:\n"
+            f"{candidate_list_text}\n\n"
+            f"Perform deep logical consistency analysis and submit any detected conflicts."
+        )
+
+        try:
+            messages = [
+                ChatMessage(role="system", content=system_prompt),
+                ChatMessage(role="user", content=user_content)
+            ]
+            response = await self.client.chat(
+                messages=messages,
+                model=settings.MODEL_REASONING,
+                tools=TOOL_CONFLICT_RADAR,
+                temperature=0.0
+            )
+
+            data = extract_chat_data(response)
+            raw_conflicts = data.get("conflicts", [])
+            conflicts: List[RequirementConflictCard] = []
+            for item in raw_conflicts:
+                conflicts.append(
+                    RequirementConflictCard(
+                        req_id_a=item.get("req_id_a", target_req.id),
+                        req_id_b=item.get("req_id_b", "UNKNOWN"),
+                        conflict_type=item.get("conflict_type", "Direct Contradiction"),
+                        severity=item.get("severity", "BLOCKER"),
+                        conflicting_quote_a=item.get("conflicting_quote_a", target_req.text),
+                        conflicting_quote_b=item.get("conflicting_quote_b", ""),
+                        explanation=item.get("explanation", "Opposing requirements detected."),
+                        reconciliation_suggestion=item.get("reconciliation_suggestion", "Disambiguate operating modes.")
+                    )
+                )
+
+            return ConflictRadarResponse(
+                total_conflicts_found=len(conflicts),
+                conflicts=conflicts
+            )
+        except Exception as e:
+            logger.error(f"Live Conflict Radar failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Conflict Radar error: {e}") from e
+
+    async def detect_project_conflicts(
+        self,
+        requirements: List[RequirementStatement]
+    ) -> ConflictRadarResponse:
+        """
+        Evaluate all pairs in a project workspace for conflicts using Conflict Radar.
+        """
+        if len(requirements) < 2:
+            return ConflictRadarResponse(total_conflicts_found=0, conflicts=[])
+
+        all_conflicts: List[RequirementConflictCard] = []
+        seen_pairs = set()
+
+        for i, target in enumerate(requirements):
+            candidates = requirements[i + 1:]
+            if not candidates:
+                continue
+            res = await self.detect_conflicts(target, candidates)
+            for c in res.conflicts:
+                pair = (min(c.req_id_a, c.req_id_b), max(c.req_id_a, c.req_id_b))
+                if pair not in seen_pairs:
+                    seen_pairs.add(pair)
+                    all_conflicts.append(c)
+
+        return ConflictRadarResponse(
+            total_conflicts_found=len(all_conflicts),
+            conflicts=all_conflicts
+        )
+
+    def _mock_detect_conflicts(
+        self,
+        target_req: RequirementStatement,
+        candidates: List[RequirementStatement]
+    ) -> ConflictRadarResponse:
+        conflicts: List[RequirementConflictCard] = []
+        target_lower = target_req.text.lower()
+        for c in candidates:
+            c_lower = c.text.lower()
+            if ("transmit" in target_lower and "no external" in c_lower) or ("transmit" in c_lower and "no external" in target_lower):
+                conflicts.append(
+                    RequirementConflictCard(
+                        req_id_a=target_req.id,
+                        req_id_b=c.id,
+                        conflict_type="Direct Contradiction",
+                        severity="BLOCKER",
+                        conflicting_quote_a="transmit cloud telemetry" if "transmit" in target_lower else "no external network transmissions",
+                        conflicting_quote_b="no external network transmissions" if "transmit" in target_lower else "transmit cloud telemetry",
+                        explanation="Contradictory network behavior under the same normal operation context.",
+                        reconciliation_suggestion="Define dedicated low-power or silent mode conditions separate from normal telemetry mode."
+                    )
+                )
+        return ConflictRadarResponse(total_conflicts_found=len(conflicts), conflicts=conflicts)
 
     async def generate_requirements_from_chat(
         self,

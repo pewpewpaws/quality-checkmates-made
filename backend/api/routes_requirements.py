@@ -1,10 +1,18 @@
 from typing import List, Optional, Tuple, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Query
-from backend.models.schemas import RequirementStatement, SignOffActionRequest, UserRole
+from backend.models.schemas import (
+    RequirementStatement,
+    SignOffActionRequest,
+    UserRole,
+    SemanticDuplicateMatch,
+    ConflictRadarResponse,
+)
 from backend.api.deps import get_user_role, require_write_permission, verify_dual_key_role_action
 from backend.services.storage import store
+from backend.services.qualcomm_service import QualcommService
 
 router = APIRouter(prefix="/api/requirements", tags=["Requirements & Dual-Key Governance"])
+qualcomm = QualcommService()
 
 
 @router.get("", response_model=List[RequirementStatement])
@@ -40,9 +48,35 @@ async def check_duplicate_requirements(
     user_context: Tuple[UserRole, bool] = Depends(get_user_role)
 ):
     """
-    Detect exact and near-duplicate requirement statements within a project workspace.
+    Detect exact and near-duplicate requirement statements within a project workspace (lexical).
     """
     return store.find_duplicates(project_id=project_id, similarity_threshold=threshold)
+
+
+@router.get("/duplicates/semantic", response_model=List[SemanticDuplicateMatch])
+async def check_semantic_duplicate_requirements(
+    project_id: str = Query("default_project", description="Target project workspace"),
+    threshold: float = Query(0.85, ge=0.5, le=1.0, description="Cosine similarity threshold (0.5 - 1.0)"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Detect semantically equivalent requirements within a project using dense embeddings (bge-large on Qualcomm AI100).
+    """
+    reqs = store.list_all(project_id=project_id)
+    return await qualcomm.find_semantic_duplicates(reqs, similarity_threshold=threshold)
+
+
+@router.get("/conflicts", response_model=ConflictRadarResponse)
+async def check_project_conflicts(
+    project_id: str = Query("default_project", description="Target project workspace"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Scan all requirements in a project workspace for mutual contradictions using Conflict Radar (Llama-3.3-70B on Qualcomm AI100).
+    """
+    reqs = store.list_all(project_id=project_id)
+    return await qualcomm.detect_project_conflicts(reqs)
+
 
 
 @router.get("/{req_id}", response_model=RequirementStatement)

@@ -347,7 +347,9 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * 🛠️ `systems_engineer`: Full engineering inspection. Can grant technical sign-off (`lock_baseline`), flag TBD, or reject. Cannot author provisional targets (403).
   * 🎖️ `executive`: Strictly read-only (all mutations yield 403). Filtered visibility lens: only sees PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) requirements; raw drafts and unresolved TBDs are shielded from view.
 * **Method**: `GET /api/requirements?project_id={id}`: List requirements (filtered by persona).
-* **Method**: `GET /api/requirements/duplicates?project_id={id}&threshold=0.70`: Detect exact (`1.0`) and near-duplicate (`>= 0.70`) statements within a workspace.
+* **Method**: `GET /api/requirements/duplicates?project_id={id}&threshold=0.70`: Detect exact (`1.0`) and lexical near-duplicate (`>= 0.70`) statements within a workspace.
+* **Method**: `GET /api/requirements/duplicates/semantic?project_id={id}&threshold=0.85`: Neural semantic duplicate clustering using dense vector embeddings on Qualcomm AI 100 (`BAAI/bge-large-en-v1.5`).
+* **Method**: `GET /api/requirements/conflicts?project_id={id}`: Project-wide Conflict Radar scanning all requirements for mutual contradictions using `Llama-3.3-70B`.
 * **Method**: `POST /api/requirements`: Create requirement (Executives prohibited).
 * **Method**: `GET /api/requirements/{id}?project_id={id}`: Fetch single requirement (403 if executive attempts to view unapproved draft/TBD).
 * **Method**: `PUT /api/requirements/{id}`: Update requirement (increments version counter on collision).
@@ -382,6 +384,12 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * Generates zero-fabrication EARS rewrites preserving `[TBD: ...]` tokens and smart suggested defaults (`submit_rewritten_requirements`).
 * **Method**: `POST /api/analysis/blueprint`:
   * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint`).
+* **Method**: `POST /api/analysis/semantic-duplicates`:
+  * Computes 1024-dimensional normalized vector embeddings on Qualcomm AI 100 (`BAAI/bge-large-en-v1.5`) and pairwise cosine similarity matrix.
+  * Detects semantically equivalent requirements across different vocabularies.
+* **Method**: `POST /api/analysis/conflicts`:
+  * Conflict Radar powered by `Llama-3.3-70B` (`submit_conflict_analysis`).
+  * Identifies `Direct Contradiction`, `Timing Mismatch`, `Resource Contention`, and `Operational Incompatibility` with verbatim quotes and reconciliation advice.
 
 ## 6. Conversational Requirement Copilot & Project Context
 * **Method**: `GET /api/chat/context`:

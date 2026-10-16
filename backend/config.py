@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     MODEL_70B: str = "Llama-3.3-70B"
     MODEL_8B: str = "Llama-3.1-8B"
     MODEL_EMBEDDING: str = "BAAI/bge-large-en-v1.5"
+    MODEL_REASONING: str = "Llama-3.3-70B"
     
     # Operational configuration
     MOCK_MODE: bool = False

@@ -2,7 +2,7 @@ import uuid
 import json
 import sqlite3
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from backend.models.schemas import (
     RequirementStatement,
@@ -571,6 +571,64 @@ class RequirementStore:
         # Save back in appropriate namespace and persist
         self.upsert(item, project_id=item.project_id)
         return item
+
+    def find_duplicates(
+        self,
+        project_id: str = "default_project",
+        similarity_threshold: float = 0.70
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect exact and near-duplicate requirement statements within a project workspace.
+        Uses exact text hashing + Jaccard token overlap similarity.
+        """
+        reqs = list(self._requirements.get(project_id, {}).values())
+        duplicates = []
+        n = len(reqs)
+
+        def tokenize(text: str) -> set[str]:
+            words = text.lower().replace("[", " ").replace("]", " ").replace(".", " ").replace(",", " ").replace(":", " ").split()
+            stopwords = {"the", "shall", "should", "must", "a", "an", "and", "or", "to", "of", "in", "for", "with", "is", "be", "if", "when"}
+            return {w for w in words if w not in stopwords and len(w) > 1}
+
+        seen_pairs = set()
+        for i in range(n):
+            tokens_i = tokenize(reqs[i].text)
+            for j in range(i + 1, n):
+                pair_key = (min(reqs[i].id, reqs[j].id), max(reqs[i].id, reqs[j].id))
+                if pair_key in seen_pairs:
+                    continue
+
+                # 1. Exact Text Collision
+                if reqs[i].text.strip().lower() == reqs[j].text.strip().lower():
+                    seen_pairs.add(pair_key)
+                    duplicates.append({
+                        "req_id_a": reqs[i].id,
+                        "req_id_b": reqs[j].id,
+                        "match_type": "EXACT",
+                        "similarity": 1.0,
+                        "text_a": reqs[i].text,
+                        "text_b": reqs[j].text
+                    })
+                    continue
+
+                # 2. Near-Duplicate Token Overlap
+                tokens_j = tokenize(reqs[j].text)
+                if tokens_i and tokens_j:
+                    intersection = len(tokens_i & tokens_j)
+                    union = len(tokens_i | tokens_j)
+                    sim = intersection / union if union > 0 else 0.0
+                    if sim >= similarity_threshold:
+                        seen_pairs.add(pair_key)
+                        duplicates.append({
+                            "req_id_a": reqs[i].id,
+                            "req_id_b": reqs[j].id,
+                            "match_type": "NEAR_DUPLICATE",
+                            "similarity": round(sim, 3),
+                            "text_a": reqs[i].text,
+                            "text_b": reqs[j].text
+                        })
+
+        return duplicates
 
 
 store = RequirementStore()

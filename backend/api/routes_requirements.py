@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Query
 from backend.models.schemas import RequirementStatement, SignOffActionRequest, UserRole
 from backend.api.deps import get_user_role, require_write_permission, verify_dual_key_role_action
@@ -31,6 +31,18 @@ async def create_requirement(
     Restricted: Executives have read-only access.
     """
     return store.upsert(req, project_id=req.project_id)
+
+
+@router.get("/duplicates", response_model=List[Dict[str, Any]])
+async def check_duplicate_requirements(
+    project_id: str = Query("default_project", description="Target project workspace"),
+    threshold: float = Query(0.70, ge=0.5, le=1.0, description="Similarity threshold (0.5 - 1.0)"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Detect exact and near-duplicate requirement statements within a project workspace.
+    """
+    return store.find_duplicates(project_id=project_id, similarity_threshold=threshold)
 
 
 @router.get("/{req_id}", response_model=RequirementStatement)

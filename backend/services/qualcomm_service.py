@@ -276,7 +276,11 @@ class QualcommService:
 
     def __init__(self, mock_mode: Optional[bool] = None):
         self.mock_mode = settings.MOCK_MODE if mock_mode is None else mock_mode
-        self.client = ImagineAsyncClient(
+
+    @property
+    def client(self) -> ImagineAsyncClient:
+        """Always obtain an ImagineAsyncClient bound to the active running event loop."""
+        return ImagineAsyncClient(
             endpoint=settings.IMAGINE_ENDPOINT_URL,
             api_key=settings.IMAGINE_API_KEY,
             timeout=settings.TIMEOUT_SECONDS,
@@ -593,7 +597,7 @@ class QualcommService:
                     tbds.append(TbdDefault(
                         parameter_name=t.get("parameter_name", "parameter_limit"),
                         suggested_value=str(t.get("suggested_value", "100 ms")),
-                        engineering_rationale=t.get("rationale", t.get("engineering_rationale", "Standard engineering baseline")),
+                        rationale=t.get("rationale") or t.get("engineering_rationale") or "Standard engineering baseline",
                         confidence=t.get("confidence", "MEDIUM") if t.get("confidence") in ["HIGH", "MEDIUM", "LOW"] else "MEDIUM"
                     ))
                 statement_text = r.get("text", "")

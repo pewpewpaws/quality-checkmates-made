@@ -347,9 +347,10 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * 🛠️ `systems_engineer`: Full engineering inspection. Can grant technical sign-off (`lock_baseline`), flag TBD, or reject. Cannot author provisional targets (403).
   * 🎖️ `executive`: Strictly read-only (all mutations yield 403). Filtered visibility lens: only sees PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) requirements; raw drafts and unresolved TBDs are shielded from view.
 * **Method**: `GET /api/requirements?project_id={id}`: List requirements (filtered by persona).
+* **Method**: `GET /api/requirements/duplicates?project_id={id}&threshold=0.70`: Detect exact (`1.0`) and near-duplicate (`>= 0.70`) statements within a workspace.
 * **Method**: `POST /api/requirements`: Create requirement (Executives prohibited).
 * **Method**: `GET /api/requirements/{id}?project_id={id}`: Fetch single requirement (403 if executive attempts to view unapproved draft/TBD).
-* **Method**: `PUT /api/requirements/{id}`: Update requirement.
+* **Method**: `PUT /api/requirements/{id}`: Update requirement (increments version counter on collision).
 * **Method**: `DELETE /api/requirements/{id}`: Delete requirement.
 * **Method**: `POST /api/requirements/{id}/sign-off`: Dual-Key state transition.
   * **Payload (PM Stage)**:

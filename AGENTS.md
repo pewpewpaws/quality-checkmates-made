@@ -168,6 +168,7 @@ Keep documentation synchronized in these specific locations:
   - 👔 `Product Manager`: Unrestricted authoring across all states (`DRAFT`, `FLAGGED_TBD`, `PROVISIONAL_PM`, `LOCKED_BASELINE`).
   - 🛠️ `Lead Systems Engineer`: Technical sign-off gate (`PROVISIONAL_PM` $\to$ `LOCKED_BASELINE`).
   - 🎖️ `Senior Manager / Executive`: Strict read-only lens restricted exclusively to PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) documents, shielding leadership from raw drafts.
+- [x] Implemented SQLite write-through persistence layer (`backend/data/quality_copilot.db`) with zero-mock live execution.
 - [x] Added automated test suite verifying cross-project isolation, executive visibility shielding, and dual-key RBAC separation of duties (31/31 passing tests).
 
 ---
@@ -175,17 +176,19 @@ Keep documentation synchronized in these specific locations:
 ### ⏳ Phase 2: Deterministic Engine & Vector Clustering (CURRENT)
 - [ ] Implement 100-Point Rubric Scoring Engine outside the LLM.
 - [ ] Implement Evidence Validator (ensure `evidence_quote` is a strict substring of source).
-- [ ] Implement Vector Duplicate Detection & Clustering with `bge-large` embeddings + `numpy` cosine similarity.
+- [x] Implement Exact Hash & Lexical Jaccard Duplicate Detection (`store.find_duplicates`).
+- [x] Implement Vector Duplicate Detection & Neural Semantic Clustering with `bge-large` embeddings + `numpy` cosine similarity.
 - [ ] Update `docs/project/architecture.md` with final deduction math.
 
 ---
 
 ### ⏳ Phase 3: AI Feature Pipelines
 - [ ] Connect `Llama-3.3-70B` tool calling for X-Ray issue detection.
-- [ ] Implement Conflict Radar (overlap search + contradictory behavior reasoning).
+- [x] Implement Conflict Radar on `Llama-3.3-70B` (overlap search + contradictory behavior reasoning via `TOOL_CONFLICT_RADAR`).
 - [ ] Implement Smart Rewriter on `Llama-3.1-8B` with Intent-Lock validation.
 - [ ] Implement Interpretation Duel generator (2 competing plausible meanings).
 - [ ] Implement Verification Blueprint generator.
+
 
 ---
 

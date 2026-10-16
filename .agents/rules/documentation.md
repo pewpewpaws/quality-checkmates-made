@@ -25,6 +25,7 @@ Always update the corresponding documentation files according to this mapping:
 | **Golden Datasets & Fixtures** | [`docs/datasets/golden_requirements.json`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/datasets/golden_requirements.json) |
 | **Pitch Strategy, Q&A & New Ideas** | [`HACKATHON.md`](file:///home/anair/Desktop/Coding/Oi-Thon/HACKATHON.md) |
 | **Milestones & Implementation Checklist** | [`AGENTS.md`](file:///home/anair/Desktop/Coding/Oi-Thon/AGENTS.md) |
+| **Code Architecture & Dependency Graph** | [`graphify-out/graph.json`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/graph.json) & [`graphify-out/GRAPH_REPORT.md`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/GRAPH_REPORT.md) via `graphify update .` |
 
 ---
 

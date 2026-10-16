@@ -6,6 +6,7 @@
 > - [`project_standards.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/project_standards.md) — Qualcomm AI 100 directives, zero-fabrication & governance
 > - [`brutal_candor.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/brutal_candor.md) — Radical candor & objective evaluation filter for all ideas
 > - [`git_workflow.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/git_workflow.md) — Commit-after-every-change policy (Strictly local, no push)
+> - [`graphify.md`](file:///home/anair/Desktop/Coding/Oi-Thon/.agents/rules/graphify.md) — Knowledge graph usage & continuous graph update policy
 
 ---
 
@@ -49,6 +50,10 @@
 8. **Pitch-Ready Live Demo (< 3 min) & Offline Fallback**:
    - Full flow must execute in under 3 minutes.
    - Maintain a mock/cached fallback adapter in `backend/` for stage resilience.
+
+9. **Knowledge Graph Usage & Continuous Graphify Sync**:
+   - **Query-First Architecture Navigation**: Before modifying cross-cutting code, tracing data flows, or investigating dependencies, always consult the knowledge graph (`graphify-out/graph.json`) via graphify MCP tools (`query_graph`, `shortest_path`, `get_node`, `god_nodes`) or CLI (`graphify query "<question>"`). Avoid blind brute-force file scanning.
+   - **Continuous Zero-Cost Sync**: After adding or modifying code, models, or schemas in a session, immediately run `graphify update .` to keep `graphify-out/graph.json`, `graphify-out/graph.html`, and `graphify-out/GRAPH_REPORT.md` synchronized via AST re-extraction (0 token cost).
 
 ---
 
@@ -103,6 +108,7 @@ Keep documentation synchronized in these specific locations:
 | **Model Configs / Benchmarks** | [`docs/models/benchmark_results.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/models/benchmark_results.md) |
 | **Empirical Research & Phase Findings** | [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md) & [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md) |
 | **Pitch Strategy, Differentiators & Ideas** | [`HACKATHON.md`](file:///home/anair/Desktop/Coding/Oi-Thon/HACKATHON.md) |
+| **Code Architecture & Dependency Graph** | [`graphify-out/graph.json`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/graph.json) & [`graphify-out/GRAPH_REPORT.md`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/GRAPH_REPORT.md) via `graphify update .` |
 
 ---
 

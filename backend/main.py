@@ -7,7 +7,7 @@ from backend.config import settings
 from backend.services.qualcomm_service import QualcommService
 from backend.services.storage import store
 from backend.models.schemas import RequirementStatement, RequirementStatus, DualKeySignOff
-from backend.api import requirements_router, parse_router, analysis_router
+from backend.api import requirements_router, parse_router, analysis_router, chat_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("req-quality-copilot")
@@ -99,6 +99,7 @@ app.add_middleware(
 app.include_router(requirements_router)
 app.include_router(parse_router)
 app.include_router(analysis_router)
+app.include_router(chat_router)
 
 
 @app.get("/")

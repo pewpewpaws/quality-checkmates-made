@@ -156,3 +156,36 @@ class SignOffActionRequest(BaseModel):
     pm_target_val: Optional[str] = None
     tech_lead_approver: Optional[str] = None
     hardware_rationale: Optional[str] = None
+
+
+class ProjectDocumentContext(BaseModel):
+    title: str = Field(..., description="Document name or section title")
+    content: str = Field(..., description="Full text or architectural overview")
+    category: str = Field("General", description="System domain or engineering domain")
+    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ProjectContext(BaseModel):
+    project_id: str = Field(default="default_project", description="Active project ID")
+    project_name: str = Field(..., description="Project designation, e.g. 'Next-Gen 800V EV BMS'")
+    domain: str = Field(..., description="Industry domain, e.g. 'Automotive Powertrain', 'Medical Device'")
+    description: str = Field(..., description="High-level engineering summary and safety constraints")
+    documents: List[ProjectDocumentContext] = Field(default_factory=list)
+
+
+class ChatMessageItem(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str
+
+
+class ChatRequirementRequest(BaseModel):
+    message: str = Field(..., description="Plain-language requirement thought or request from PM")
+    project_id: Optional[str] = Field("default_project", description="Target project context ID")
+    conversation_history: List[ChatMessageItem] = Field(default_factory=list)
+    save_to_store: bool = Field(True, description="Whether to automatically register generated requirements into the active store")
+
+
+class ChatRequirementResponse(BaseModel):
+    agent_reply: str = Field(..., description="Conversational explanation and engineering feedback from Copilot")
+    generated_requirements: List[RequirementStatement] = Field(default_factory=list, description="Formal EARS requirements synthesized from PM input")
+    context_grounding: str = Field(..., description="Reference to project architectural constraints used")

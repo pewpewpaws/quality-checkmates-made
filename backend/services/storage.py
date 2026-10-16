@@ -1,16 +1,68 @@
 from typing import Dict, List, Optional
 from datetime import datetime
-from backend.models.schemas import RequirementStatement, RequirementStatus, DualKeySignOff
+from backend.models.schemas import (
+    RequirementStatement,
+    RequirementStatus,
+    DualKeySignOff,
+    ProjectContext,
+    ProjectDocumentContext
+)
 
 
 class RequirementStore:
     """
-    High-performance in-memory requirement baseline store with Dual-Key state governance.
-    Preloaded with sample datasets for pitch demonstrations.
+    High-performance in-memory requirement baseline store with Dual-Key state governance
+    and Project Context grounding for conversational AI agent workflows.
     """
 
     def __init__(self):
         self._items: Dict[str, RequirementStatement] = {}
+        self._project_contexts: Dict[str, ProjectContext] = {}
+        self._init_default_project()
+
+    def _init_default_project(self):
+        default_ctx = ProjectContext(
+            project_id="default_project",
+            project_name="Next-Gen 800V EV Powertrain & BMS",
+            domain="Automotive Systems (ISO 26262 / ASIL-D)",
+            description=(
+                "800V silicon-carbide traction inverter and battery management system. "
+                "Supports 350kW DC fast charging, liquid glycol thermal loop, CAN-FD bus (500 kbps nominal, 2 Mbps data), "
+                "and strict ASIL-D high-voltage disconnect within 10ms of pyrotechnic fuse or crash trigger."
+            ),
+            documents=[
+                ProjectDocumentContext(
+                    title="BMS Architectural Safety Charter",
+                    content=(
+                        "Operating envelope: 2.8V to 4.25V per NMC cell. "
+                        "Maximum pack surface temperature allowed during DC fast charging is 55°C. "
+                        "All battery fault codes (DTCs) must be broadcast over CAN-FD ID 0x3F2."
+                    ),
+                    category="Safety & Compliance"
+                )
+            ]
+        )
+        self._project_contexts[default_ctx.project_id] = default_ctx
+
+    def get_project_context(self, project_id: str = "default_project") -> Optional[ProjectContext]:
+        return self._project_contexts.get(project_id) or self._project_contexts.get("default_project")
+
+    def set_project_context(self, context: ProjectContext) -> ProjectContext:
+        self._project_contexts[context.project_id] = context
+        return context
+
+    def add_document_to_context(self, project_id: str, doc: ProjectDocumentContext) -> ProjectContext:
+        ctx = self.get_project_context(project_id)
+        if not ctx:
+            ctx = ProjectContext(
+                project_id=project_id,
+                project_name=f"Project {project_id}",
+                domain="Embedded Systems",
+                description="Custom user uploaded project context"
+            )
+            self._project_contexts[project_id] = ctx
+        ctx.documents.append(doc)
+        return ctx
 
     def get_all(self) -> List[RequirementStatement]:
         return list(self._items.values())

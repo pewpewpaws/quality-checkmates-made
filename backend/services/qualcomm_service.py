@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from imagine import ImagineAsyncClient, ChatMessage
 from backend.config import settings
 from backend.models.schemas import (
@@ -12,6 +12,8 @@ from backend.models.schemas import (
     TbdDefault,
     VerificationPlan,
     TestCase,
+    RequirementStatement,
+    RequirementStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -181,6 +183,53 @@ TOOL_BLUEPRINT = [{
                 }
             },
             "required": ["verification_method", "preconditions", "positive_test_case", "negative_boundary_test_case", "acceptance_criteria"]
+        }
+    }
+}]
+
+TOOL_CHAT = [{
+    "type": "function",
+    "function": {
+        "name": "submit_chat_requirements",
+        "description": "Formulate formal EARS requirements and conversational feedback grounded in project documentation context.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "agent_reply": {
+                    "type": "string",
+                    "description": "Conversational explanation to the PM detailing how the requirement was synthesized and grounded."
+                },
+                "context_grounding": {
+                    "type": "string",
+                    "description": "Specific project architectural constraint, charter boundary, or safety limit cited."
+                },
+                "requirements": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "text": {"type": "string", "description": "Strict EARS statement preserving [TBD: parameter_name]"},
+                            "category": {"type": "string"},
+                            "section": {"type": "string"},
+                            "identified_tbds": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "parameter_name": {"type": "string"},
+                                        "suggested_value": {"type": "string"},
+                                        "rationale": {"type": "string"},
+                                        "confidence": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW"]}
+                                    },
+                                    "required": ["parameter_name", "suggested_value", "rationale", "confidence"]
+                                }
+                            }
+                        },
+                        "required": ["text", "category", "section", "identified_tbds"]
+                    }
+                }
+            },
+            "required": ["agent_reply", "context_grounding", "requirements"]
         }
     }
 }]
@@ -443,6 +492,85 @@ class QualcommService:
                 vectors.append(v.tolist())
             return vectors
 
+    async def generate_requirements_from_chat(
+        self,
+        pm_message: str,
+        project_context: str,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        next_req_index: int = 1
+    ) -> Tuple[str, List[RequirementStatement], str]:
+        """
+        Synthesize formal, atomic EARS requirements from conversational PM inputs,
+        strictly grounded in the provided project context and engineering charter.
+        """
+        if self.mock_mode:
+            return self._mock_chat_requirements(pm_message, project_context, next_req_index)
+
+        system_prompt = (
+            "You are the Requirement Quality Copilot, an enterprise AI Systems Engineering Architect. "
+            "A Product Manager is talking to you in plain, informal English. "
+            "Your job is to translate their request into formal, atomic, unambiguous EARS requirements (ISO/IEC/IEEE 29148 standard) "
+            "strictly grounded in the provided Project Documentation Context.\n\n"
+            f"PROJECT CONTEXT & ENGINEERING CHARTER:\n{project_context}\n\n"
+            "STRICT ZERO-FABRICATION DIRECTIVE:\n"
+            "1. NEVER hardcode assumed numerical thresholds in the requirement text.\n"
+            "2. Preserve all unstated metrics as `[TBD: <parameter_name_and_unit>]`.\n"
+            "3. Propose SMART SUGGESTED DEFAULTS in `identified_tbds` grounded in the Project Context or engineering standards.\n"
+            "4. Provide a friendly conversational `agent_reply` explaining your engineering rationale to the PM.\n"
+            "Call submit_chat_requirements."
+        )
+
+        messages = [ChatMessage(role="system", content=system_prompt)]
+        if conversation_history:
+            for m in conversation_history[-4:]:
+                role = m.get("role", "user")
+                if role in ["user", "assistant"]:
+                    messages.append(ChatMessage(role=role, content=m.get("content", "")))
+        messages.append(ChatMessage(role="user", content=f'PM Request: "{pm_message}" Call submit_chat_requirements.'))
+
+        try:
+            resp = await self.client.chat(
+                messages=messages,
+                model=settings.MODEL_70B,
+                tools=TOOL_CHAT,
+                temperature=0.1
+            )
+            tc = resp.choices[0].message.tool_calls[0]
+            data = parse_tool_args(tc.function.arguments)
+
+            agent_reply = data.get("agent_reply", "I have structured your request into formal requirements.")
+            grounding = data.get("context_grounding", "Grounded in Project Context.")
+            raw_reqs = data.get("requirements", [])
+
+            req_statements = []
+            for idx, r in enumerate(raw_reqs, start=next_req_index):
+                tbds = []
+                for t in r.get("identified_tbds", []):
+                    tbds.append(TbdDefault(
+                        parameter_name=t.get("parameter_name", "parameter_limit"),
+                        suggested_value=t.get("suggested_value", "100 ms"),
+                        rationale=t.get("rationale", "Standard engineering baseline"),
+                        confidence=t.get("confidence", "MEDIUM") if t.get("confidence") in ["HIGH", "MEDIUM", "LOW"] else "MEDIUM"
+                    ))
+                statement_text = r.get("text", "")
+                req_statements.append(RequirementStatement(
+                    id=f"REQ-CHAT-{idx:03d}",
+                    text=statement_text,
+                    category=r.get("category", "Functional"),
+                    section=r.get("section", "Chat Synthesis"),
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised=statement_text,
+                        rationale=grounding,
+                        identified_tbds=tbds
+                    )
+                ))
+            return agent_reply, req_statements, grounding
+        except Exception as e:
+            logger.warning(f"Live Chat synthesis failed: {e}. Using fallback mock adapter.")
+            return self._mock_chat_requirements(pm_message, project_context, next_req_index)
+
     # --- Fallback Mock Generators (Stage Pitch Resilience) ---
 
     def _mock_xray_issues(self, req_text: str) -> List[IssueCard]:
@@ -544,3 +672,102 @@ class QualcommService:
                 "FAIL": "Telemetry latency > [TBD: max_packet_latency_ms] or packet dropped under nominal load"
             }
         )
+
+    def _mock_chat_requirements(
+        self,
+        pm_message: str,
+        project_context: str,
+        next_req_index: int = 1
+    ) -> Tuple[str, List[RequirementStatement], str]:
+        lower = pm_message.lower()
+        if any(w in lower for w in ["overheat", "temperature", "temp", "cool", "battery", "thermal", "hot"]):
+            reqs = [
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index:03d}",
+                    text="When pack temperature exceeds [TBD: max_pack_temp_degC], the thermal management system shall activate auxiliary liquid coolant flow within [TBD: cooling_actuation_ms].",
+                    category="Thermal Safety",
+                    section="Section 4.5 - BMS Thermal Management",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="When pack temperature exceeds [TBD: max_pack_temp_degC], the thermal management system shall activate auxiliary liquid coolant flow within [TBD: cooling_actuation_ms].",
+                        rationale="Derived from 800V EV BMS Charter: 55°C maximum DC fast charge limit.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="max_pack_temp_degC",
+                                suggested_value="55 °C",
+                                rationale="Maximum operating envelope under DC fast charging cited in Project Safety Charter.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="cooling_actuation_ms",
+                                suggested_value="250 ms",
+                                rationale="CAN-FD thermal valve response budget.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                ),
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index+1:03d}",
+                    text="If battery cell temperature reaches [TBD: critical_thermal_runaway_threshold_degC], the vehicle interface shall display a red warning icon and sound an audible chime within [TBD: alert_display_ms].",
+                    category="Driver Alert",
+                    section="Section 6.1 - Cluster Warning Alerts",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="If battery cell temperature reaches [TBD: critical_thermal_runaway_threshold_degC], the vehicle interface shall display a red warning icon and sound an audible chime within [TBD: alert_display_ms].",
+                        rationale="ISO 26262 ASIL-D driver notification requirement.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="critical_thermal_runaway_threshold_degC",
+                                suggested_value="60 °C",
+                                rationale="Thermal runaway onset threshold for NMC 811 chemistry.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="alert_display_ms",
+                                suggested_value="100 ms",
+                                rationale="Human factors instrument cluster warning display latency standard.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                )
+            ]
+            agent_reply = (
+                "I analyzed your request against your **Next-Gen 800V EV Powertrain & BMS** charter. "
+                "Because your thermal loop limits peak pack temperature to 55°C during 350kW fast charging, "
+                "I split your thought into two atomic EARS requirements: one for auxiliary cooling actuation and one for critical driver alerting. "
+                "All thresholds are preserved as `[TBD]` with Smart Suggested Defaults grounded in your charter."
+            )
+            grounding = "Grounded in Project Charter: 800V BMS thermal loop (55°C limit during 350kW fast charging, ISO 26262 ASIL-D)."
+            return agent_reply, reqs, grounding
+
+        # Generic Fallback
+        req = RequirementStatement(
+            id=f"REQ-CHAT-{next_req_index:03d}",
+            text=f"The system shall process {pm_message.strip()} within [TBD: max_response_latency_ms].",
+            category="Functional",
+            section="Section 3.0 - General Systems",
+            status=RequirementStatus.FLAGGED_TBD,
+            rewrite_suggestion=RewriteSuggestion(
+                original=pm_message,
+                revised=f"The system shall process {pm_message.strip()} within [TBD: max_response_latency_ms].",
+                rationale="Formatted into EARS syntax from conversational PM prompt.",
+                identified_tbds=[
+                    TbdDefault(
+                        parameter_name="max_response_latency_ms",
+                        suggested_value="200 ms",
+                        rationale="Nominal embedded controller execution cycle.",
+                        confidence="MEDIUM"
+                    )
+                ]
+            )
+        )
+        agent_reply = (
+            f"I converted your requirement thought into formal EARS syntax and mapped it to the system architecture. "
+            f"Numerical response time has been parameterized as `[TBD: max_response_latency_ms]` with a suggested default of 200ms."
+        )
+        grounding = "Grounded in general embedded systems operating charter."
+        return agent_reply, [req], grounding

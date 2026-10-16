@@ -352,3 +352,24 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * Generates zero-fabrication EARS rewrites preserving `[TBD: ...]` tokens and smart suggested defaults (`submit_rewritten_requirements`).
 * **Method**: `POST /api/analysis/blueprint`:
   * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint`).
+
+## 5. Conversational Requirement Copilot & Project Context
+* **Method**: `GET /api/chat/context`:
+  * Returns active project context (name, domain, architectural summary, and attached documents).
+* **Method**: `POST /api/chat/context`:
+  * Updates or creates project context.
+* **Method**: `POST /api/chat/context/document`:
+  * Multipart upload or raw text attachment of architectural charter documents (TXT, CSV, PDF).
+* **Method**: `POST /api/chat/message`:
+  * Conversational AI endpoint where Product Managers speak in informal, plain English.
+  * Formulates formal, atomic EARS requirements strictly grounded in the project context with zero-fabrication `[TBD]` preservation and smart suggested defaults.
+  * Automatically persists requirements to store if `save_to_store: true`.
+  * **Payload**:
+    ```json
+    {
+      "message": "When the battery gets too hot while fast charging, turn on coolant pump and alert the driver.",
+      "project_id": "default_project",
+      "save_to_store": true,
+      "conversation_history": []
+    }
+    ```

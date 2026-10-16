@@ -15,6 +15,11 @@ from backend.models.schemas import (
     DocumentParseRequest,
     DocumentParseResponse,
     SignOffActionRequest,
+    ProjectDocumentContext,
+    ProjectContext,
+    ChatMessageItem,
+    ChatRequirementRequest,
+    ChatRequirementResponse,
 )
 
 __all__ = [
@@ -34,4 +39,9 @@ __all__ = [
     "DocumentParseRequest",
     "DocumentParseResponse",
     "SignOffActionRequest",
+    "ProjectDocumentContext",
+    "ProjectContext",
+    "ChatMessageItem",
+    "ChatRequirementRequest",
+    "ChatRequirementResponse",
 ]

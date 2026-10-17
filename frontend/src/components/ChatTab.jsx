@@ -66,7 +66,7 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
       <div
         className="glass-card squircle-sm"
         style={{
-          padding: '8px 12px',
+          padding: '10px 14px',
           marginBottom: '10px',
           display: 'flex',
           alignItems: 'center',
@@ -74,14 +74,14 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Grounded Charter:</span>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Grounded Charter:</span>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
             {activeProject?.project_name}
           </span>
         </div>
         <span
           className="badge-chip squircle-xs"
-          style={{ fontSize: '10px', background: 'var(--accent-blue-subtle)', color: 'var(--accent-blue)' }}
+          style={{ fontSize: '11px', padding: '3px 8px', background: 'var(--accent-blue-subtle)', color: 'var(--accent-blue)' }}
         >
           EARS Syntax • Zero Fabrication
         </span>
@@ -111,16 +111,16 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
               className={`squircle-sm`}
               style={{
                 maxWidth: '85%',
-                padding: '10px 14px',
-                background: msg.sender === 'user' ? '#1c2230' : 'var(--bg-card)',
-                border: msg.sender === 'user' ? '1px solid #2b354d' : '1px solid var(--border-subtle)',
+                padding: '12px 16px',
+                background: msg.sender === 'user' ? '#1c2638' : 'var(--bg-card)',
+                border: msg.sender === 'user' ? '1px solid var(--border-medium)' : '1px solid var(--border-subtle)',
               }}
             >
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: '600' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: '600' }}>
                 {msg.sender === 'user' ? 'You' : 'Copilot'}
               </div>
 
-              <div style={{ fontSize: '12px', lineHeight: '1.45', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '13.5px', lineHeight: '1.55', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
                 {msg.text}
               </div>
 
@@ -129,28 +129,28 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
                 <div
                   className="squircle-xs"
                   style={{
-                    marginTop: '8px',
-                    padding: '8px 10px',
+                    marginTop: '10px',
+                    padding: '10px 12px',
                     background: 'var(--bg-app)',
                     border: '1px solid var(--border-medium)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>
                       {msg.suggestedReq.id || 'SUGGESTED-REQ'}
                     </span>
                     <button
                       onClick={() => onAdoptRequirement(msg.suggestedReq)}
                       className="btn-squircle btn-primary-blue"
-                      style={{ padding: '3px 8px', fontSize: '10px' }}
+                      style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: '500' }}
                     >
                       + Adopt
                     </button>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-primary)', fontStyle: 'italic', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '5px', lineHeight: '1.45' }}>
                     "{msg.suggestedReq.text}"
                   </div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
                     {msg.suggestedReq.category || 'General'} • {msg.suggestedReq.section || 'General'}
                   </div>
                 </div>
@@ -160,11 +160,11 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
         ))}
 
         {isLoading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '11px', padding: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)', fontSize: '12px', padding: '8px' }}>
             <span
               style={{
-                width: '6px',
-                height: '6px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
                 background: 'var(--accent-blue)',
               }}
@@ -175,15 +175,15 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
       </div>
 
       {/* Quick Prompt Chips */}
-      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '8px 0 4px' }}>
+      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '8px 0 4px' }}>
         {quickPrompts.map((p, i) => (
           <button
             key={i}
             onClick={() => handleSend(p)}
             className="btn-squircle btn-secondary"
             style={{
-              padding: '3px 8px',
-              fontSize: '10px',
+              padding: '4px 10px',
+              fontSize: '11.5px',
               whiteSpace: 'nowrap',
               color: 'var(--text-secondary)',
             }}

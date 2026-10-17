@@ -67,7 +67,7 @@ export default function Header({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
             Requirement Quality Copilot
           </span>
           <span
@@ -76,7 +76,9 @@ export default function Header({
               background: 'var(--accent-blue-subtle)',
               color: 'var(--accent-blue)',
               border: '1px solid var(--accent-blue-border)',
-              fontSize: '10px',
+              fontSize: '11px',
+              padding: '2px 8px',
+              fontWeight: '500',
             }}
           >
             Qualcomm Cloud AI 100
@@ -91,10 +93,10 @@ export default function Header({
           display: 'flex',
           alignItems: 'center',
           gap: '14px',
-          padding: '4px 14px',
+          padding: '6px 16px',
           background: 'var(--bg-panel)',
           border: '1px solid var(--border-subtle)',
-          fontSize: '11px',
+          fontSize: '12.5px',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -104,17 +106,17 @@ export default function Header({
           </span>
         </div>
 
-        <div style={{ width: '1px', height: '12px', background: 'var(--border-subtle)' }} />
+        <div style={{ width: '1px', height: '14px', background: 'var(--border-subtle)' }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span>
             <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> <span style={{ color: 'var(--text-muted)' }}>reqs</span>
           </span>
-          <span style={{ color: 'var(--text-green)' }}>
+          <span style={{ color: 'var(--text-green)', fontWeight: '500' }}>
             <strong>{lockPct}%</strong> locked
           </span>
           {tbd > 0 && (
-            <span style={{ color: 'var(--text-red)' }}>
+            <span style={{ color: 'var(--text-red)', fontWeight: '500' }}>
               <strong>{tbd}</strong> TBD
             </span>
           )}
@@ -128,8 +130,9 @@ export default function Header({
           onClick={() => setLiveMode(!liveMode)}
           className="btn-squircle"
           style={{
-            padding: '4px 8px',
-            fontSize: '11px',
+            padding: '5px 10px',
+            fontSize: '12px',
+            fontWeight: '500',
             background: liveMode ? 'var(--accent-green-subtle)' : 'var(--accent-amber-subtle)',
             color: liveMode ? 'var(--text-green)' : 'var(--text-amber)',
             border: `1px solid ${liveMode ? 'var(--accent-green-border)' : 'var(--accent-amber-border)'}`,
@@ -138,8 +141,8 @@ export default function Header({
         >
           <span
             style={{
-              width: '6px',
-              height: '6px',
+              width: '7px',
+              height: '7px',
               borderRadius: '50%',
               background: liveMode ? 'var(--text-green)' : 'var(--text-amber)',
             }}
@@ -153,9 +156,9 @@ export default function Header({
           onChange={(e) => setUserRole(e.target.value)}
           className="input-squircle"
           style={{
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: '500',
-            padding: '4px 8px',
+            padding: '5px 10px',
             cursor: 'pointer',
             background: 'var(--bg-input)',
             border: '1px solid var(--border-medium)',
@@ -172,9 +175,9 @@ export default function Header({
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
             className="btn-squircle btn-secondary"
-            style={{ padding: '4px 10px', fontSize: '11px' }}
+            style={{ padding: '5px 12px', fontSize: '12px', fontWeight: '500' }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -196,7 +199,7 @@ export default function Header({
                 border: '1px solid var(--border-medium)',
               }}
             >
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '4px 8px', fontWeight: '600' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 8px', fontWeight: '700', letterSpacing: '0.4px' }}>
                 EXPORT SPECIFICATION
               </div>
 
@@ -206,7 +209,7 @@ export default function Header({
                 style={{
                   width: '100%',
                   justifyContent: 'flex-start',
-                  padding: '6px 8px',
+                  padding: '8px 10px',
                   background: 'transparent',
                   color: 'var(--text-primary)',
                   textAlign: 'left',
@@ -214,10 +217,10 @@ export default function Header({
                 onMouseEnter={(e) => (e.target.style.background = 'var(--bg-card-hover)')}
                 onMouseLeave={(e) => (e.target.style.background = 'transparent')}
               >
-                <span>📊</span>
+                <span style={{ fontSize: '14px' }}>📊</span>
                 <div>
-                  <div style={{ fontSize: '11px', fontWeight: '500' }}>Export CSV</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>DOORS / Jira format</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '600' }}>Export CSV</div>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>DOORS / Jira format</div>
                 </div>
               </button>
 
@@ -227,7 +230,7 @@ export default function Header({
                 style={{
                   width: '100%',
                   justifyContent: 'flex-start',
-                  padding: '6px 8px',
+                  padding: '8px 10px',
                   background: 'transparent',
                   color: 'var(--text-primary)',
                   textAlign: 'left',
@@ -235,10 +238,10 @@ export default function Header({
                 onMouseEnter={(e) => (e.target.style.background = 'var(--bg-card-hover)')}
                 onMouseLeave={(e) => (e.target.style.background = 'transparent')}
               >
-                <span>📄</span>
+                <span style={{ fontSize: '14px' }}>📄</span>
                 <div>
-                  <div style={{ fontSize: '11px', fontWeight: '500' }}>Export PDF Specification</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ReportLab certified baseline</div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '600' }}>Export PDF Specification</div>
+                  <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>ReportLab certified baseline</div>
                 </div>
               </button>
             </div>

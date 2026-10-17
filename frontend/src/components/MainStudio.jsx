@@ -62,8 +62,8 @@ export default function MainStudio({
                 onClick={() => setActiveTab(t.id)}
                 className="btn-squircle"
                 style={{
-                  padding: '5px 12px',
-                  fontSize: '11px',
+                  padding: '7px 14px',
+                  fontSize: '12.5px',
                   fontWeight: isActive ? '600' : '500',
                   background: isActive ? 'var(--bg-card-selected)' : 'transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -76,13 +76,14 @@ export default function MainStudio({
                 {t.badge && (
                   <span
                     style={{
-                      fontSize: '9px',
-                      padding: '1px 5px',
-                      marginLeft: '5px',
+                      fontSize: '10.5px',
+                      padding: '2px 6px',
+                      marginLeft: '6px',
                       background: 'var(--accent-blue-subtle)',
                       color: 'var(--accent-blue)',
-                      borderRadius: '3px',
+                      borderRadius: '4px',
                       fontFamily: 'var(--font-mono)',
+                      fontWeight: '600',
                     }}
                   >
                     {t.badge}
@@ -93,9 +94,9 @@ export default function MainStudio({
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-muted)' }}>
           <span>Workspace:</span>
-          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
+          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: '600' }}>
             {activeProjectId}
           </span>
         </div>

@@ -1,50 +1,70 @@
 /* Apple Design System for Web — WWDC Fluid Interface & Craft Edition */
 :root {
-  /* Apple Pro Dark Neutral Materials (WWDC macOS & iPadOS Dark) */
-  --bg-app: #0a0c10;
-  --bg-chrome-translucent: rgba(16, 19, 26, 0.76);
-  --bg-sidebar: rgba(13, 15, 21, 0.84);
-  --bg-panel: rgba(18, 22, 30, 0.80);
-  --bg-card: rgba(22, 27, 36, 0.70);
-  --bg-card-hover: rgba(28, 34, 46, 0.85);
-  --bg-card-active: #1d2330;
-  --bg-input: rgba(12, 14, 19, 0.88);
+  /* Apple Pro Dark Neutral Materials */
+  --bg-app: #080a0f;
+  --bg-chrome-translucent: rgba(14, 18, 25, 0.88);
+  --bg-sidebar: rgba(11, 14, 20, 0.94);
+  --bg-panel: rgba(16, 20, 29, 0.92);
+  --bg-card: rgba(22, 28, 40, 0.85);
+  --bg-card-hover: rgba(30, 38, 54, 0.95);
+  --bg-card-active: #232c3d;
+  --bg-card-selected: #1c2638;
+  --bg-input: #0e121a;
 
   /* Materials: Subtle Hairline & Light-Catching Borders */
-  --border-subtle: rgba(255, 255, 255, 0.065);
-  --border-medium: rgba(255, 255, 255, 0.11);
-  --border-top-highlight: rgba(255, 255, 255, 0.14); /* Light catching the top glass edge */
-  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-top-highlight: rgba(255, 255, 255, 0.22);
+  --border-glass: rgba(255, 255, 255, 0.12);
 
-  /* Apple Pro Typography Scale & Vibrancy */
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-muted: #6e6e73;
-  --text-dim: #48484a;
+  /* High-Contrast Pro Typography Scale & Vibrancy */
+  --text-primary: #ffffff;
+  --text-secondary: #e2e8f0;   /* High-contrast readable slate-200 */
+  --text-muted: #94a3b8;       /* Clean readable medium slate-400 */
+  --text-dim: #64748b;         /* Crisp label slate-500 */
 
-  /* Muted Apple System Accents */
-  --system-blue: #2997ff;
-  --system-blue-subtle: rgba(41, 151, 255, 0.12);
-  --system-blue-border: rgba(41, 151, 255, 0.30);
+  /* High-Contrast Functional Status Colors */
+  --text-green: #4ade80;
+  --text-amber: #fcd34d;
+  --text-red: #f87171;
+  --text-blue: #60a5fa;
 
-  --system-green: #30d158;
-  --system-green-subtle: rgba(48, 209, 88, 0.12);
-  --system-green-border: rgba(48, 209, 88, 0.30);
+  /* Accent Colors & Subtles */
+  --accent-blue: #38bdf8;
+  --accent-blue-subtle: rgba(56, 189, 248, 0.15);
+  --accent-blue-border: rgba(56, 189, 248, 0.35);
 
-  --system-amber: #ffd60a;
-  --system-amber-subtle: rgba(255, 214, 10, 0.12);
-  --system-amber-border: rgba(255, 214, 10, 0.30);
+  --accent-green: #4ade80;
+  --accent-green-subtle: rgba(74, 222, 128, 0.15);
+  --accent-green-border: rgba(74, 222, 128, 0.35);
 
-  --system-red: #ff453a;
-  --system-red-subtle: rgba(255, 69, 58, 0.12);
-  --system-red-border: rgba(255, 69, 58, 0.30);
+  --accent-amber: #fbbf24;
+  --accent-amber-subtle: rgba(251, 191, 36, 0.15);
+  --accent-amber-border: rgba(251, 191, 36, 0.35);
 
-  --system-purple: #bf5af2;
-  --system-purple-subtle: rgba(191, 90, 242, 0.12);
+  --accent-red: #f87171;
+  --accent-red-subtle: rgba(248, 113, 113, 0.15);
+  --accent-red-border: rgba(248, 113, 113, 0.35);
 
-  /* SF Pro Typography Hierarchy */
-  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", -apple-system-ui-sans-serif, sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --system-blue: #38bdf8;
+  --system-blue-subtle: rgba(56, 189, 248, 0.15);
+  --system-blue-border: rgba(56, 189, 248, 0.35);
+
+  --system-green: #4ade80;
+  --system-green-subtle: rgba(74, 222, 128, 0.15);
+  --system-green-border: rgba(74, 222, 128, 0.35);
+
+  --system-amber: #fbbf24;
+  --system-amber-subtle: rgba(251, 191, 36, 0.15);
+  --system-amber-border: rgba(251, 191, 36, 0.35);
+
+  --system-red: #f87171;
+  --system-red-subtle: rgba(248, 113, 113, 0.15);
+  --system-red-border: rgba(248, 113, 113, 0.35);
+
+  /* Typography Hierarchy - Prioritize Inter & JetBrains Mono for web rendering */
+  --font-system: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
 
   /* Squircles: Apple Continuous Superellipse Radii */
   --squircle-xs: 6px;
@@ -105,14 +125,17 @@ h1, h2, h3, .heading-large {
 
 body, p, .body-regular {
   letter-spacing: -0.006em;
-  line-height: 1.45;
-  font-size: 13px;
+  line-height: 1.5;
+  font-size: 13.5px;
+  color: var(--text-secondary);
 }
 
 .caption-small {
-  letter-spacing: 0.025em;
-  line-height: 1.35;
-  font-size: 11px;
+  letter-spacing: 0.015em;
+  line-height: 1.4;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .tabular-nums {

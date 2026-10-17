@@ -94,14 +94,14 @@ export default function Sidebar({
       {/* 1. Projects Section */}
       <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
             WORKSPACES
           </span>
           {userRole !== 'executive' && (
             <button
               onClick={() => setShowNewProjectModal(true)}
               className="btn-squircle btn-secondary"
-              style={{ padding: '2px 7px', fontSize: '10px' }}
+              style={{ padding: '3px 8px', fontSize: '11px', fontWeight: '500' }}
               title="Create New Workspace"
             >
               + New
@@ -120,7 +120,7 @@ export default function Sidebar({
                 style={{
                   width: '100%',
                   justifyContent: 'space-between',
-                  padding: '6px 8px',
+                  padding: '7px 9px',
                   background: isActive ? 'var(--bg-card-selected)' : 'transparent',
                   border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -128,11 +128,11 @@ export default function Sidebar({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                  <span style={{ fontSize: '12px', opacity: 0.8 }}>
+                  <span style={{ fontSize: '13px', opacity: 0.85 }}>
                     {proj.project_id.includes('bms') ? '⚡' : proj.project_id.includes('flight') ? '✈' : proj.project_id.includes('med') ? '✚' : '📁'}
                   </span>
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <div style={{ fontSize: '11px', fontWeight: isActive ? '600' : '500' }}>
+                    <div style={{ fontSize: '12.5px', fontWeight: isActive ? '600' : '500' }}>
                       {proj.project_name}
                     </div>
                   </div>
@@ -140,9 +140,10 @@ export default function Sidebar({
 
                 <span
                   style={{
-                    fontSize: '10px',
+                    fontSize: '11.5px',
                     color: 'var(--text-muted)',
                     fontFamily: 'var(--font-mono)',
+                    fontWeight: '500',
                   }}
                 >
                   {proj.total_requirements ?? 0}
@@ -154,9 +155,9 @@ export default function Sidebar({
       </div>
 
       {/* 2. Requirements Explorer Header & Filters */}
-      <div style={{ padding: '10px 14px 6px', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
+          <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
             REQUIREMENTS
           </span>
           {userRole !== 'executive' && (
@@ -166,7 +167,7 @@ export default function Sidebar({
                 setShowNewReqModal(true);
               }}
               className="btn-squircle btn-secondary"
-              style={{ padding: '2px 7px', fontSize: '10px' }}
+              style={{ padding: '3px 8px', fontSize: '11px', fontWeight: '500' }}
               title="Add Statement"
             >
               + Add
@@ -181,11 +182,11 @@ export default function Sidebar({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input-squircle"
-          style={{ width: '100%', fontSize: '11px', padding: '5px 8px', marginBottom: '6px' }}
+          style={{ width: '100%', fontSize: '12px', padding: '6px 9px', marginBottom: '8px' }}
         />
 
         {/* Status Filter Pills */}
-        <div style={{ display: 'flex', gap: '3px', overflowX: 'auto', paddingBottom: '2px' }}>
+        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
           {['ALL', 'FLAGGED_TBD', 'PROVISIONAL_PM', 'LOCKED_BASELINE'].map((st) => {
             const isSelected = statusFilter === st;
             const label = st === 'ALL' ? 'All' : st === 'FLAGGED_TBD' ? 'TBD' : st === 'PROVISIONAL_PM' ? 'Prov' : 'Locked';
@@ -195,8 +196,9 @@ export default function Sidebar({
                 onClick={() => setStatusFilter(st)}
                 className="btn-squircle squircle-pill"
                 style={{
-                  padding: '2px 7px',
-                  fontSize: '10px',
+                  padding: '3px 9px',
+                  fontSize: '11px',
+                  fontWeight: '500',
                   background: isSelected ? 'var(--border-medium)' : 'transparent',
                   color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)',
                   border: isSelected ? '1px solid var(--border-glass)' : '1px solid transparent',
@@ -210,9 +212,9 @@ export default function Sidebar({
       </div>
 
       {/* 3. Requirements List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {filteredRequirements.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-dim)', fontSize: '11px' }}>
+          <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-muted)', fontSize: '12px' }}>
             No requirements match criteria.
           </div>
         ) : (
@@ -230,23 +232,23 @@ export default function Sidebar({
                 onClick={() => setSelectedReqId(req.id)}
                 className="glass-card squircle-sm"
                 style={{
-                  padding: '8px 10px',
+                  padding: '10px 12px',
                   cursor: 'pointer',
                   background: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
                   borderColor: isSelected ? 'var(--accent-blue-border)' : 'var(--border-subtle)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span
                       style={{
-                        width: '6px',
-                        height: '6px',
+                        width: '7px',
+                        height: '7px',
                         borderRadius: '50%',
                         background: statusColor,
                       }}
                     />
-                    <span style={{ fontSize: '11px', fontWeight: '600', fontFamily: 'var(--font-mono)', color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
                       {req.id}
                     </span>
                   </div>
@@ -254,9 +256,10 @@ export default function Sidebar({
                   {scoreVal !== undefined && (
                     <span
                       style={{
-                        fontSize: '10px',
-                        color: 'var(--text-muted)',
+                        fontSize: '11.5px',
+                        color: 'var(--text-secondary)',
                         fontFamily: 'var(--font-mono)',
+                        fontWeight: '500',
                       }}
                     >
                       {Math.round(scoreVal)} pts
@@ -266,9 +269,9 @@ export default function Sidebar({
 
                 <div
                   style={{
-                    fontSize: '11px',
+                    fontSize: '12px',
                     color: 'var(--text-secondary)',
-                    lineHeight: '1.35',
+                    lineHeight: '1.45',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',

@@ -1,81 +1,81 @@
 /* Apple Design System for Web — WWDC Fluid Interface & Craft Edition */
 :root {
-  /* Apple Pro Dark Neutral Materials (Zero Blue Tint - Pure System Greys) */
-  --bg-app: #161618;
-  --bg-chrome-translucent: rgba(22, 22, 24, 0.90);
-  --bg-sidebar: rgba(26, 26, 28, 0.96);
-  --bg-panel: rgba(30, 30, 34, 0.94);
-  --bg-card: rgba(38, 38, 42, 0.88);
-  --bg-card-hover: rgba(48, 48, 54, 0.96);
-  --bg-card-active: #3a3a40;
-  --bg-card-selected: #34343a;
-  --bg-input: #202023;
+  /* Notion Dark Mode Core Palette */
+  --bg-app: #191919;
+  --bg-chrome-translucent: #191919;
+  --bg-sidebar: #202020;
+  --bg-panel: #202020;
+  --bg-card: #252525;
+  --bg-card-hover: #2f2f2f;
+  --bg-card-active: #353535;
+  --bg-card-selected: #2d2d2d;
+  --bg-input: #202020;
 
-  /* Materials: Subtle Hairline & Light-Catching Apple Specular Borders */
+  /* Notion Subtle Borders & Dividers */
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-medium: rgba(255, 255, 255, 0.14);
-  --border-top-highlight: rgba(255, 255, 255, 0.20);
-  --border-glass: rgba(255, 255, 255, 0.10);
+  --border-medium: rgba(255, 255, 255, 0.13);
+  --border-top-highlight: rgba(255, 255, 255, 0.10);
+  --border-glass: rgba(255, 255, 255, 0.08);
 
-  /* High-Contrast Pro Typography Scale & Vibrancy */
-  --text-primary: #ffffff;
-  --text-secondary: #e2e8f0;   /* High-contrast readable slate-200 */
-  --text-muted: #94a3b8;       /* Clean readable medium slate-400 */
-  --text-dim: #64748b;         /* Crisp label slate-500 */
+  /* High-Contrast Notion Typography Scale */
+  --text-primary: rgba(255, 255, 255, 0.90);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.45);
+  --text-dim: rgba(255, 255, 255, 0.30);
 
-  /* High-Contrast Functional Status Colors */
-  --text-green: #4ade80;
-  --text-amber: #fcd34d;
-  --text-red: #f87171;
-  --text-blue: #60a5fa;
+  /* Notion Functional Status Colors */
+  --text-green: #4dab72;
+  --text-amber: #e5b85d;
+  --text-red: #eb5757;
+  --text-blue: #529cca;
 
-  /* Accent Colors & Subtles */
-  --accent-blue: #38bdf8;
-  --accent-blue-subtle: rgba(56, 189, 248, 0.15);
-  --accent-blue-border: rgba(56, 189, 248, 0.35);
+  /* Notion Tag Pill Accents */
+  --accent-blue: #529cca;
+  --accent-blue-subtle: rgba(43, 136, 217, 0.20);
+  --accent-blue-border: rgba(43, 136, 217, 0.35);
 
-  --accent-green: #4ade80;
-  --accent-green-subtle: rgba(74, 222, 128, 0.15);
-  --accent-green-border: rgba(74, 222, 128, 0.35);
+  --accent-green: #4dab72;
+  --accent-green-subtle: rgba(46, 133, 81, 0.20);
+  --accent-green-border: rgba(46, 133, 81, 0.35);
 
-  --accent-amber: #fbbf24;
-  --accent-amber-subtle: rgba(251, 191, 36, 0.15);
-  --accent-amber-border: rgba(251, 191, 36, 0.35);
+  --accent-amber: #e5b85d;
+  --accent-amber-subtle: rgba(203, 145, 47, 0.20);
+  --accent-amber-border: rgba(203, 145, 47, 0.35);
 
-  --accent-red: #f87171;
-  --accent-red-subtle: rgba(248, 113, 113, 0.15);
-  --accent-red-border: rgba(248, 113, 113, 0.35);
+  --accent-red: #eb5757;
+  --accent-red-subtle: rgba(224, 62, 62, 0.20);
+  --accent-red-border: rgba(224, 62, 62, 0.35);
 
-  --system-blue: #38bdf8;
-  --system-blue-subtle: rgba(56, 189, 248, 0.15);
-  --system-blue-border: rgba(56, 189, 248, 0.35);
+  --system-blue: #529cca;
+  --system-blue-subtle: rgba(43, 136, 217, 0.20);
+  --system-blue-border: rgba(43, 136, 217, 0.35);
 
-  --system-green: #4ade80;
-  --system-green-subtle: rgba(74, 222, 128, 0.15);
-  --system-green-border: rgba(74, 222, 128, 0.35);
+  --system-green: #4dab72;
+  --system-green-subtle: rgba(46, 133, 81, 0.20);
+  --system-green-border: rgba(46, 133, 81, 0.35);
 
-  --system-amber: #fbbf24;
-  --system-amber-subtle: rgba(251, 191, 36, 0.15);
-  --system-amber-border: rgba(251, 191, 36, 0.35);
+  --system-amber: #e5b85d;
+  --system-amber-subtle: rgba(203, 145, 47, 0.20);
+  --system-amber-border: rgba(203, 145, 47, 0.35);
 
-  --system-red: #f87171;
-  --system-red-subtle: rgba(248, 113, 113, 0.15);
-  --system-red-border: rgba(248, 113, 113, 0.35);
+  --system-red: #eb5757;
+  --system-red-subtle: rgba(224, 62, 62, 0.20);
+  --system-red-border: rgba(224, 62, 62, 0.35);
 
-  /* Typography Hierarchy - Prioritize Inter & JetBrains Mono for web rendering */
-  --font-system: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Monaco, Consolas, monospace;
+  /* Notion Clean Typography Hierarchy */
+  --font-system: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: 'SFMono-Regular', Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* Squircles: Apple Continuous Superellipse Radii */
-  --squircle-xs: 6px;
-  --squircle-sm: 9px;
-  --squircle-md: 12px;
-  --squircle-lg: 16px;
-  --squircle-xl: 22px;
+  /* Notion Radii */
+  --squircle-xs: 3px;
+  --squircle-sm: 4px;
+  --squircle-md: 6px;
+  --squircle-lg: 8px;
+  --squircle-xl: 12px;
 
-  /* Spring Physics Timing Constants */
-  --spring-press-timing: 100ms cubic-bezier(0.2, 0.9, 0.3, 1);
-  --spring-settle-timing: 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Timing Constants */
+  --spring-press-timing: 80ms ease;
+  --spring-settle-timing: 150ms ease;
 }
 
 * {
@@ -305,36 +305,122 @@ body, p, .body-regular {
 .badge-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   padding: 2px 7px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
-  border-radius: var(--squircle-xs);
-  letter-spacing: 0.02em;
+  border-radius: 3px;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
 }
 
 .badge-locked {
-  background: var(--system-green-subtle);
-  color: var(--system-green);
-  border: 1px solid var(--system-green-border);
+  background: rgba(46, 133, 81, 0.22);
+  color: #4dab72;
+  border: 1px solid rgba(46, 133, 81, 0.35);
 }
 
 .badge-provisional {
-  background: var(--system-amber-subtle);
-  color: var(--system-amber);
-  border: 1px solid var(--system-amber-border);
+  background: rgba(203, 145, 47, 0.22);
+  color: #e5b85d;
+  border: 1px solid rgba(203, 145, 47, 0.35);
 }
 
 .badge-tbd {
-  background: var(--system-red-subtle);
-  color: var(--system-red);
-  border: 1px solid var(--system-red-border);
+  background: rgba(224, 62, 62, 0.22);
+  color: #eb5757;
+  border: 1px solid rgba(224, 62, 62, 0.35);
 }
 
 .badge-chip-cyan {
-  background: var(--system-blue-subtle);
-  color: var(--system-blue);
-  border: 1px solid var(--system-blue-border);
+  background: rgba(43, 136, 217, 0.22);
+  color: #529cca;
+  border: 1px solid rgba(43, 136, 217, 0.35);
+}
+
+/* ==========================================================================
+   5B. NOTION SPECIFIC COMPONENTS: Callouts, Property Tables & Tags
+   ========================================================================== */
+.notion-callout {
+  display: flex;
+  gap: 12px;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.notion-callout-icon {
+  font-size: 17px;
+  line-height: 1.35;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.notion-callout-content {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.notion-property-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12.5px;
+  min-height: 29px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.notion-property-name {
+  width: 140px;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notion-property-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+}
+
+.notion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  user-select: none;
+}
+
+.notion-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.notion-btn-primary {
+  background: #2383e2;
+  color: #ffffff;
+  border: 1px solid #1c6dc0;
+}
+
+.notion-btn-primary:hover {
+  background: #1d74ca;
 }
 
 /* ==========================================================================

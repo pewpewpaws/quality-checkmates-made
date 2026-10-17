@@ -223,57 +223,71 @@ export default function Sidebar({
             const isLocked = req.status === 'LOCKED_BASELINE';
             const isProv = req.status === 'PROVISIONAL_PM';
 
-            const statusColor = isLocked ? 'var(--text-green)' : isProv ? 'var(--text-amber)' : 'var(--text-red)';
+            const statusClass = isLocked ? 'badge-locked' : isProv ? 'badge-provisional' : 'badge-tbd';
+            const statusLabel = isLocked ? 'Locked' : isProv ? 'Prov' : 'TBD';
             const scoreVal = req.quality_score?.overall;
 
             return (
               <div
                 key={req.id}
                 onClick={() => setSelectedReqId(req.id)}
-                className="glass-card squircle-sm"
                 style={{
-                  padding: '10px 12px',
+                  padding: '7px 9px',
+                  borderRadius: '4px',
                   cursor: 'pointer',
-                  background: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
-                  borderColor: isSelected ? 'var(--accent-blue-border)' : 'var(--border-subtle)',
+                  background: isSelected ? 'rgba(255, 255, 255, 0.085)' : 'transparent',
+                  border: isSelected ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid transparent',
+                  transition: 'background 0.1s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
                 }}
+                className="notion-sidebar-row"
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px', overflow: 'hidden' }}>
+                    <span style={{ fontSize: '13px', opacity: 0.85 }}>📄</span>
                     <span
                       style={{
-                        width: '7px',
-                        height: '7px',
-                        borderRadius: '50%',
-                        background: statusColor,
+                        fontSize: '12.5px',
+                        fontWeight: isSelected ? '600' : '500',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--text-primary)',
                       }}
-                    />
-                    <span style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
+                    >
                       {req.id}
                     </span>
                   </div>
 
-                  {scoreVal !== undefined && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {scoreVal !== undefined && (
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--text-muted)',
+                          fontFamily: 'var(--font-mono)',
+                        }}
+                      >
+                        {Math.round(scoreVal)}
+                      </span>
+                    )}
                     <span
-                      style={{
-                        fontSize: '11.5px',
-                        color: 'var(--text-secondary)',
-                        fontFamily: 'var(--font-mono)',
-                        fontWeight: '500',
-                      }}
+                      className={`badge-chip ${statusClass}`}
+                      style={{ fontSize: '9.5px', padding: '1px 5px' }}
                     >
-                      {Math.round(scoreVal)} pts
+                      {statusLabel}
                     </span>
-                  )}
+                  </div>
                 </div>
 
                 <div
                   style={{
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    lineHeight: '1.45',
+                    fontSize: '11.5px',
+                    color: 'var(--text-muted)',
+                    lineHeight: '1.35',
+                    paddingLeft: '20px',
                     display: '-webkit-box',
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: 1,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
                   }}

@@ -498,21 +498,21 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792257596.5691605,
-    "seen": 1792259463.7669876,
-    "ast_hash": "8ab512f317db2813f24e04f9f964b9e0",
+    "mtime": 1792260137.8887787,
+    "seen": 1792260215.9159572,
+    "ast_hash": "bb1adcd6cbd416058fdaf77d36228c05",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {
-    "mtime": 1792259126.6372585,
-    "seen": 1792259463.7669897,
-    "ast_hash": "5e65371c9284d62d3526870c82e65179",
+    "mtime": 1792259723.3119283,
+    "seen": 1792260215.9159603,
+    "ast_hash": "b384f55c749c68547a7af7f7a8ba52bd",
     "semantic_hash": ""
   },
   "frontend/src/components/Header.jsx": {
-    "mtime": 1792259103.5150523,
-    "seen": 1792259463.7670019,
-    "ast_hash": "3039a110c5b6cb1ef9073fef5526cf82",
+    "mtime": 1792260021.7679973,
+    "seen": 1792260215.915963,
+    "ast_hash": "500fd20d3b1cb75c3c307a0e33ebd583",
     "semantic_hash": ""
   },
   "frontend/src/components/IngestTab.jsx": {
@@ -522,15 +522,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/MainStudio.jsx": {
-    "mtime": 1792257720.9004922,
-    "seen": 1792259463.7670112,
-    "ast_hash": "836f4ca97c48612d979c0612e945a8b9",
+    "mtime": 1792260198.8721852,
+    "seen": 1792260215.9159691,
+    "ast_hash": "93fc1a3f3d84dc8b1be04a03a4bd3121",
     "semantic_hash": ""
   },
   "frontend/src/components/Sidebar.jsx": {
-    "mtime": 1792257634.1652193,
-    "seen": 1792259463.7670135,
-    "ast_hash": "9258086d96f62fbd4a842608101e431e",
+    "mtime": 1792260059.9232552,
+    "seen": 1792260215.9159713,
+    "ast_hash": "3f6be1b167c766013a69584028794625",
     "semantic_hash": ""
   },
   "frontend/src/main.jsx": {

@@ -22,10 +22,10 @@ export default function MainStudio({
   const [activeTab, setActiveTab] = useState('studio');
 
   const tabs = [
-    { id: 'studio', label: 'Inspector', badge: selectedRequirement?.id || null },
-    { id: 'chat', label: 'Copilot Chat' },
-    { id: 'ingest', label: 'Ingest & Parse' },
-    { id: 'conflict', label: 'Conflict Radar' },
+    { id: 'studio', label: 'Inspector', icon: '📋', badge: selectedRequirement?.id || null },
+    { id: 'chat', label: 'Copilot Chat', icon: '💬' },
+    { id: 'ingest', label: 'Ingest Documents', icon: '📥' },
+    { id: 'conflict', label: 'Conflict Radar', icon: '⚡' },
   ];
 
   return (
@@ -34,56 +34,64 @@ export default function MainStudio({
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 52px)',
+        height: 'calc(100vh - 44px)',
         zIndex: 30,
         overflow: 'hidden',
-        padding: '10px 14px 12px',
+        padding: '8px 16px 12px',
         position: 'relative',
         background: 'var(--bg-app)',
       }}
     >
-      {/* Tab Switcher Bar */}
+      {/* Notion View Switcher Bar */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '2px 4px',
+          padding: '0 4px',
           marginBottom: '10px',
           borderBottom: '1px solid var(--border-subtle)',
         }}
       >
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', gap: '2px' }}>
           {tabs.map((t) => {
             const isActive = activeTab === t.id;
             return (
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
-                className="btn-squircle"
                 style={{
-                  padding: '7px 14px',
-                  fontSize: '12.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 10px',
+                  fontSize: '13px',
                   fontWeight: isActive ? '600' : '500',
-                  background: isActive ? 'var(--bg-card-selected)' : 'transparent',
+                  background: 'transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                  border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
-                  borderBottom: isActive ? '2px solid var(--accent-blue)' : '2px solid transparent',
-                  borderRadius: '6px 6px 0 0',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: isActive ? '2px solid var(--text-primary)' : '2px solid transparent',
+                  cursor: 'pointer',
+                  borderRadius: '3px 3px 0 0',
+                  transition: 'color 0.1s ease',
                 }}
+                className="notion-tab-btn"
               >
+                <span style={{ fontSize: '13px' }}>{t.icon}</span>
                 {t.label}
                 {t.badge && (
                   <span
                     style={{
-                      fontSize: '10.5px',
-                      padding: '2px 6px',
-                      marginLeft: '6px',
-                      background: 'var(--accent-blue-subtle)',
-                      color: 'var(--accent-blue)',
-                      borderRadius: '4px',
+                      fontSize: '11px',
+                      padding: '1px 5px',
+                      marginLeft: '4px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: 'var(--text-secondary)',
+                      borderRadius: '3px',
                       fontFamily: 'var(--font-mono)',
-                      fontWeight: '600',
+                      fontWeight: '500',
                     }}
                   >
                     {t.badge}

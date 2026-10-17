@@ -35,83 +35,86 @@ export default function Header({
     <header
       style={{
         zIndex: 50,
-        height: '52px',
-        padding: '0 16px',
+        height: '44px',
+        padding: '0 14px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         background: 'var(--bg-sidebar)',
         borderBottom: '1px solid var(--border-subtle)',
         position: 'relative',
+        fontSize: '13px',
       }}
     >
-      {/* Brand Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Notion Breadcrumb Trail */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <div
-          className="squircle-xs"
           style={{
-            width: '28px',
-            height: '28px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid var(--border-medium)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '6px',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            padding: '3px 6px',
+            borderRadius: '4px',
+            transition: 'background 0.12s ease',
           }}
+          className="notion-breadcrumb-item"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-            <polyline points="2 17 12 22 22 17" />
-            <polyline points="2 12 12 17 22 12" />
-          </svg>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
-            Requirement Quality Copilot
+          <span style={{ fontSize: '15px' }}>📋</span>
+          <span style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>
+            Quality Copilot
           </span>
         </div>
-      </div>
 
-      {/* Middle Stats Bar (Active Project Scope) */}
-      <div
-        className="squircle-pill"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '14px',
-          padding: '6px 16px',
-          background: 'var(--bg-panel)',
-          border: '1px solid var(--border-subtle)',
-          fontSize: '12.5px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ color: 'var(--text-muted)' }}>Project:</span>
-          <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
+        <span style={{ color: 'var(--text-dim)', fontSize: '12px' }}>/</span>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 8px',
+            borderRadius: '4px',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid var(--border-subtle)',
+          }}
+        >
+          <span style={{ fontSize: '13px' }}>
+            {activeProjectId.includes('bms') ? '⚡' : activeProjectId.includes('flight') ? '✈' : activeProjectId.includes('med') ? '✚' : '📁'}
+          </span>
+          <span style={{ fontWeight: '600', color: 'var(--text-primary)', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {activeProject?.project_name || activeProjectId}
           </span>
         </div>
+      </div>
 
-        <div style={{ width: '1px', height: '14px', background: 'var(--border-subtle)' }} />
+      {/* Middle Stats: Notion Tag Pills */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span
+          className="badge-chip"
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-subtle)',
+          }}
+        >
+          {total} reqs
+        </span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span>
-            <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> <span style={{ color: 'var(--text-muted)' }}>reqs</span>
+        <span className="badge-chip badge-locked">
+          {lockPct}% locked
+        </span>
+
+        {tbd > 0 && (
+          <span className="badge-chip badge-tbd">
+            {tbd} TBD
           </span>
-          <span style={{ color: 'var(--text-green)', fontWeight: '500' }}>
-            <strong>{lockPct}%</strong> locked
-          </span>
-          {tbd > 0 && (
-            <span style={{ color: 'var(--text-red)', fontWeight: '500' }}>
-              <strong>{tbd}</strong> TBD
-            </span>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Right Controls: Persona Switcher, Export, Mode */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Offline / Live Toggle */}
         <button
           onClick={() => setLiveMode(!liveMode)}

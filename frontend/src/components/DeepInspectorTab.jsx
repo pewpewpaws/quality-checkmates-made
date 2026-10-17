@@ -184,107 +184,137 @@ export default function DeepInspectorTab({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '10px', paddingRight: '4px' }}>
-      {/* 1. Header & Status Bar */}
-      <div
-        className="glass-panel squircle-sm"
-        style={{
-          padding: '12px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '15px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
-              {requirement.id}
-            </span>
-            <span
-              className={`badge-chip squircle-xs ${isLocked ? 'badge-locked' : isProv ? 'badge-provisional' : 'badge-tbd'}`}
-              style={{ fontSize: '11px', padding: '3px 8px' }}
-            >
-              {isLocked ? 'LOCKED BASELINE' : isProv ? 'PROVISIONAL PM' : 'FLAGGED TBD'}
-            </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontWeight: '500' }}>
-              v{requirement.version}
-            </span>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '12px', paddingRight: '6px' }}>
+      {/* 1. Notion Page Header & Title */}
+      <div style={{ padding: '8px 4px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '24px', lineHeight: 1 }}>
+            {activeProjectId.includes('bms') ? '⚡' : activeProjectId.includes('flight') ? '✈' : activeProjectId.includes('med') ? '✚' : '📄'}
+          </span>
+          <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+            {requirement.id}: {requirement.category || 'Functional Requirement'}
+          </h1>
+        </div>
+
+        {/* 2. Notion Properties Table */}
+        <div style={{ display: 'flex', flexDirection: 'column', margin: '10px 0', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', padding: '4px 0' }}>
+          <div className="notion-property-row">
+            <div className="notion-property-name">
+              <span>🏷️</span> Status
+            </div>
+            <div className="notion-property-value">
+              <span className={`badge-chip ${isLocked ? 'badge-locked' : isProv ? 'badge-provisional' : 'badge-tbd'}`}>
+                {isLocked ? 'LOCKED BASELINE' : isProv ? 'PROVISIONAL PM' : 'FLAGGED TBD'}
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                v{requirement.version}
+              </span>
+            </div>
           </div>
 
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Category: <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>{requirement.category || 'General'}</span> • Section: <span style={{ color: 'var(--text-secondary)', fontWeight: '500' }}>{requirement.section || 'General'}</span>
+          <div className="notion-property-row">
+            <div className="notion-property-name">
+              <span>📑</span> Section
+            </div>
+            <div className="notion-property-value">
+              <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>{requirement.section || 'General'}</span>
+            </div>
+          </div>
+
+          <div className="notion-property-row">
+            <div className="notion-property-name">
+              <span>📊</span> Quality Score
+            </div>
+            <div className="notion-property-value">
+              <span style={{ fontWeight: '600', fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-primary)' }}>
+                {overallScore}/100
+              </span>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                (Clarity: {scoreObj?.clarity || 0}/25 • Verifiability: {scoreObj?.verifiability || 0}/25 • Completeness: {scoreObj?.completeness || 0}/20)
+              </span>
+            </div>
+          </div>
+
+          <div className="notion-property-row">
+            <div className="notion-property-name">
+              <span>🔑</span> Dual-Key Gate
+            </div>
+            <div className="notion-property-value">
+              <span style={{ fontSize: '12px', color: isLocked ? 'var(--text-green)' : isProv ? 'var(--text-amber)' : 'var(--text-muted)' }}>
+                {isLocked ? `Technical Sign-off: ${requirement.sign_off?.tech_lead_approver || 'Lead Systems Engineer'}` : isProv ? `PM Provisional Value: ${requirement.sign_off?.pm_target_val || 'Pending validation'}` : 'Pending Dual-Key Sign-off'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* AI Action Quick Buttons */}
-        <div style={{ display: 'flex', gap: '6px' }}>
+        {/* 3. Notion Action Toolbar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0 12px' }}>
           <button
             onClick={handleTriggerXray}
             disabled={isRunningAI}
-            className="btn-squircle btn-secondary"
-            style={{ fontSize: '12px', padding: '5px 10px', fontWeight: '500' }}
+            className="notion-btn"
           >
-            X-Ray
+            🔬 Run X-Ray
           </button>
           <button
             onClick={handleTriggerDuel}
             disabled={isRunningAI}
-            className="btn-squircle btn-secondary"
-            style={{ fontSize: '12px', padding: '5px 10px', fontWeight: '500' }}
+            className="notion-btn"
           >
-            Duel
+            ⚔️ Interpretation Duel
           </button>
           <button
             onClick={handleTriggerRewrite}
             disabled={isRunningAI}
-            className="btn-squircle btn-secondary"
-            style={{ fontSize: '12px', padding: '5px 10px', fontWeight: '500' }}
+            className="notion-btn"
           >
-            Rewrite
+            ✍️ Intent-Locked Rewrite
           </button>
           <button
             onClick={handleTriggerBlueprint}
             disabled={isRunningAI}
-            className="btn-squircle btn-secondary"
-            style={{ fontSize: '12px', padding: '5px 10px', fontWeight: '500' }}
+            className="notion-btn"
           >
-            Blueprint
+            🧪 Verification Blueprint
           </button>
         </div>
       </div>
 
-      {/* 2. Interactive Requirement Text Box */}
-      <div className="glass-panel squircle-sm" style={{ padding: '14px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
-            CONTRACTUAL STATEMENT
-          </span>
-          {userRole !== 'executive' && (
-            <button
-              onClick={() => {
-                if (isEditingText) handleSaveTextEdit();
-                else setIsEditingText(true);
-              }}
-              className="btn-squircle btn-secondary"
-              style={{ padding: '3px 8px', fontSize: '11px', fontWeight: '500' }}
-            >
-              {isEditingText ? '✓ Save' : 'Edit'}
-            </button>
+      {/* 4. Notion Callout Block for Requirement Statement */}
+      <div className="notion-callout">
+        <div className="notion-callout-icon">📌</div>
+        <div className="notion-callout-content">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+              Contractual Statement
+            </span>
+            {userRole !== 'executive' && (
+              <button
+                onClick={() => {
+                  if (isEditingText) handleSaveTextEdit();
+                  else setIsEditingText(true);
+                }}
+                className="notion-btn"
+                style={{ padding: '2px 8px', fontSize: '11px' }}
+              >
+                {isEditingText ? '✓ Save' : '✎ Edit'}
+              </button>
+            )}
+          </div>
+
+          {isEditingText ? (
+            <textarea
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              className="input-squircle"
+              style={{ width: '100%', height: '80px', fontSize: '14px', lineHeight: '1.5' }}
+            />
+          ) : (
+            <div style={{ fontSize: '14.5px', lineHeight: '1.65', color: 'var(--text-primary)', fontWeight: '450' }}>
+              {renderHighlightedText(requirement.text)}
+            </div>
           )}
         </div>
-
-        {isEditingText ? (
-          <textarea
-            value={editedText}
-            onChange={(e) => setEditedText(e.target.value)}
-            className="input-squircle"
-            style={{ width: '100%', height: '80px', fontSize: '14px', lineHeight: '1.5' }}
-          />
-        ) : (
-          <div style={{ fontSize: '15px', lineHeight: '1.65', color: 'var(--text-primary)', fontWeight: '450', padding: '4px 0' }}>
-            {renderHighlightedText(requirement.text)}
-          </div>
-        )}
       </div>
 
       {/* 3. Deterministic 100-Point Rubric Card */}

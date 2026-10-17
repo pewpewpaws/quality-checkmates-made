@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792262162.8521283,
-    "seen": 1792262193.4797914,
-    "ast_hash": "988ff36deab8a4e746887f85c18eff10",
+    "mtime": 1792262608.4906137,
+    "seen": 1792262624.252611,
+    "ast_hash": "f9c01dda10915d814adabcbcb43569f5",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {

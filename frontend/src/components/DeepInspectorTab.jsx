@@ -324,7 +324,63 @@ export default function DeepInspectorTab({
   const overallScore = scoreObj ? Math.round(scoreObj.overall) : 0;
 
   const getSmartSuggestionsForParam = (paramName) => {
-    const p = (paramName || '').toLowerCase();
+    const p = (paramName || '').toLowerCase().trim();
+
+    // 0. Explicit vague / unquantified terms mapping to formal TBD placeholders & engineering defaults
+    if (p === 'periodically') {
+      return [
+        { value: 'every [TBD: transmission interval in ms]', rationale: 'Convert to contractual [TBD] parameter envelope', confidence: 'RECOMMENDED' },
+        { value: 'every 1000ms', rationale: '1 Hz nominal CAN-FD telemetry broadcast rate', confidence: 'HIGH' },
+        { value: 'every 5000ms', rationale: '0.2 Hz low-power telematics transmission cycle', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p === 'as appropriate') {
+      return [
+        { value: 'under [TBD: transmission policy]', rationale: 'Convert to contractual [TBD] policy envelope', confidence: 'RECOMMENDED' },
+        { value: 'upon DTC fault trigger or cyclic timer expiry', rationale: 'Deterministic ISO 14229 UDS diagnostic trigger', confidence: 'HIGH' },
+        { value: 'when vehicle ignition state is active', rationale: 'Power-mode gated telemetry transmission', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p === 'quickly') {
+      return [
+        { value: 'within [TBD: response duration in ms]', rationale: 'Convert to contractual [TBD] latency envelope', confidence: 'RECOMMENDED' },
+        { value: 'within 10ms', rationale: 'ASIL-D real-time safety response budget', confidence: 'HIGH' },
+        { value: 'within 50ms', rationale: 'Standard cyclic task deadline', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p === 'promptly') {
+      return [
+        { value: 'within [TBD: timeout duration in ms]', rationale: 'Convert to contractual [TBD] deadline', confidence: 'RECOMMENDED' },
+        { value: 'within 100ms', rationale: 'Sub-system fault broadcast time ceiling', confidence: 'HIGH' },
+      ];
+    }
+    if (p === 'high reliability') {
+      return [
+        { value: 'with [TBD: MTBF target or ASIL level]', rationale: 'Convert to contractual [TBD] reliability metric', confidence: 'RECOMMENDED' },
+        { value: 'with 99.999% availability (ISO 26262 ASIL-D)', rationale: 'Safety-critical automotive integrity level', confidence: 'HIGH' },
+        { value: 'with MTBF exceeding 50,000 operating hours', rationale: 'IEC 60601-1 mission durability benchmark', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p === 'high pressure') {
+      return [
+        { value: 'when pressure exceeds [TBD: occlusion threshold in kPa]', rationale: 'Convert to contractual [TBD] pressure cutoff', confidence: 'RECOMMENDED' },
+        { value: 'when line pressure exceeds 100 kPa ± 10 kPa', rationale: 'IEC 62304 downstream occlusion alarm threshold', confidence: 'HIGH' },
+        { value: 'when line pressure exceeds 15 psi', rationale: 'Fluidic barrier physical relief threshold', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p === 'critical') {
+      return [
+        { value: '[TBD: critical temperature threshold]', rationale: 'Convert to contractual [TBD] thermal limit', confidence: 'RECOMMENDED' },
+        { value: 'pack surface temperature exceeds 55°C', rationale: 'BMS thermal runaway derating threshold', confidence: 'HIGH' },
+        { value: 'junction temperature exceeds 65°C', rationale: 'Inverter silicon-carbide junction protection cutoff', confidence: 'HIGH' },
+      ];
+    }
+    if (p === 'normal load' || p === 'normal conditions') {
+      return [
+        { value: 'under [TBD: operating temperature and voltage envelope]', rationale: 'Convert to contractual [TBD] operating conditions', confidence: 'RECOMMENDED' },
+        { value: 'between -20°C and +50°C under 350V–450V bus voltage', rationale: 'Standard automotive environmental qualification envelope', confidence: 'HIGH' },
+      ];
+    }
 
     // 1. Check if AI Smart Rewriter already provided suggestions in identified_tbds
     const identified = requirement.rewrite_suggestion?.identified_tbds || [];
@@ -414,27 +470,66 @@ export default function DeepInspectorTab({
       onRequirementUpdated(saved);
       setActiveTbdToken(null);
       setCustomTbdVal('');
-      setTbdResolvedMessage(`Resolved ${targetToken} ➔ "${valTrimmed}" (Rubric Quality: ${Math.round(newScore.overall)} pts)`);
+      setTbdResolvedMessage(`Resolved "${targetToken}" ➔ "${valTrimmed}" (Rubric Quality: ${Math.round(newScore.overall)} pts)`);
       setTimeout(() => setTbdResolvedMessage(''), 5000);
     } catch (err) {
-      alert(`Failed to apply TBD parameter: ${err.message}`);
+      alert(`Failed to apply parameter: ${err.message}`);
     } finally {
       setIsResolvingTbd(false);
     }
   };
 
   const renderHighlightedText = (text) => {
-    const parts = text.split(/(\[TBD:[^\]]+\])/g);
-    let tbdIndex = 0;
+    // Known ambiguous terms + issue evidence quotes
+    const knownVagueTerms = [
+      'periodically',
+      'as appropriate',
+      'quickly',
+      'promptly',
+      'high reliability',
+      'high pressure',
+      'normal load',
+      'normal conditions',
+      'user-friendly',
+      'optimal',
+      'robust',
+      'reasonable',
+      'gracefully',
+      'critical',
+    ];
+
+    const issueQuotes = (requirement?.issues || [])
+      .map((i) => i.evidence_quote?.trim())
+      .filter((q) => q && q.length > 2 && q.length < 35 && !q.includes('\n'));
+
+    const combinedTerms = Array.from(new Set([...knownVagueTerms, ...issueQuotes]))
+      .sort((a, b) => b.length - a.length)
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+    const regex = new RegExp(`(\\[TBD:[^\\]]+\\]|\\b(?:${combinedTerms.join('|')})\\b)`, 'gi');
+    const parts = text.split(regex);
+    let tokenIndex = 0;
 
     return (
       <span>
         {parts.map((part, i) => {
-          if (part.startsWith('[TBD:') && part.endsWith(']')) {
-            const currentTbdIndex = tbdIndex++;
-            const paramName = part.slice(5, -1).trim();
-            const isOpen = activeTbdToken && activeTbdToken.index === currentTbdIndex;
+          if (!part) return null;
+          const isTbd = part.startsWith('[TBD:') && part.endsWith(']');
+          const isVague = !isTbd && combinedTerms.some((t) => new RegExp(`^${t}$`, 'i').test(part));
+
+          if (isTbd || isVague) {
+            const currentTokenIndex = tokenIndex++;
+            const paramName = isTbd ? part.slice(5, -1).trim() : part.trim();
+            const isOpen = activeTbdToken && activeTbdToken.index === currentTokenIndex;
             const suggestions = getSmartSuggestionsForParam(paramName);
+
+            const chipColor = isTbd ? '#ff6b6b' : '#f59e0b';
+            const chipBg = isOpen
+              ? (isTbd ? 'rgba(235, 87, 87, 0.35)' : 'rgba(245, 158, 11, 0.35)')
+              : (isTbd ? 'rgba(235, 87, 87, 0.16)' : 'rgba(245, 158, 11, 0.16)');
+            const chipBorder = isOpen
+              ? (isTbd ? '1px solid #ff6b6b' : '1px solid #f59e0b')
+              : (isTbd ? '1px solid rgba(235, 87, 87, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)');
 
             return (
               <span key={i} style={{ position: 'relative', display: 'inline-block', margin: '0 2px' }}>
@@ -442,15 +537,15 @@ export default function DeepInspectorTab({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveTbdToken(isOpen ? null : { token: part, param: paramName, index: currentTbdIndex });
+                    setActiveTbdToken(isOpen ? null : { token: part, param: paramName, index: currentTokenIndex, isVague });
                   }}
                   className="tbd-token-chip"
                   style={{
                     cursor: 'pointer',
-                    background: isOpen ? 'rgba(235, 87, 87, 0.32)' : 'rgba(235, 87, 87, 0.16)',
-                    color: '#ff6b6b',
-                    border: isOpen ? '1px solid #ff6b6b' : '1px solid rgba(235, 87, 87, 0.35)',
-                    boxShadow: isOpen ? '0 0 10px rgba(235, 87, 87, 0.3)' : 'none',
+                    background: chipBg,
+                    color: chipColor,
+                    border: chipBorder,
+                    boxShadow: isOpen ? `0 0 10px ${isTbd ? 'rgba(235, 87, 87, 0.3)' : 'rgba(245, 158, 11, 0.3)'}` : 'none',
                     padding: '2px 7px',
                     borderRadius: '4px',
                     fontFamily: 'var(--font-mono)',
@@ -461,9 +556,9 @@ export default function DeepInspectorTab({
                     gap: '4px',
                     transition: 'all 0.12s ease',
                   }}
-                  title="Click to resolve parameter with Grammarly-style Smart Defaults"
+                  title={isTbd ? "Click to resolve parameter with Grammarly-style Smart Defaults" : `Unquantified term '${part}': Click to replace with a [TBD] parameter or engineering default`}
                 >
-                  <span style={{ fontSize: '11px' }}>✨</span>
+                  <span style={{ fontSize: '11px' }}>{isTbd ? '✨' : '⚠️'}</span>
                   <span>{part}</span>
                   <span style={{ fontSize: '9px', opacity: 0.7 }}>▾</span>
                 </button>
@@ -477,7 +572,7 @@ export default function DeepInspectorTab({
                       top: 'calc(100% + 8px)',
                       left: '0',
                       zIndex: 1000,
-                      width: '340px',
+                      width: '350px',
                       background: '#242426',
                       border: '1px solid rgba(255, 255, 255, 0.16)',
                       borderRadius: '6px',
@@ -490,9 +585,12 @@ export default function DeepInspectorTab({
                     {/* Header */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '14px' }}>✨</span>
+                        <span style={{ fontSize: '14px' }}>{isTbd ? '✨' : '⚠️'}</span>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                          Resolve: <code style={{ color: '#ff7b72', background: 'rgba(255, 255, 255, 0.08)', padding: '1px 5px', borderRadius: '3px' }}>{paramName}</code>
+                          {isTbd ? 'Resolve TBD:' : 'Unquantified Parameter:'}{' '}
+                          <code style={{ color: chipColor, background: 'rgba(255, 255, 255, 0.08)', padding: '1px 5px', borderRadius: '3px' }}>
+                            {paramName}
+                          </code>
                         </span>
                       </div>
                       <button
@@ -513,13 +611,15 @@ export default function DeepInspectorTab({
                     </div>
 
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: '1.4' }}>
-                      Select a Smart Suggested Default from the engineering envelope, or enter a custom contractual value:
+                      {isTbd
+                        ? 'Select a Smart Suggested Default from the engineering envelope, or enter a custom contractual value:'
+                        : `'${paramName}' is ambiguous and unquantified. Convert to a formal contractual [TBD] parameter or apply an engineering default:`}
                     </div>
 
                     {/* Suggested Replacement Chips (Grammarly style 1-click accept) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
                       <div style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Smart Suggested Defaults
+                        Smart Suggested Actions
                       </div>
                       {suggestions.map((sug, sIdx) => (
                         <div
@@ -540,10 +640,10 @@ export default function DeepInspectorTab({
                         >
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#57c07b', fontFamily: 'var(--font-mono)' }}>
+                              <span style={{ fontSize: '12.5px', fontWeight: '700', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#57c07b', fontFamily: 'var(--font-mono)' }}>
                                 {sug.value}
                               </span>
-                              <span style={{ fontSize: '9.5px', padding: '1px 4px', background: 'rgba(46, 133, 81, 0.2)', color: '#4dab72', borderRadius: '2px' }}>
+                              <span style={{ fontSize: '9.5px', padding: '1px 4px', background: sug.value.includes('[TBD:') ? 'rgba(235, 87, 87, 0.2)' : 'rgba(46, 133, 81, 0.2)', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#4dab72', borderRadius: '2px' }}>
                                 {sug.confidence}
                               </span>
                             </div>
@@ -551,7 +651,7 @@ export default function DeepInspectorTab({
                               {sug.rationale}
                             </div>
                           </div>
-                          <span style={{ fontSize: '11px', color: '#57c07b', fontWeight: '600', paddingLeft: '8px' }}>
+                          <span style={{ fontSize: '11px', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#57c07b', fontWeight: '600', paddingLeft: '8px', whiteSpace: 'nowrap' }}>
                             Apply ↵
                           </span>
                         </div>
@@ -561,12 +661,12 @@ export default function DeepInspectorTab({
                     {/* Custom Input Entry */}
                     <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
                       <div style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>
-                        Custom Engineering Value
+                        Custom Engineering Parameter / Value
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input
                           type="text"
-                          placeholder="e.g. 15ms or 55°C"
+                          placeholder={isTbd ? "e.g. 15ms or 55°C" : "e.g. every [TBD: interval] or 1000ms"}
                           value={customTbdVal}
                           onChange={(e) => setCustomTbdVal(e.target.value)}
                           onKeyDown={(e) => {
@@ -717,6 +817,51 @@ export default function DeepInspectorTab({
               </button>
             )}
           </div>
+
+          {/* Unquantified TBD Flag Notification Banner */}
+          {requirement.status === 'FLAGGED_TBD' && !isEditingText && (
+            <div
+              style={{
+                marginBottom: '10px',
+                padding: '7px 10px',
+                background: 'rgba(235, 87, 87, 0.10)',
+                border: '1px solid rgba(235, 87, 87, 0.28)',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                fontSize: '11.5px',
+                color: '#ff7b72',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px' }}>⚠️</span>
+                <span>
+                  <strong>Unquantified Parameters Flagged</strong>:{' '}
+                  {requirement.text.includes('[TBD:')
+                    ? 'Contains formal [TBD] parameter chip. Click the chip below to resolve.'
+                    : 'Ambiguous or unquantified terms detected. Click any highlighted ⚠️ token below to insert [TBD] parameters or apply smart defaults.'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleTriggerRewrite}
+                disabled={isRunningAI}
+                className="notion-btn"
+                style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderColor: 'rgba(235, 87, 87, 0.4)',
+                  color: '#ff7b72',
+                  background: 'rgba(235, 87, 87, 0.15)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ✨ Run Rewriter
+              </button>
+            </div>
+          )}
 
           {isEditingText ? (
             <textarea

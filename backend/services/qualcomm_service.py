@@ -1137,6 +1137,91 @@ class QualcommService:
             grounding = "Grounded in Lean Hardware Startup & Consumer Toy Safety Standards (ASTM F963 / ISO/IEC/IEEE 29148)."
             return agent_reply, reqs, grounding
 
+        if "chip" in lower and any(k in lower for k in ["distribution", "distribute", "execute", "execution", "mobile"]):
+            reqs = [
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index:03d}",
+                    text="The chip distribution orchestrator shall deliver cryptographically signed firmware packages to target mobile chipsets within [TBD: max_distribution_window_seconds] via [TBD: supported_transport_protocols].",
+                    category="Distribution & OTA",
+                    section="Section 1.0 - Chip Package Distribution",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="The chip distribution orchestrator shall deliver cryptographically signed firmware packages to target mobile chipsets within [TBD: max_distribution_window_seconds] via [TBD: supported_transport_protocols].",
+                        rationale="Derived from mobile chipset distribution brief; bounds OTA transport latency and secure transport protocol.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="max_distribution_window_seconds",
+                                suggested_value="180 seconds",
+                                rationale="Cellular network OTA timeout budget for mobile chip flash packages.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="supported_transport_protocols",
+                                suggested_value="HTTPS / CoAP with TLS 1.3",
+                                rationale="Secure mobile transport protocol standard for silicon device fleet management.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                ),
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index+1:03d}",
+                    text="When a verified binary payload is received, the mobile chip execution engine shall complete binary loading and execute target tasks within [TBD: max_execution_latency_ms] without exceeding junction thermal limit of [TBD: max_junction_temp_degC].",
+                    category="Execution & Silicon Safety",
+                    section="Section 2.0 - On-Chip Execution Runtime",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="When a verified binary payload is received, the mobile chip execution engine shall complete binary loading and execute target tasks within [TBD: max_execution_latency_ms] without exceeding junction thermal limit of [TBD: max_junction_temp_degC].",
+                        rationale="Controls on-chip execution latency while preventing silicon thermal throttling.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="max_execution_latency_ms",
+                                suggested_value="1200 ms",
+                                rationale="Snapdragon/ARM mobile SoC cold-launch execution budget for dynamic firmware modules.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="max_junction_temp_degC",
+                                suggested_value="85 °C",
+                                rationale="Nominal mobile silicon maximum junction thermal budget under sustained compute workload.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                ),
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index+2:03d}",
+                    text="If binary signature validation or runtime execution fails on the mobile chip, the system shall abort execution and revert to the golden boot partition within [TBD: max_rollback_latency_ms].",
+                    category="Resilience & Rollback",
+                    section="Section 3.0 - Failsafe Recovery",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="If binary signature validation or runtime execution fails on the mobile chip, the system shall abort execution and revert to the golden boot partition within [TBD: max_rollback_latency_ms].",
+                        rationale="Prevents bricking silicon devices during field distribution; enforces dual-bank fallback.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="max_rollback_latency_ms",
+                                suggested_value="500 ms",
+                                rationale="Hardware watchdog A/B partition failover timeout budget.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                )
+            ]
+            agent_reply = (
+                "I analyzed your request to build software for mobile chip package distribution and on-device execution. "
+                "Because deploying and executing code on mobile silicon demands strict transport reliability, thermal safety boundaries, and anti-bricking recovery, "
+                "I decomposed your concept into 3 atomic EARS requirements: (1) Secure package distribution across mobile chip targets, "
+                "(2) On-chip execution latency bound with silicon junction thermal limits, and (3) Automated cryptographic verification and failsafe partition rollback. "
+                "All operational parameters are isolated as `[TBD]` placeholders with Qualcomm/Snapdragon silicon engineering defaults."
+            )
+            grounding = "Grounded in Mobile Silicon Architecture & Secure Firmware OTA Standards (Qualcomm Snapdragon / ARM TrustZone / ISO/IEC/IEEE 29148)."
+            return agent_reply, reqs, grounding
+
         # Generic Fallback
         req = RequirementStatement(
             id=f"REQ-CHAT-{next_req_index:03d}",

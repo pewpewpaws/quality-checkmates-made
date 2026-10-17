@@ -239,7 +239,108 @@ def test_broke_entrepreneur_toy_company_chat_synthesis():
     stored_reqs = store.get_all(project_id=proj_id)
     assert len(stored_reqs) >= 3
     for r in reqs:
-        stored = store.get_by_id(r["id"])
+        stored = store.get_by_id(r["id"], project_id=proj_id)
         assert stored is not None
         assert stored.project_id == proj_id
         assert stored.status == RequirementStatus.FLAGGED_TBD
+
+
+def test_mobile_chip_distribution_and_execution_chat_synthesis():
+    """
+    Test edge-case scenario where a Systems Engineer or PM wants to build
+    software for mobile chip firmware distribution and remote execution.
+    
+    Verifies that the Copilot:
+    1. Acknowledges mobile silicon constraints (OTA transport, execution latency, thermal budget, rollback).
+    2. Decomposes the prompt into atomic, formal EARS requirements:
+       - Secure package distribution across mobile chipsets
+       - On-chip execution timing with junction thermal boundary enforcement
+       - Cryptographic verification failure recovery and A/B partition rollback
+    3. Strictly enforces Zero-Fabrication Directive with [TBD: ...] placeholders.
+    4. Attaches realistic Snapdragon/ARM silicon engineering defaults in metadata chips.
+    5. Persists the requirements into project storage under FLAGGED_TBD governance status.
+    """
+    proj_id = "proj-mobile-silicon"
+
+    # 1. Initialize project workspace
+    client.post(
+        "/api/projects",
+        json={
+            "project_id": proj_id,
+            "project_name": "Mobile Silicon Fleet Management",
+            "domain": "Mobile Chipsets & Embedded Silicon",
+            "description": "OTA firmware distribution and runtime execution engine for Snapdragon chipsets."
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+
+    # 2. PM enters conversational request
+    pm_input = "We need software for mobile chip distribution and execute firmware binaries across the fleet."
+
+    resp = client.post(
+        "/api/chat/message",
+        json={
+            "message": pm_input,
+            "project_id": proj_id,
+            "save_to_store": True,
+            "conversation_history": [
+                {"role": "user", "content": "How do we handle remote execution on mobile silicon?"},
+                {"role": "assistant", "content": "Remote mobile chip execution requires signed binary distribution, strict thermal monitoring, and golden boot rollback."}
+            ]
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # 3. Assert Conversational Agent Reply
+    reply = data["agent_reply"].lower()
+    assert "chip" in reply
+    assert "distribution" in reply or "distribute" in reply
+    assert "execution" in reply or "execute" in reply
+    assert "thermal" in reply or "rollback" in reply
+
+    # 4. Assert Decomposed EARS Requirements
+    reqs = data["generated_requirements"]
+    assert len(reqs) >= 3, f"Expected at least 3 decomposed requirements, got {len(reqs)}"
+
+    # Requirement 1: Package Distribution & Transport
+    dist_req = next((r for r in reqs if "distribution" in r["category"].lower() or "ota" in r["category"].lower()), None)
+    assert dist_req is not None, "Missing package distribution requirement"
+    assert "shall" in dist_req["text"].lower()
+    assert "[TBD: max_distribution_window_seconds]" in dist_req["text"]
+    assert "[TBD: supported_transport_protocols]" in dist_req["text"]
+    assert dist_req["status"] == RequirementStatus.FLAGGED_TBD
+    dist_tbds = {t["parameter_name"]: t for t in dist_req["rewrite_suggestion"]["identified_tbds"]}
+    assert "180" in dist_tbds["max_distribution_window_seconds"]["suggested_value"]
+    assert "TLS" in dist_tbds["supported_transport_protocols"]["suggested_value"] or "HTTPS" in dist_tbds["supported_transport_protocols"]["suggested_value"]
+
+    # Requirement 2: On-Chip Execution & Thermal Safety
+    exec_req = next((r for r in reqs if "execution" in r["category"].lower() or "safety" in r["category"].lower()), None)
+    assert exec_req is not None, "Missing on-chip execution requirement"
+    assert "shall" in exec_req["text"].lower()
+    assert "[TBD: max_execution_latency_ms]" in exec_req["text"]
+    assert "[TBD: max_junction_temp_degC]" in exec_req["text"]
+    assert exec_req["status"] == RequirementStatus.FLAGGED_TBD
+    exec_tbds = {t["parameter_name"]: t for t in exec_req["rewrite_suggestion"]["identified_tbds"]}
+    assert "1200" in exec_tbds["max_execution_latency_ms"]["suggested_value"]
+    assert "85" in exec_tbds["max_junction_temp_degC"]["suggested_value"]
+
+    # Requirement 3: Cryptographic Failure & Failsafe Rollback
+    rollback_req = next((r for r in reqs if "rollback" in r["category"].lower() or "recovery" in r["category"].lower() or "resilience" in r["category"].lower()), None)
+    assert rollback_req is not None, "Missing rollback recovery requirement"
+    assert "shall" in rollback_req["text"].lower()
+    assert "[TBD: max_rollback_latency_ms]" in rollback_req["text"]
+    assert rollback_req["status"] == RequirementStatus.FLAGGED_TBD
+    rollback_tbds = {t["parameter_name"]: t for t in rollback_req["rewrite_suggestion"]["identified_tbds"]}
+    assert "500" in rollback_tbds["max_rollback_latency_ms"]["suggested_value"]
+
+    # 5. Check Persistence in Project Store
+    stored_reqs = store.get_all(project_id=proj_id)
+    assert len(stored_reqs) >= 3
+    for r in reqs:
+        stored = store.get_by_id(r["id"], project_id=proj_id)
+        assert stored is not None
+        assert stored.project_id == proj_id
+        assert stored.status == RequirementStatus.FLAGGED_TBD
+

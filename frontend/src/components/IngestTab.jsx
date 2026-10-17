@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { parseText, parseFile } from '../services/api';
 
 /**
- * IngestTab Component
- * Multi-format Document Ingestion & Parser (TXT, CSV, PDF, MD)
- * Extracts numbered lists, REQ tags, and unnumbered paragraphs into atomic statements.
+ * IngestTab Component (Antigravity 2.0 Pro Edition)
+ * Multi-format Document Ingestion & Parser with muted pro aesthetics.
  */
 export default function IngestTab({ activeProjectId, activeProject, onIngestRequirements }) {
   const [rawText, setRawText] = useState('');
@@ -69,47 +68,46 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '14px' }}>
-      {/* Target Project Scope Callout */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '10px' }}>
+      {/* Target Project Callout */}
       <div
         className="glass-card squircle-sm"
         style={{
-          padding: '10px 14px',
+          padding: '8px 12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderLeft: '3px solid var(--accent-cyan)',
         }}
       >
         <div>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>
-            Ingest Documents into: {activeProject?.project_name || activeProjectId}
+          <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
+            Target: {activeProject?.project_name || activeProjectId}
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Parsed statements are isolated strictly to this workspace namespace.
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+            Parsed statements are isolated to this workspace namespace.
           </div>
         </div>
         <span
           className="badge-chip squircle-xs"
-          style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}
+          style={{ background: 'var(--accent-blue-subtle)', color: 'var(--accent-blue)' }}
         >
           EARS Extractor
         </span>
       </div>
 
       {/* Upload Zone & Quick Preloads */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
         {/* File Drag & Drop */}
         <div
-          className="glass-panel squircle-md"
+          className="glass-panel squircle-sm"
           style={{
-            padding: '16px',
+            padding: '14px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            border: '1px dashed var(--border-glass)',
+            border: '1px dashed var(--border-medium)',
             cursor: 'pointer',
           }}
           onClick={() => document.getElementById('file-input')?.click()}
@@ -121,21 +119,21 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
             style={{ display: 'none' }}
             onChange={handleFileUpload}
           />
-          <span style={{ fontSize: '28px', marginBottom: '8px' }}>📂</span>
-          <div style={{ fontSize: '13px', fontWeight: '600', color: '#ffffff' }}>
+          <span style={{ fontSize: '20px', marginBottom: '4px', opacity: 0.8 }}>📂</span>
+          <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
             {selectedFile ? selectedFile.name : 'Upload PRD, CSV, TXT, or PDF'}
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
             Supports Jira exports, DO-178C specifications, and narrative requirements
           </div>
         </div>
 
         {/* Quick Preload Templates */}
-        <div className="glass-panel squircle-md" style={{ padding: '14px' }}>
-          <div style={{ fontSize: '12px', fontWeight: '600', color: '#ffffff', marginBottom: '8px' }}>
-            ⚡ Stage Pitch Quick Preloads
+        <div className="glass-panel squircle-sm" style={{ padding: '10px 12px' }}>
+          <div style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            Preload Sample Specifications
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <button
               onClick={() => {
                 setRawText(sampleDatasets.bms);
@@ -143,9 +141,9 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
                 handleParseText(sampleDatasets.bms);
               }}
               className="btn-squircle btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '6px 10px', fontSize: '11px' }}
+              style={{ justifyContent: 'flex-start', padding: '4px 8px', fontSize: '11px' }}
             >
-              🔋 Preload 800V Powertrain & BMS Statements
+              800V Powertrain & BMS Statements
             </button>
             <button
               onClick={() => {
@@ -154,9 +152,9 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
                 handleParseText(sampleDatasets.aero);
               }}
               className="btn-squircle btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '6px 10px', fontSize: '11px' }}
+              style={{ justifyContent: 'flex-start', padding: '4px 8px', fontSize: '11px' }}
             >
-              ✈️ Preload Aerospace Fly-By-Wire Spec
+              Aerospace Fly-By-Wire Spec
             </button>
             <button
               onClick={() => {
@@ -165,28 +163,28 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
                 handleParseText(sampleDatasets.med);
               }}
               className="btn-squircle btn-secondary"
-              style={{ justifyContent: 'flex-start', padding: '6px 10px', fontSize: '11px' }}
+              style={{ justifyContent: 'flex-start', padding: '4px 8px', fontSize: '11px' }}
             >
-              💉 Preload Precision Infusion Pump Spec
+              Precision Infusion Pump Spec
             </button>
           </div>
         </div>
       </div>
 
       {/* Direct Text Paste Area */}
-      <div className="glass-panel squircle-md" style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="glass-panel squircle-sm" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: '#ffffff' }}>
-            Raw Unstructured Requirements Text
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-primary)' }}>
+            Raw Requirements Text
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Default Category:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Default Category:</span>
             <input
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="input-squircle"
-              style={{ padding: '3px 8px', fontSize: '11px', width: '130px' }}
+              style={{ padding: '2px 6px', fontSize: '10px', width: '120px' }}
             />
           </div>
         </div>
@@ -196,72 +194,72 @@ REQ-AERO-103: The triple-redundant autopilot disengage override shall transfer m
           value={rawText}
           onChange={(e) => setRawText(e.target.value)}
           className="input-squircle"
-          style={{ width: '100%', height: '110px', resize: 'vertical', fontFamily: 'var(--font-mono)', fontSize: '12px' }}
+          style={{ width: '100%', height: '90px', resize: 'vertical', fontFamily: 'var(--font-mono)', fontSize: '11px' }}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
           <button
             onClick={() => handleParseText()}
             disabled={isParsing || !rawText.trim()}
-            className="btn-squircle btn-primary"
+            className="btn-squircle btn-primary-blue"
             style={{ opacity: isParsing || !rawText.trim() ? 0.6 : 1 }}
           >
-            {isParsing ? 'Parsing...' : 'Analyze & Extract Requirements'}
+            {isParsing ? 'Parsing...' : 'Extract Statements'}
           </button>
         </div>
       </div>
 
       {/* Parsing Preview Deck */}
       {parsedResult && (
-        <div className="glass-panel squircle-md" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="glass-panel squircle-sm" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#ffffff' }}>
-                Extraction Preview: {parsedResult.total_parsed} Requirements Found
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                Extracted: {parsedResult.total_parsed} statements
               </span>
-              <span style={{ marginLeft: '10px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Format: <strong style={{ color: '#38bdf8' }}>{parsedResult.format_detected}</strong>
+              <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--text-muted)' }}>
+                format: <strong style={{ color: 'var(--accent-blue)' }}>{parsedResult.format_detected}</strong>
               </span>
             </div>
 
             <button
               onClick={handleConfirmIngest}
-              className="btn-squircle btn-success"
-              style={{ padding: '6px 14px' }}
+              className="btn-squircle btn-primary"
+              style={{ padding: '4px 10px', fontSize: '11px' }}
             >
-              ✓ Ingest All to {activeProjectId}
+              ✓ Ingest into {activeProjectId}
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '240px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
             {parsedResult.requirements.map((req, idx) => (
               <div
                 key={idx}
-                className="glass-card squircle-sm"
+                className="glass-card squircle-xs"
                 style={{
-                  padding: '8px 12px',
+                  padding: '6px 10px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '12px',
+                  gap: '8px',
                 }}
               >
                 <div style={{ overflow: 'hidden' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>
                       {req.id}
                     </span>
-                    <span style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
+                    <span style={{ fontSize: '9px', color: 'var(--text-dim)' }}>
                       {req.category || 'General'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {req.text}
                   </div>
                 </div>
 
-                <span className="badge-chip badge-tbd squircle-xs" style={{ whiteSpace: 'nowrap' }}>
-                  🔴 FLAGGED_TBD
+                <span className="badge-chip badge-tbd squircle-xs" style={{ whiteSpace: 'nowrap', fontSize: '9px' }}>
+                  FLAGGED TBD
                 </span>
               </div>
             ))}

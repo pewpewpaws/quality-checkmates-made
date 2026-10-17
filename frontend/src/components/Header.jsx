@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { getExportCsvUrl, getExportPdfUrl } from '../services/api';
 
 /**
- * Header Component (Antigravity 2.0 Cockpit Top Bar)
- * Features:
- * - Brand with Qualcomm Cloud AI 100 chip status
- * - Active Project stats pill (Total, % Locked, Open TBDs)
- * - 1-Click Persona Switcher (👔 Product Manager <-> 🛠️ Lead Systems Engineer <-> 🎖️ Executive)
- * - 1-Click Export Dropdown (CSV & Publication PDF)
- * - Offline / Live Stage Mode toggle
+ * Header Component (Antigravity 2.0 Pro Edition)
+ * Refined, muted top bar with crisp 1px borders, subtle status indicators,
+ * and seamless persona switching.
  */
 export default function Header({
   activeProject,
@@ -21,7 +17,6 @@ export default function Header({
 }) {
   const [showExportMenu, setShowExportMenu] = useState(false);
 
-  // Compute live project metrics
   const total = requirements.length;
   const locked = requirements.filter((r) => r.status === 'LOCKED_BASELINE').length;
   const provisional = requirements.filter((r) => r.status === 'PROVISIONAL_PM').length;
@@ -36,180 +31,150 @@ export default function Header({
     window.open(url, '_blank');
   };
 
-  const roleLabels = {
-    product_manager: {
-      name: 'Product Manager',
-      icon: '👔',
-      badge: 'Author & Provisional Gate',
-      color: 'var(--accent-amber)',
-    },
-    systems_engineer: {
-      name: 'Lead Systems Engineer',
-      icon: '🛠️',
-      badge: 'Technical Sign-off Gate',
-      color: 'var(--accent-green)',
-    },
-    executive: {
-      name: 'Senior Executive',
-      icon: '🎖️',
-      badge: 'Read-Only Baseline Lens',
-      color: 'var(--accent-cyan)',
-    },
-  };
-
-  const currentRole = roleLabels[userRole] || roleLabels.product_manager;
-
   return (
     <header
-      className="glass-panel"
       style={{
         zIndex: 50,
-        height: '62px',
-        padding: '0 20px',
+        height: '52px',
+        padding: '0 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border-glass)',
+        background: 'var(--bg-sidebar)',
+        borderBottom: '1px solid var(--border-subtle)',
         position: 'relative',
       }}
     >
-      {/* Brand & Qualcomm Badge */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      {/* Brand & Qualcomm AI 100 Badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div
-          className="squircle-sm"
+          className="squircle-xs"
           style={{
-            width: '36px',
-            height: '36px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+            width: '28px',
+            height: '28px',
+            background: '#1b2230',
+            border: '1px solid #283347',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(56, 189, 248, 0.45)',
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#388bfd" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2" />
             <polyline points="2 17 12 22 22 17" />
             <polyline points="2 12 12 17 22 12" />
           </svg>
         </div>
 
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '15px', fontWeight: '700', letterSpacing: '-0.3px', color: '#ffffff' }}>
-              Requirement Quality Copilot
-            </span>
-            <span
-              className="badge-chip squircle-xs"
-              style={{
-                background: 'rgba(56, 189, 248, 0.15)',
-                color: '#38bdf8',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                fontSize: '10px',
-                fontWeight: '600',
-              }}
-            >
-              Qualcomm AI 100
-            </span>
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Antigravity 2.0 • Dual-Key Architecture Governance
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
+            Requirement Quality Copilot
+          </span>
+          <span
+            className="badge-chip squircle-xs"
+            style={{
+              background: 'var(--accent-blue-subtle)',
+              color: 'var(--accent-blue)',
+              border: '1px solid var(--accent-blue-border)',
+              fontSize: '10px',
+            }}
+          >
+            Qualcomm Cloud AI 100
+          </span>
         </div>
       </div>
 
       {/* Middle Stats Bar (Active Project Scope) */}
       <div
-        className="glass-card squircle-pill"
+        className="squircle-pill"
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
-          padding: '6px 18px',
-          background: 'rgba(15, 23, 42, 0.65)',
+          gap: '14px',
+          padding: '4px 14px',
+          background: 'var(--bg-panel)',
+          border: '1px solid var(--border-subtle)',
+          fontSize: '11px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Scope:</span>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: '#ffffff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ color: 'var(--text-muted)' }}>Project:</span>
+          <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
             {activeProject?.project_name || activeProjectId}
           </span>
         </div>
 
-        <div style={{ width: '1px', height: '14px', background: 'var(--border-subtle)' }} />
+        <div style={{ width: '1px', height: '12px', background: 'var(--border-subtle)' }} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span>
-            <strong style={{ color: '#ffffff' }}>{total}</strong> <span style={{ color: 'var(--text-muted)' }}>Reqs</span>
+            <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> <span style={{ color: 'var(--text-muted)' }}>reqs</span>
           </span>
-          <span style={{ color: '#34d399' }}>
-            <strong>{lockPct}%</strong> Locked
+          <span style={{ color: 'var(--text-green)' }}>
+            <strong>{lockPct}%</strong> locked
           </span>
           {tbd > 0 && (
-            <span style={{ color: '#f87171' }}>
-              <strong>{tbd}</strong> Open TBD
+            <span style={{ color: 'var(--text-red)' }}>
+              <strong>{tbd}</strong> TBD
             </span>
           )}
         </div>
       </div>
 
       {/* Right Controls: Persona Switcher, Export, Mode */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {/* Offline / Live Toggle */}
         <button
           onClick={() => setLiveMode(!liveMode)}
           className="btn-squircle"
           style={{
-            padding: '5px 10px',
+            padding: '4px 8px',
             fontSize: '11px',
-            background: liveMode ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-            color: liveMode ? '#34d399' : '#fbbf24',
-            border: `1px solid ${liveMode ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)'}`,
+            background: liveMode ? 'var(--accent-green-subtle)' : 'var(--accent-amber-subtle)',
+            color: liveMode ? 'var(--text-green)' : 'var(--text-amber)',
+            border: `1px solid ${liveMode ? 'var(--accent-green-border)' : 'var(--accent-amber-border)'}`,
           }}
           title="Toggle Qualcomm Cloud AI 100 Live / Fast Offline Mock"
         >
           <span
             style={{
-              width: '7px',
-              height: '7px',
+              width: '6px',
+              height: '6px',
               borderRadius: '50%',
-              background: liveMode ? '#10b981' : '#f59e0b',
-              boxShadow: `0 0 8px ${liveMode ? '#10b981' : '#f59e0b'}`,
+              background: liveMode ? 'var(--text-green)' : 'var(--text-amber)',
             }}
           />
-          {liveMode ? 'Cloud AI100' : 'Offline Stage'}
+          {liveMode ? 'Cloud AI100' : 'Offline'}
         </button>
 
         {/* Persona Switcher Dropdown */}
-        <div style={{ position: 'relative' }}>
-          <select
-            value={userRole}
-            onChange={(e) => setUserRole(e.target.value)}
-            className="input-squircle"
-            style={{
-              fontSize: '12px',
-              fontWeight: '600',
-              padding: '6px 12px',
-              cursor: 'pointer',
-              background: 'rgba(20, 24, 38, 0.95)',
-              border: `1px solid ${currentRole.color}`,
-              color: '#ffffff',
-            }}
-          >
-            <option value="product_manager">👔 Product Manager (Author)</option>
-            <option value="systems_engineer">🛠️ Lead Systems Engineer (Sign-Off)</option>
-            <option value="executive">🎖️ Senior Executive (Baseline Lens)</option>
-          </select>
-        </div>
+        <select
+          value={userRole}
+          onChange={(e) => setUserRole(e.target.value)}
+          className="input-squircle"
+          style={{
+            fontSize: '11px',
+            fontWeight: '500',
+            padding: '4px 8px',
+            cursor: 'pointer',
+            background: 'var(--bg-input)',
+            border: '1px solid var(--border-medium)',
+            color: 'var(--text-primary)',
+          }}
+        >
+          <option value="product_manager">👔 Product Manager</option>
+          <option value="systems_engineer">🛠️ Lead Systems Engineer</option>
+          <option value="executive">🎖️ Senior Executive</option>
+        </select>
 
         {/* Export Button & Dropdown */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
             className="btn-squircle btn-secondary"
-            style={{ padding: '6px 14px', fontSize: '12px' }}
+            style={{ padding: '4px 10px', fontSize: '11px' }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -219,18 +184,19 @@ export default function Header({
 
           {showExportMenu && (
             <div
-              className="glass-panel squircle-md"
+              className="glass-panel squircle-sm"
               style={{
                 position: 'absolute',
-                top: 'calc(100% + 8px)',
+                top: 'calc(100% + 6px)',
                 right: 0,
-                width: '230px',
-                padding: '8px',
-                boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                width: '210px',
+                padding: '6px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                 zIndex: 100,
+                border: '1px solid var(--border-medium)',
               }}
             >
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', padding: '6px 10px', fontWeight: '600' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '4px 8px', fontWeight: '600' }}>
                 EXPORT SPECIFICATION
               </div>
 
@@ -240,18 +206,18 @@ export default function Header({
                 style={{
                   width: '100%',
                   justifyContent: 'flex-start',
-                  padding: '8px 10px',
+                  padding: '6px 8px',
                   background: 'transparent',
-                  color: 'var(--text-main)',
+                  color: 'var(--text-primary)',
                   textAlign: 'left',
                 }}
-                onMouseEnter={(e) => (e.target.style.background = 'rgba(255,255,255,0.08)')}
+                onMouseEnter={(e) => (e.target.style.background = 'var(--bg-card-hover)')}
                 onMouseLeave={(e) => (e.target.style.background = 'transparent')}
               >
                 <span>📊</span>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '600' }}>Export CSV</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>IBM DOORS / Jira compatible</div>
+                  <div style={{ fontSize: '11px', fontWeight: '500' }}>Export CSV</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>DOORS / Jira format</div>
                 </div>
               </button>
 
@@ -261,18 +227,18 @@ export default function Header({
                 style={{
                   width: '100%',
                   justifyContent: 'flex-start',
-                  padding: '8px 10px',
+                  padding: '6px 8px',
                   background: 'transparent',
-                  color: 'var(--text-main)',
+                  color: 'var(--text-primary)',
                   textAlign: 'left',
                 }}
-                onMouseEnter={(e) => (e.target.style.background = 'rgba(255,255,255,0.08)')}
+                onMouseEnter={(e) => (e.target.style.background = 'var(--bg-card-hover)')}
                 onMouseLeave={(e) => (e.target.style.background = 'transparent')}
               >
                 <span>📄</span>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: '600' }}>Export PDF Specification</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ReportLab certified audit report</div>
+                  <div style={{ fontSize: '11px', fontWeight: '500' }}>Export PDF Specification</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>ReportLab certified baseline</div>
                 </div>
               </button>
             </div>

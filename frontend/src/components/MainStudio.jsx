@@ -5,12 +5,8 @@ import DeepInspectorTab from './DeepInspectorTab';
 import ConflictTab from './ConflictTab';
 
 /**
- * MainStudio Component (Center Cockpit)
- * Hosts multi-tab interface:
- * 1. Chat Copilot
- * 2. Ingest & Parse
- * 3. Deep Inspector (Rubric, Dual-Key Gate, X-Ray Flaws)
- * 4. Conflict & Duplicates Radar
+ * MainStudio Component (Antigravity 2.0 Pro Edition)
+ * Clean tabbed center workspace with muted surfaces and crisp typography.
  */
 export default function MainStudio({
   activeProjectId,
@@ -23,13 +19,13 @@ export default function MainStudio({
   onAdoptRequirement,
   onIngestRequirements,
 }) {
-  const [activeTab, setActiveTab] = useState('studio'); // 'chat' | 'ingest' | 'studio' | 'conflict'
+  const [activeTab, setActiveTab] = useState('studio');
 
   const tabs = [
-    { id: 'studio', label: '🔍 Deep Studio', badge: selectedRequirement?.id || null },
-    { id: 'chat', label: '💬 Chat Copilot' },
-    { id: 'ingest', label: '📄 Ingest & Parse' },
-    { id: 'conflict', label: '📡 Conflict Radar' },
+    { id: 'studio', label: 'Inspector', badge: selectedRequirement?.id || null },
+    { id: 'chat', label: 'Copilot Chat' },
+    { id: 'ingest', label: 'Ingest & Parse' },
+    { id: 'conflict', label: 'Conflict Radar' },
   ];
 
   return (
@@ -38,22 +34,23 @@ export default function MainStudio({
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 62px)',
+        height: 'calc(100vh - 52px)',
         zIndex: 30,
         overflow: 'hidden',
-        padding: '12px 18px 16px',
+        padding: '10px 14px 12px',
         position: 'relative',
+        background: 'var(--bg-app)',
       }}
     >
       {/* Tab Switcher Bar */}
       <div
-        className="glass-panel squircle-md"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '4px 6px',
-          marginBottom: '12px',
+          padding: '2px 4px',
+          marginBottom: '10px',
+          borderBottom: '1px solid var(--border-subtle)',
         }}
       >
         <div style={{ display: 'flex', gap: '4px' }}>
@@ -65,20 +62,28 @@ export default function MainStudio({
                 onClick={() => setActiveTab(t.id)}
                 className="btn-squircle"
                 style={{
-                  padding: '7px 14px',
-                  fontSize: '12px',
-                  fontWeight: isActive ? '700' : '500',
-                  background: isActive ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.4) 0%, rgba(56, 189, 248, 0.25) 100%)' : 'transparent',
-                  color: isActive ? '#ffffff' : 'var(--text-muted)',
-                  border: isActive ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid transparent',
-                  boxShadow: isActive ? '0 0 12px rgba(56, 189, 248, 0.25)' : 'none',
+                  padding: '5px 12px',
+                  fontSize: '11px',
+                  fontWeight: isActive ? '600' : '500',
+                  background: isActive ? 'var(--bg-card-selected)' : 'transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                  border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
+                  borderBottom: isActive ? '2px solid var(--accent-blue)' : '2px solid transparent',
+                  borderRadius: '6px 6px 0 0',
                 }}
               >
                 {t.label}
                 {t.badge && (
                   <span
-                    className="badge-chip badge-chip-cyan squircle-xs"
-                    style={{ fontSize: '9px', padding: '1px 5px', marginLeft: '4px' }}
+                    style={{
+                      fontSize: '9px',
+                      padding: '1px 5px',
+                      marginLeft: '5px',
+                      background: 'var(--accent-blue-subtle)',
+                      color: 'var(--accent-blue)',
+                      borderRadius: '3px',
+                      fontFamily: 'var(--font-mono)',
+                    }}
                   >
                     {t.badge}
                   </span>
@@ -88,14 +93,9 @@ export default function MainStudio({
           })}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '8px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Active Scope:
-          </span>
-          <span
-            className="badge-chip squircle-xs"
-            style={{ background: 'rgba(255, 255, 255, 0.08)', color: '#ffffff' }}
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
+          <span>Workspace:</span>
+          <span style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '10px' }}>
             {activeProjectId}
           </span>
         </div>

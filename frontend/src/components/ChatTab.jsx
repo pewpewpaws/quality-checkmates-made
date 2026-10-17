@@ -2,15 +2,14 @@ import React, { useState } from 'react';
 import { sendChatMessage } from '../services/api';
 
 /**
- * ChatTab Component
- * Conversational Requirements Copilot grounded in active project architecture documents.
- * Generates strict EARS statements with zero-fabrication [TBD] preservation and 1-click adoption.
+ * ChatTab Component (Antigravity 2.0 Pro Edition)
+ * Grounded conversational requirement formulation with muted, pro-grade styling.
  */
 export default function ChatTab({ activeProjectId, activeProject, onAdoptRequirement }) {
   const [messages, setMessages] = useState([
     {
       sender: 'assistant',
-      text: `Hello! I am your Requirement Quality Copilot grounded in **${activeProject?.project_name || activeProjectId}**. Type or paste an informal specification, and I will formulate atomic, verifiable EARS requirements with preserved [TBD] tokens.`,
+      text: `Copilot connected to **${activeProject?.project_name || activeProjectId}**. Enter informal desires or system objectives to generate atomic, verifiable EARS requirements with preserved [TBD] parameters.`,
       suggestedReq: null,
     },
   ]);
@@ -18,9 +17,9 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
   const [isLoading, setIsLoading] = useState(false);
 
   const quickPrompts = [
-    'When battery cell temperature exceeds 55°C during DC fast charging, derate charging current and broadcast CAN-FD fault.',
-    'The sensor hub should quickly alert the flight computer if pitch rate is anomalous.',
-    'When fluid occlusion pressure exceeds safe threshold, halt infusion pump flow within 250ms.',
+    'When battery cell temperature exceeds 55°C during DC fast charging, derate current and alert driver.',
+    'The sensor hub should alert the flight computer if pitch rate is anomalous.',
+    'When fluid occlusion pressure exceeds threshold, halt pump flow within 250ms.',
   ];
 
   const handleSend = async (textToSend) => {
@@ -67,22 +66,22 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
       <div
         className="glass-card squircle-sm"
         style={{
-          padding: '10px 14px',
-          marginBottom: '12px',
+          padding: '8px 12px',
+          marginBottom: '10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '14px' }}>📐</span>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            Grounded in Charter: <strong style={{ color: '#ffffff' }}>{activeProject?.project_name}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Grounded Charter:</span>
+          <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>
+            {activeProject?.project_name}
           </span>
         </div>
         <span
           className="badge-chip squircle-xs"
-          style={{ fontSize: '10px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}
+          style={{ fontSize: '10px', background: 'var(--accent-blue-subtle)', color: 'var(--accent-blue)' }}
         >
           EARS Syntax • Zero Fabrication
         </span>
@@ -95,8 +94,8 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
-          paddingRight: '6px',
+          gap: '10px',
+          paddingRight: '4px',
         }}
       >
         {messages.map((msg, idx) => (
@@ -109,54 +108,50 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
             }}
           >
             <div
-              className={`glass-panel ${msg.sender === 'user' ? 'squircle-md' : 'squircle-lg'}`}
+              className={`squircle-sm`}
               style={{
                 maxWidth: '85%',
-                padding: '12px 16px',
-                background: msg.sender === 'user'
-                  ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.45) 0%, rgba(56, 189, 248, 0.25) 100%)'
-                  : 'rgba(20, 24, 38, 0.75)',
-                border: msg.sender === 'user'
-                  ? '1px solid rgba(56, 189, 248, 0.4)'
-                  : '1px solid var(--border-subtle)',
+                padding: '10px 14px',
+                background: msg.sender === 'user' ? '#1c2230' : 'var(--bg-card)',
+                border: msg.sender === 'user' ? '1px solid #2b354d' : '1px solid var(--border-subtle)',
               }}
             >
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: '600' }}>
-                {msg.sender === 'user' ? 'Product Manager' : 'Qualcomm AI Copilot'}
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: '600' }}>
+                {msg.sender === 'user' ? 'You' : 'Copilot'}
               </div>
 
-              <div style={{ fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+              <div style={{ fontSize: '12px', lineHeight: '1.45', whiteSpace: 'pre-wrap', color: 'var(--text-primary)' }}>
                 {msg.text}
               </div>
 
               {/* Actionable Requirement Card */}
               {msg.suggestedReq && (
                 <div
-                  className="glass-card squircle-sm"
+                  className="squircle-xs"
                   style={{
-                    marginTop: '10px',
-                    padding: '10px',
-                    background: 'rgba(15, 23, 42, 0.85)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
+                    marginTop: '8px',
+                    padding: '8px 10px',
+                    background: 'var(--bg-app)',
+                    border: '1px solid var(--border-medium)',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--accent-blue)', fontFamily: 'var(--font-mono)' }}>
                       {msg.suggestedReq.id || 'SUGGESTED-REQ'}
                     </span>
                     <button
                       onClick={() => onAdoptRequirement(msg.suggestedReq)}
-                      className="btn-squircle btn-primary"
-                      style={{ padding: '4px 10px', fontSize: '11px' }}
+                      className="btn-squircle btn-primary-blue"
+                      style={{ padding: '3px 8px', fontSize: '10px' }}
                     >
-                      + Adopt into Project
+                      + Adopt
                     </button>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#ffffff', fontStyle: 'italic', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-primary)', fontStyle: 'italic', marginBottom: '4px' }}>
                     "{msg.suggestedReq.text}"
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                    Category: {msg.suggestedReq.category || 'General'} • Section: {msg.suggestedReq.section || 'General'}
+                    {msg.suggestedReq.category || 'General'} • {msg.suggestedReq.section || 'General'}
                   </div>
                 </div>
               )}
@@ -165,59 +160,56 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
         ))}
 
         {isLoading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontSize: '12px', padding: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)', fontSize: '11px', padding: '6px' }}>
             <span
               style={{
-                width: '8px',
-                height: '8px',
+                width: '6px',
+                height: '6px',
                 borderRadius: '50%',
-                background: '#38bdf8',
-                animation: 'pulse 1.2s infinite',
+                background: 'var(--accent-blue)',
               }}
             />
-            Qualcomm Cloud AI 100 is formulating grounded EARS requirements...
+            Formulating EARS requirements on Qualcomm AI 100...
           </div>
         )}
       </div>
 
       {/* Quick Prompt Chips */}
-      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '10px 0 6px' }}>
+      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '8px 0 4px' }}>
         {quickPrompts.map((p, i) => (
           <button
             key={i}
             onClick={() => handleSend(p)}
-            className="btn-squircle squircle-pill"
+            className="btn-squircle btn-secondary"
             style={{
-              padding: '4px 10px',
-              fontSize: '11px',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'var(--text-muted)',
+              padding: '3px 8px',
+              fontSize: '10px',
               whiteSpace: 'nowrap',
-              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-secondary)',
             }}
           >
-            💬 {p.slice(0, 38)}...
+            {p.slice(0, 35)}...
           </button>
         ))}
       </div>
 
       {/* Chat Input Box */}
-      <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
+      <div style={{ display: 'flex', gap: '6px', paddingTop: '4px' }}>
         <input
           type="text"
-          placeholder="State requirement desire in plain English..."
+          placeholder="Type requirement desire in natural language..."
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           className="input-squircle"
-          style={{ flex: 1, padding: '10px 14px', fontSize: '13px' }}
+          style={{ flex: 1, padding: '7px 10px', fontSize: '12px' }}
           disabled={isLoading}
         />
         <button
           onClick={() => handleSend()}
           disabled={isLoading || !inputMessage.trim()}
-          className="btn-squircle btn-primary"
-          style={{ padding: '0 18px', opacity: isLoading || !inputMessage.trim() ? 0.6 : 1 }}
+          className="btn-squircle btn-primary-blue"
+          style={{ padding: '0 14px', opacity: isLoading || !inputMessage.trim() ? 0.6 : 1 }}
         >
           Send
         </button>

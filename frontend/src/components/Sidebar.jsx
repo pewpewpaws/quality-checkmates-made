@@ -1,13 +1,8 @@
 import React, { useState } from 'react';
 
 /**
- * Sidebar Component (Antigravity 2.0 Left Navigation)
- * Features:
- * - Projects List with requirement count indicators
- * - Requirement Explorer strictly isolated to active project
- * - Filter pills (All, TBD, Provisional, Locked)
- * - Live search
- * - Squircle styling and hover micro-animations
+ * Sidebar Component (Antigravity 2.0 Pro Edition)
+ * Clean, muted IDE file tree layout with squircle geometry and per-project isolation.
  */
 export default function Sidebar({
   projects = [],
@@ -25,7 +20,6 @@ export default function Sidebar({
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [showNewReqModal, setShowNewReqModal] = useState(false);
 
-  // Form states
   const [newProjName, setNewProjName] = useState('');
   const [newProjId, setNewProjId] = useState('');
   const [newProjDomain, setNewProjDomain] = useState('');
@@ -36,14 +30,11 @@ export default function Sidebar({
   const [newReqCategory, setNewReqCategory] = useState('General');
   const [newReqSection, setNewReqSection] = useState('Section 1.0');
 
-  // Filter requirements by search and status
   const filteredRequirements = requirements.filter((req) => {
-    // Status filter
     if (statusFilter === 'FLAGGED_TBD' && req.status !== 'FLAGGED_TBD') return false;
     if (statusFilter === 'PROVISIONAL_PM' && req.status !== 'PROVISIONAL_PM') return false;
     if (statusFilter === 'LOCKED_BASELINE' && req.status !== 'LOCKED_BASELINE') return false;
 
-    // Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchId = req.id?.toLowerCase().includes(q);
@@ -88,43 +79,37 @@ export default function Sidebar({
 
   return (
     <aside
-      className="glass-panel"
       style={{
-        width: '320px',
-        minWidth: '320px',
-        height: 'calc(100vh - 62px)',
+        width: '300px',
+        minWidth: '300px',
+        height: 'calc(100vh - 52px)',
         display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid var(--border-glass)',
+        background: 'var(--bg-sidebar)',
+        borderRight: '1px solid var(--border-subtle)',
         zIndex: 40,
         overflow: 'hidden',
       }}
     >
-      {/* 1. Project Workspaces Accordion / Selector */}
-      <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+      {/* 1. Projects Section */}
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>
-            PROJECT WORKSPACES
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
+            WORKSPACES
           </span>
           {userRole !== 'executive' && (
             <button
               onClick={() => setShowNewProjectModal(true)}
-              className="btn-squircle"
-              style={{
-                padding: '3px 8px',
-                fontSize: '11px',
-                background: 'rgba(56, 189, 248, 0.12)',
-                color: '#38bdf8',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-              }}
-              title="Create New Project Workspace"
+              className="btn-squircle btn-secondary"
+              style={{ padding: '2px 7px', fontSize: '10px' }}
+              title="Create New Workspace"
             >
               + New
             </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {projects.map((proj) => {
             const isActive = proj.project_id === activeProjectId;
             return (
@@ -135,33 +120,29 @@ export default function Sidebar({
                 style={{
                   width: '100%',
                   justifyContent: 'space-between',
-                  padding: '7px 10px',
-                  background: isActive ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                  border: isActive ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid transparent',
-                  color: isActive ? '#ffffff' : 'var(--text-muted)',
+                  padding: '6px 8px',
+                  background: isActive ? 'var(--bg-card-selected)' : 'transparent',
+                  border: isActive ? '1px solid var(--border-medium)' : '1px solid transparent',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
                   textAlign: 'left',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                  <span style={{ fontSize: '14px' }}>
-                    {proj.project_id.includes('bms') ? '🔋' : proj.project_id.includes('flight') ? '✈️' : proj.project_id.includes('med') ? '💉' : '📁'}
+                  <span style={{ fontSize: '12px', opacity: 0.8 }}>
+                    {proj.project_id.includes('bms') ? '⚡' : proj.project_id.includes('flight') ? '✈' : proj.project_id.includes('med') ? '✚' : '📁'}
                   </span>
                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    <div style={{ fontSize: '12px', fontWeight: isActive ? '600' : '500', color: isActive ? '#ffffff' : 'var(--text-main)' }}>
+                    <div style={{ fontSize: '11px', fontWeight: isActive ? '600' : '500' }}>
                       {proj.project_name}
-                    </div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
-                      {proj.domain || 'Domain Spec'}
                     </div>
                   </div>
                 </div>
 
                 <span
-                  className="badge-chip squircle-xs"
                   style={{
                     fontSize: '10px',
-                    background: isActive ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.06)',
-                    color: isActive ? '#38bdf8' : 'var(--text-muted)',
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)',
                   }}
                 >
                   {proj.total_requirements ?? 0}
@@ -173,10 +154,10 @@ export default function Sidebar({
       </div>
 
       {/* 2. Requirements Explorer Header & Filters */}
-      <div style={{ padding: '12px 16px 8px', borderBottom: '1px solid var(--border-subtle)' }}>
+      <div style={{ padding: '10px 14px 6px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.5px', color: 'var(--text-muted)' }}>
-            REQUIREMENTS EXPLORER
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-muted)', letterSpacing: '0.4px' }}>
+            REQUIREMENTS
           </span>
           {userRole !== 'executive' && (
             <button
@@ -184,15 +165,9 @@ export default function Sidebar({
                 setNewReqId(`REQ-${activeProjectId.slice(0, 3).toUpperCase()}-${String(requirements.length + 1).padStart(3, '0')}`);
                 setShowNewReqModal(true);
               }}
-              className="btn-squircle"
-              style={{
-                padding: '3px 8px',
-                fontSize: '11px',
-                background: 'rgba(16, 185, 129, 0.12)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-              }}
-              title="Add Statement to Active Project"
+              className="btn-squircle btn-secondary"
+              style={{ padding: '2px 7px', fontSize: '10px' }}
+              title="Add Statement"
             >
               + Add
             </button>
@@ -202,29 +177,29 @@ export default function Sidebar({
         {/* Live Search */}
         <input
           type="text"
-          placeholder="Filter by keyword or ID..."
+          placeholder="Filter requirements..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="input-squircle"
-          style={{ width: '100%', fontSize: '12px', padding: '6px 10px', marginBottom: '8px' }}
+          style={{ width: '100%', fontSize: '11px', padding: '5px 8px', marginBottom: '6px' }}
         />
 
         {/* Status Filter Pills */}
-        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
+        <div style={{ display: 'flex', gap: '3px', overflowX: 'auto', paddingBottom: '2px' }}>
           {['ALL', 'FLAGGED_TBD', 'PROVISIONAL_PM', 'LOCKED_BASELINE'].map((st) => {
             const isSelected = statusFilter === st;
-            const label = st === 'ALL' ? 'All' : st === 'FLAGGED_TBD' ? '🔴 TBD' : st === 'PROVISIONAL_PM' ? '🟡 Prov' : '🟢 Lock';
+            const label = st === 'ALL' ? 'All' : st === 'FLAGGED_TBD' ? 'TBD' : st === 'PROVISIONAL_PM' ? 'Prov' : 'Locked';
             return (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className="btn-squircle squircle-pill"
                 style={{
-                  padding: '3px 8px',
+                  padding: '2px 7px',
                   fontSize: '10px',
-                  background: isSelected ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.04)',
-                  color: isSelected ? '#ffffff' : 'var(--text-muted)',
-                  border: isSelected ? '1px solid rgba(255,255,255,0.25)' : '1px solid transparent',
+                  background: isSelected ? 'var(--border-medium)' : 'transparent',
+                  color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)',
+                  border: isSelected ? '1px solid var(--border-glass)' : '1px solid transparent',
                 }}
               >
                 {label}
@@ -234,10 +209,10 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* 3. Scrollable Requirements Tree / List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {/* 3. Requirements List */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {filteredRequirements.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-dim)', fontSize: '12px' }}>
+          <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-dim)', fontSize: '11px' }}>
             No requirements match criteria.
           </div>
         ) : (
@@ -246,45 +221,42 @@ export default function Sidebar({
             const isLocked = req.status === 'LOCKED_BASELINE';
             const isProv = req.status === 'PROVISIONAL_PM';
 
-            const statusDotColor = isLocked ? '#10b981' : isProv ? '#f59e0b' : '#ef4444';
+            const statusColor = isLocked ? 'var(--text-green)' : isProv ? 'var(--text-amber)' : 'var(--text-red)';
             const scoreVal = req.quality_score?.overall;
 
             return (
               <div
                 key={req.id}
                 onClick={() => setSelectedReqId(req.id)}
-                className="glass-card squircle-md"
+                className="glass-card squircle-sm"
                 style={{
-                  padding: '10px',
+                  padding: '8px 10px',
                   cursor: 'pointer',
-                  background: isSelected ? 'rgba(56, 189, 248, 0.14)' : 'rgba(20, 24, 38, 0.55)',
-                  border: isSelected ? '1px solid rgba(56, 189, 248, 0.45)' : '1px solid var(--border-subtle)',
-                  boxShadow: isSelected ? '0 0 14px rgba(56, 189, 248, 0.2)' : 'none',
+                  background: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
+                  borderColor: isSelected ? 'var(--accent-blue-border)' : 'var(--border-subtle)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span
                       style={{
-                        width: '7px',
-                        height: '7px',
+                        width: '6px',
+                        height: '6px',
                         borderRadius: '50%',
-                        background: statusDotColor,
-                        boxShadow: `0 0 6px ${statusDotColor}`,
+                        background: statusColor,
                       }}
                     />
-                    <span style={{ fontSize: '12px', fontWeight: '700', fontFamily: 'var(--font-mono)', color: isSelected ? '#38bdf8' : '#ffffff' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '600', fontFamily: 'var(--font-mono)', color: isSelected ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
                       {req.id}
                     </span>
                   </div>
 
                   {scoreVal !== undefined && (
                     <span
-                      className="badge-chip squircle-xs"
                       style={{
                         fontSize: '10px',
-                        background: scoreVal >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                        color: scoreVal >= 80 ? '#34d399' : '#fbbf24',
+                        color: 'var(--text-muted)',
+                        fontFamily: 'var(--font-mono)',
                       }}
                     >
                       {Math.round(scoreVal)} pts
@@ -295,7 +267,7 @@ export default function Sidebar({
                 <div
                   style={{
                     fontSize: '11px',
-                    color: 'var(--text-muted)',
+                    color: 'var(--text-secondary)',
                     lineHeight: '1.35',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
@@ -304,12 +276,6 @@ export default function Sidebar({
                   }}
                 >
                   {req.text}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '10px', color: 'var(--text-dim)' }}>
-                  <span>{req.category || 'General'}</span>
-                  <span>•</span>
-                  <span>{req.section || 'Sec 1'}</span>
                 </div>
               </div>
             );
@@ -323,21 +289,20 @@ export default function Sidebar({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 999,
           }}
         >
-          <div className="glass-panel squircle-lg" style={{ width: '420px', padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px', color: '#ffffff' }}>
+          <div className="glass-panel squircle-md" style={{ width: '380px', padding: '18px', border: '1px solid var(--border-medium)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>
               Create Project Workspace
             </h3>
-            <form onSubmit={handleCreateProjectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <form onSubmit={handleCreateProjectSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
                   Project ID (slug)
                 </label>
                 <input
@@ -352,12 +317,12 @@ export default function Sidebar({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
                   Project Name
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Level-3 Highway Pilot ADAS"
+                  placeholder="e.g. Highway Pilot ADAS"
                   value={newProjName}
                   onChange={(e) => setNewProjName(e.target.value)}
                   className="input-squircle"
@@ -367,12 +332,12 @@ export default function Sidebar({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Engineering Domain / Standard
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
+                  Domain Standard
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Automotive Safety (ISO 26262)"
+                  placeholder="e.g. Automotive ISO 26262"
                   value={newProjDomain}
                   onChange={(e) => setNewProjDomain(e.target.value)}
                   className="input-squircle"
@@ -380,20 +345,7 @@ export default function Sidebar({
                 />
               </div>
 
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                  Description / Architecture Charter
-                </label>
-                <textarea
-                  placeholder="Operational parameters and system boundaries..."
-                  value={newProjDesc}
-                  onChange={(e) => setNewProjDesc(e.target.value)}
-                  className="input-squircle"
-                  style={{ width: '100%', height: '70px', resize: 'vertical' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowNewProjectModal(false)}
@@ -401,8 +353,8 @@ export default function Sidebar({
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-squircle btn-primary">
-                  Create Workspace
+                <button type="submit" className="btn-squircle btn-primary-blue">
+                  Create
                 </button>
               </div>
             </form>
@@ -416,23 +368,22 @@ export default function Sidebar({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            backdropFilter: 'blur(8px)',
+            background: 'rgba(0,0,0,0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 999,
           }}
         >
-          <div className="glass-panel squircle-lg" style={{ width: '460px', padding: '24px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '14px', color: '#ffffff' }}>
-              Add Requirement to {activeProjectId}
+          <div className="glass-panel squircle-md" style={{ width: '420px', padding: '18px', border: '1px solid var(--border-medium)' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>
+              Add Requirement ({activeProjectId})
             </h3>
-            <form onSubmit={handleCreateReqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <form onSubmit={handleCreateReqSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                    Requirement ID
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
+                    ID
                   </label>
                   <input
                     type="text"
@@ -444,7 +395,7 @@ export default function Sidebar({
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
                     Category
                   </label>
                   <input
@@ -458,7 +409,7 @@ export default function Sidebar({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '3px' }}>
                   Requirement Text (Preserve [TBD: ...])
                 </label>
                 <textarea
@@ -466,12 +417,12 @@ export default function Sidebar({
                   value={newReqText}
                   onChange={(e) => setNewReqText(e.target.value)}
                   className="input-squircle"
-                  style={{ width: '100%', height: '80px', resize: 'vertical' }}
+                  style={{ width: '100%', height: '70px', resize: 'vertical' }}
                   required
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '8px' }}>
                 <button
                   type="button"
                   onClick={() => setShowNewReqModal(false)}
@@ -479,8 +430,8 @@ export default function Sidebar({
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn-squircle btn-primary">
-                  Save Requirement
+                <button type="submit" className="btn-squircle btn-primary-blue">
+                  Save
                 </button>
               </div>
             </form>

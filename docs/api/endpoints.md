@@ -425,3 +425,18 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
     }
     ```
 
+## 7. Phase 2.5 Requirement Baseline Export Endpoints
+* **Method**: `GET /api/requirements/export/csv`:
+  * Exports all requirements within a project workspace as an RFC 4180 compliant CSV document.
+  * Query parameters: `project_id` (string), `status` (optional `RequirementStatus`).
+  * Response: `text/csv` with `Content-Disposition: attachment; filename="{project_id}_requirements.csv"`.
+  * Headers: `Requirement ID`, `Project ID`, `Category`, `Section`, `Requirement Text`, `Status`, `Rubric Score`, `Clarity`, `Verifiability`, `Completeness`, `Atomicity`, `Consistency`, `PM Target Value`, `PM Author`, `Technical Approver`, `Hardware Rationale`, `Signed Off At`, `Version`, `Updated At`.
+  * RBAC Filtering: `executive` role shields `DRAFT` and `FLAGGED_TBD` requirements.
+
+* **Method**: `GET /api/requirements/export/pdf`:
+  * Generates an engineering-grade, structured specification baseline PDF using `reportlab`.
+  * Query parameters: `project_id` (string), `status` (optional `RequirementStatus`).
+  * Response: `application/pdf` with `Content-Disposition: attachment; filename="{project_id}_specification.pdf"`.
+  * Contains executive header banner, project workspace metadata, rubric scoring summary metrics, color-coded status badges (`🟢 LOCKED_BASELINE`, `🟡 PROVISIONAL_PM`, `🔴 FLAGGED_TBD`), and dual-key governance sign-off audit cards with PM and Lead Systems Engineer signatures.
+  * RBAC Filtering: `executive` role shields `DRAFT` and `FLAGGED_TBD` requirements.
+

@@ -194,17 +194,25 @@ Keep documentation synchronized in these specific locations:
 - [x] Added REST routes for all Phase 3 AI pipelines (`/api/analysis/xray`, `/api/analysis/duel`, `/api/analysis/rewrite`, `/api/analysis/intent-lock`, `/api/analysis/blueprint`, `/api/analysis/conflicts`).
 - [x] Verified full unit, integration, and AITL test suites across Qualcomm Cloud AI 100 live hardware.
 
+---
+
+### ✅ Phase 2.5: Requirement Baseline Export Engine (COMPLETED)
+- [x] Implemented RFC 4180 CSV export with UTF-8 BOM (`ExportService.to_csv`).
+- [x] Implemented publication-grade structured engineering specification PDF generator with ReportLab (`ExportService.to_pdf`).
+- [x] Added REST endpoints: `GET /api/requirements/export/csv` and `GET /api/requirements/export/pdf`.
+- [x] Integrated Hierarchical RBAC visibility shielding (Executive role shields raw drafts and unapproved TBDs).
+- [x] Preloaded distinct isolated demo projects (`default_project`, `proj-flight`, `proj-med`) with domain architecture charters, dual-key sign-offs, and rubric scores.
+- [x] Added automated test suite (`backend/tests/test_export.py`) verifying CSV headers, PDF signatures, project isolation, and RBAC filters (4/4 passing).
 
 ---
 
-### ⏳ Phase 4: Modern Web Frontend (Mock-First / Venue-Ready)
-- [ ] Setup React + Vite frontend with dark-mode aesthetic.
-- [ ] Build Requirement Input & Parser view.
-- [ ] Build Dual-Key Governance UI (1-Click Header Persona Switcher: PM Mode 🟡 <-> Lead Engineer Mode 🟢 sign-off).
-- [ ] Build X-Ray Issue Cards with clickable evidence highlighting.
-- [ ] Build Interpretation Duel selector cards.
-- [ ] Build Intent-Locked side-by-side Diff Viewer.
-- [ ] Build Verification Blueprint test plan export (JSON/CSV).
+### ⏳ Phase 4: Antigravity 2.0 Web Frontend (Mock-First / Venue-Ready)
+- [ ] Setup React + Vite frontend with Antigravity 2.0 dark-mode glassmorphic aesthetic and Squircle geometry.
+- [ ] Build interactive 60 FPS Google Gemini mobile fluid iridescent background canvas.
+- [ ] Build Collapsible Left Sidebar with isolated project requirement trees, live search, and status filtering.
+- [ ] Build 1-Click Header Persona Switcher (`👔 PM` $\longleftrightarrow$ `🛠️ Lead Systems Engineer` $\longleftrightarrow$ `🎖️ Executive`).
+- [ ] Build 1-Click Export Menu (CSV & Structured PDF).
+- [ ] Build Multi-Tab Center Studio: Conversational Copilot, Document Ingest & Parser, Deep Requirement Inspector (100-pt Rubric Receipt, X-Ray Evidence Highlighting, Interpretation Duel, Intent-Locked Rewriter Diff, Dual-Key Sign-off Gate, Verification Blueprint), and Conflict Radar.
 - [ ] Build Mock / Live API Adapter toggle (`VITE_API_MODE="MOCK" | "LIVE"`).
 
 ---

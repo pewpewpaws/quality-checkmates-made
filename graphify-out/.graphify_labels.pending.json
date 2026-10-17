@@ -6,6 +6,7 @@
   "12": "QualcommService",
   "13": "update_requirement",
   "14": "storage.py",
+  "15": "test_live_duplicates_conflicts.py",
   "16": "UserRole",
   "17": "1. Feature Priority Breakdown",
   "18": "2. Multi-Domain Scenario Breakdown",
@@ -16,5 +17,11 @@
   "23": "delete_project",
   "24": "update_project",
   "25": "get_project_context",
-  "28": "delete_requirement"
+  "26": "export_service.py",
+  "27": "main.py",
+  "28": "delete_requirement",
+  "29": "test_rbac_and_workspaces.py",
+  "30": "qualcomm_service.py",
+  "31": "test_api.py",
+  "32": "Enum"
 }

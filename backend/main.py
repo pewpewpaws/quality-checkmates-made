@@ -21,11 +21,23 @@ logger = logging.getLogger("req-quality-copilot")
 qualcomm = QualcommService()
 
 
+from backend.models.schemas import (
+    RequirementStatement,
+    RequirementStatus,
+    DualKeySignOff,
+    ProjectDocumentContext
+)
+from backend.services.rubric_engine import rubric_engine
+
+
 def preload_demo_datasets():
-    """Preload representative industry requirements for instant 3-minute pitch readiness."""
-    sample_requirements = [
+    """Preload representative industry projects with isolated requirements for instant 3-minute pitch readiness."""
+    
+    # 1. Project: Default / 800V BMS
+    bms_reqs = [
         RequirementStatement(
             id="REQ-BMS-001",
+            project_id="default_project",
             text="The battery management system shall periodically transmit telemetry data to the central cloud repository as appropriate.",
             category="Automotive BMS",
             section="Section 4.2 - Telemetry",
@@ -37,40 +49,159 @@ def preload_demo_datasets():
         ),
         RequirementStatement(
             id="REQ-BMS-002",
+            project_id="default_project",
             text="The thermal management module should quickly reduce power consumption and warn the driver if temperature is critical.",
             category="Automotive BMS",
             section="Section 4.5 - Thermal Safety",
-            status=RequirementStatus.FLAGGED_TBD,
+            status=RequirementStatus.PROVISIONAL_PM,
             sign_off=DualKeySignOff(
                 requirement_id="REQ-BMS-002",
-                state=RequirementStatus.FLAGGED_TBD
+                state=RequirementStatus.PROVISIONAL_PM,
+                pm_author="Alex Mercer (PM)",
+                pm_target_val="Derate by 50% power when pack temp exceeds 58°C"
             )
         ),
         RequirementStatement(
-            id="REQ-IOT-003",
-            text="The IoT sensor gateway shall buffer reading samples where feasible while preserving minimal memory overhead.",
-            category="IoT Gateway",
-            section="Section 2.1 - Ingestion",
-            status=RequirementStatus.FLAGGED_TBD,
+            id="REQ-BMS-003",
+            project_id="default_project",
+            text="The high-voltage contactor controller shall disconnect the traction battery within 10ms upon detecting an ASIL-D crash trigger or pyrotechnic fuse trip.",
+            category="Automotive BMS",
+            section="Section 6.1 - High Voltage Safety",
+            status=RequirementStatus.LOCKED_BASELINE,
             sign_off=DualKeySignOff(
-                requirement_id="REQ-IOT-003",
-                state=RequirementStatus.FLAGGED_TBD
-            )
-        ),
-        RequirementStatement(
-            id="REQ-MED-004",
-            text="The infusion controller shall maintain high reliability and shut off pump flow if high pressure is detected.",
-            category="Medical Infusion",
-            section="Section 5.1 - Pressure Safety",
-            status=RequirementStatus.FLAGGED_TBD,
-            sign_off=DualKeySignOff(
-                requirement_id="REQ-MED-004",
-                state=RequirementStatus.FLAGGED_TBD
+                requirement_id="REQ-BMS-003",
+                state=RequirementStatus.LOCKED_BASELINE,
+                pm_author="Alex Mercer (PM)",
+                pm_target_val="<= 10ms disconnection latency",
+                tech_lead_approver="Dr. Aris Thorne (Lead Systems Engineer)",
+                hardware_rationale="Meets ISO 26262 ASIL-D high-voltage disconnect timing requirement on hardware test bench.",
+                signed_off_at=None
             )
         )
     ]
-    store.bulk_add(sample_requirements)
-    logger.info(f"Preloaded {len(sample_requirements)} pitch-ready demo requirements into store.")
+
+    # 2. Project: Aerospace Flight Control (DO-178C)
+    if "proj-flight" not in store._projects:
+        store.create_project(
+            project_id="proj-flight",
+            project_name="Commercial Fly-By-Wire Flight Computer",
+            domain="Aerospace Avionics (DO-178C / Level-A)",
+            description="Triple-modular redundant primary flight control computer for fly-by-wire commercial transport aircraft."
+        )
+        store.add_document("proj-flight", ProjectDocumentContext(
+            id="DOC-AERO-001",
+            title="Flight Control Safety Charter",
+            content="Pitch authority limit: -10 deg to +25 deg. Actuator slew rate >= 40 deg/sec. Total sidestick latency <= 25ms.",
+            category="Avionics Specification"
+        ))
+
+    aero_reqs = [
+        RequirementStatement(
+            id="REQ-AERO-001",
+            project_id="proj-flight",
+            text="The primary flight control computer shall command elevator pitch trim actuators within [TBD: latency_ms] upon sidestick displacement.",
+            category="Flight Dynamics",
+            section="Section 3.1 - Pitch Control",
+            status=RequirementStatus.FLAGGED_TBD,
+            sign_off=DualKeySignOff(requirement_id="REQ-AERO-001", state=RequirementStatus.FLAGGED_TBD)
+        ),
+        RequirementStatement(
+            id="REQ-AERO-002",
+            project_id="proj-flight",
+            text="The stall warning system should activate stick-shaker vibration when angle-of-attack exceeds critical threshold for more than 200ms.",
+            category="Flight Dynamics",
+            section="Section 3.4 - Stall Protection",
+            status=RequirementStatus.PROVISIONAL_PM,
+            sign_off=DualKeySignOff(
+                requirement_id="REQ-AERO-002",
+                state=RequirementStatus.PROVISIONAL_PM,
+                pm_author="Sarah Jenkins (PM)",
+                pm_target_val="AoA threshold = 14.5° in clean configuration"
+            )
+        ),
+        RequirementStatement(
+            id="REQ-AERO-003",
+            project_id="proj-flight",
+            text="The triple-redundant autopilot disengage override shall transfer manual authority to pilot controls within 15ms of disconnect button actuation.",
+            category="Flight Control",
+            section="Section 5.2 - Override Safety",
+            status=RequirementStatus.LOCKED_BASELINE,
+            sign_off=DualKeySignOff(
+                requirement_id="REQ-AERO-003",
+                state=RequirementStatus.LOCKED_BASELINE,
+                pm_author="Sarah Jenkins (PM)",
+                pm_target_val="15ms transfer window",
+                tech_lead_approver="Col. Marcus Vance (Chief Flight Architect)",
+                hardware_rationale="Verified on Iron Bird test bench with MIL-STD-1553B bus compliance."
+            )
+        )
+    ]
+
+    # 3. Project: Medical Infusion Device (IEC 62304)
+    if "proj-med" not in store._projects:
+        store.create_project(
+            project_id="proj-med",
+            project_name="Precision Smart Infusion Pump",
+            domain="Medical Devices (IEC 62304 / Class III)",
+            description="Dual-channel precision syringe and volumetric infusion pump with anti-free-flow clamp and ultrasonic air-in-line detection."
+        )
+        store.add_document("proj-med", ProjectDocumentContext(
+            id="DOC-MED-001",
+            title="Infusion Safety Charter",
+            content="Maximum allowable occlusion pressure: 100 kPa ± 10 kPa. Air-in-line sensor bubble detection threshold: 50 microliters.",
+            category="Medical Safety Standard"
+        ))
+
+    med_reqs = [
+        RequirementStatement(
+            id="REQ-MED-001",
+            project_id="proj-med",
+            text="The infusion controller shall maintain high reliability and shut off pump flow if high pressure is detected.",
+            category="Fluidics Safety",
+            section="Section 2.1 - Occlusion Control",
+            status=RequirementStatus.FLAGGED_TBD,
+            sign_off=DualKeySignOff(requirement_id="REQ-MED-001", state=RequirementStatus.FLAGGED_TBD)
+        ),
+        RequirementStatement(
+            id="REQ-MED-002",
+            project_id="proj-med",
+            text="The bolus metering module shall deliver medication within [TBD: bolus_accuracy_pct] of programmed dose.",
+            category="Dosing Accuracy",
+            section="Section 2.4 - Micro-Bolus",
+            status=RequirementStatus.PROVISIONAL_PM,
+            sign_off=DualKeySignOff(
+                requirement_id="REQ-MED-002",
+                state=RequirementStatus.PROVISIONAL_PM,
+                pm_author="Dr. Clara Vance (PM)",
+                pm_target_val="± 2.0% volumetric delivery accuracy"
+            )
+        ),
+        RequirementStatement(
+            id="REQ-MED-003",
+            project_id="proj-med",
+            text="The emergency battery backup module shall sustain continuous fluid delivery at 50 mL/hr for at least 120 minutes following AC mains interruption.",
+            category="Power Failsafe",
+            section="Section 4.1 - Power Management",
+            status=RequirementStatus.LOCKED_BASELINE,
+            sign_off=DualKeySignOff(
+                requirement_id="REQ-MED-003",
+                state=RequirementStatus.LOCKED_BASELINE,
+                pm_author="Dr. Clara Vance (PM)",
+                pm_target_val="120 minutes battery runtime",
+                tech_lead_approver="Dr. Elena Rostova (Lead Biomedical Systems Engineer)",
+                hardware_rationale="Validated across Li-ion pack aging cycle tests under full stepper motor load."
+            )
+        )
+    ]
+
+    # Calculate rubric scores for all demo requirements
+    all_demo = [("default_project", bms_reqs), ("proj-flight", aero_reqs), ("proj-med", med_reqs)]
+    for pid, req_list in all_demo:
+        for r in req_list:
+            rubric_engine.score_requirement(r)
+        store.bulk_add(req_list, project_id=pid)
+
+    logger.info("Preloaded pitch-ready isolated demo projects: default_project, proj-flight, proj-med.")
 
 
 # Preload on import for immediate state availability across testing and ASGI servers

@@ -1,8 +1,9 @@
 from typing import List, Optional, Tuple, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Response
 from backend.models.schemas import (
     RequirementStatement,
     SignOffActionRequest,
+    RequirementStatus,
     UserRole,
     SemanticDuplicateMatch,
     ConflictRadarResponse,
@@ -12,9 +13,59 @@ from backend.api.deps import get_user_role, require_write_permission, verify_dua
 from backend.services.storage import store
 from backend.services.qualcomm_service import QualcommService
 from backend.services.rubric_engine import rubric_engine
+from backend.services.export_service import export_service
 
 router = APIRouter(prefix="/api/requirements", tags=["Requirements & Dual-Key Governance"])
 qualcomm = QualcommService()
+
+
+@router.get("/export/csv")
+async def export_requirements_csv(
+    project_id: str = Query("default_project", description="Target project workspace ID"),
+    status: Optional[RequirementStatus] = Query(None, description="Optional status filter"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Export project requirements to RFC 4180 CSV format (Phase 2.5).
+    Hierarchical RBAC: Executives are shielded from raw DRAFT or FLAGGED_TBD requirements.
+    """
+    role, _ = user_context
+    reqs = store.get_all(project_id=project_id, role=role)
+    if status:
+        reqs = [r for r in reqs if r.status == status]
+    
+    csv_data = export_service.to_csv(reqs)
+    filename = f"{project_id}_requirements.csv"
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
+
+@router.get("/export/pdf")
+async def export_requirements_pdf(
+    project_id: str = Query("default_project", description="Target project workspace ID"),
+    status: Optional[RequirementStatus] = Query(None, description="Optional status filter"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Export project requirements to a publication-grade structured PDF engineering specification (Phase 2.5).
+    Hierarchical RBAC: Executives only receive approved baselines.
+    """
+    role, _ = user_context
+    reqs = store.get_all(project_id=project_id, role=role)
+    if status:
+        reqs = [r for r in reqs if r.status == status]
+    
+    workspace = store.get_project(project_id)
+    pdf_bytes = export_service.to_pdf(requirements=reqs, project=workspace)
+    filename = f"{project_id}_specification.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 
 @router.get("", response_model=List[RequirementStatement])

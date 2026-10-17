@@ -29,6 +29,12 @@ export default function DeepInspectorTab({
   const [isEditingText, setIsEditingText] = useState(false);
   const [editedText, setEditedText] = useState(requirement?.text || '');
 
+  // Grammarly-Style TBD Inline Resolver State
+  const [activeTbdToken, setActiveTbdToken] = useState(null);
+  const [customTbdVal, setCustomTbdVal] = useState('');
+  const [isResolvingTbd, setIsResolvingTbd] = useState(false);
+  const [tbdResolvedMessage, setTbdResolvedMessage] = useState('');
+
   if (!requirement) {
     return (
       <div
@@ -169,18 +175,280 @@ export default function DeepInspectorTab({
   const scoreObj = requirement.quality_score;
   const overallScore = scoreObj ? Math.round(scoreObj.overall) : 0;
 
+  const getSmartSuggestionsForParam = (paramName) => {
+    const p = (paramName || '').toLowerCase();
+
+    // 1. Check if AI Smart Rewriter already provided suggestions in identified_tbds
+    const identified = requirement.rewrite_suggestion?.identified_tbds || [];
+    const matched = identified.find(
+      (t) => t.parameter_name?.toLowerCase() === p || p.includes(t.parameter_name?.toLowerCase())
+    );
+    if (matched) {
+      return [
+        {
+          value: matched.suggested_value,
+          rationale: matched.rationale || 'AI Smart Rewriter recommendation',
+          confidence: matched.confidence || 'HIGH',
+        },
+      ];
+    }
+
+    // 2. Domain-grounded Smart Suggested Defaults
+    if (p.includes('latency') || p.includes('time') || p.includes('delay') || p.includes('ms')) {
+      return [
+        { value: '10ms', rationale: 'ISO 26262 ASIL-D high-voltage disconnect threshold', confidence: 'HIGH' },
+        { value: '25ms', rationale: 'DO-178C Level-A fly-by-wire cyclic control budget', confidence: 'HIGH' },
+        { value: '50ms', rationale: 'CAN-FD nominal cyclic broadcast deadline', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p.includes('temp') || p.includes('heat') || p.includes('deg')) {
+      return [
+        { value: '55°C', rationale: 'Maximum pack surface temperature during DC fast charge', confidence: 'HIGH' },
+        { value: '58°C', rationale: 'BMS thermal safety warning trigger', confidence: 'HIGH' },
+        { value: '60°C', rationale: 'Critical thermal runaway derating cutoff', confidence: 'HIGH' },
+      ];
+    }
+    if (p.includes('accuracy') || p.includes('pct') || p.includes('percent') || p.includes('tolerance')) {
+      return [
+        { value: '± 2.0%', rationale: 'IEC 62304 Class-III micro-bolus volumetric tolerance', confidence: 'HIGH' },
+        { value: '± 5.0%', rationale: 'Nominal commercial pump delivery window', confidence: 'MEDIUM' },
+        { value: '± 1.0%', rationale: 'Critical pediatric drug infusion tolerance', confidence: 'HIGH' },
+      ];
+    }
+    if (p.includes('pressure') || p.includes('psi') || p.includes('kpa')) {
+      return [
+        { value: '100 kPa ± 10 kPa', rationale: 'IEC 62304 downstream occlusion threshold', confidence: 'HIGH' },
+        { value: '15 psi', rationale: 'Fluidic line safety relief barrier limit', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p.includes('rate') || p.includes('baud') || p.includes('freq') || p.includes('hz')) {
+      return [
+        { value: '500 kbps nominal, 2 Mbps data', rationale: 'Automotive CAN-FD standard bus profile', confidence: 'HIGH' },
+        { value: '100 Hz', rationale: 'High-frequency telemetry sampling rate', confidence: 'MEDIUM' },
+      ];
+    }
+    if (p.includes('runtime') || p.includes('battery') || p.includes('duration') || p.includes('min')) {
+      return [
+        { value: '120 minutes', rationale: 'IEC 60601-1 continuous life-support battery backup', confidence: 'HIGH' },
+        { value: '60 minutes', rationale: 'Standard transport failsafe duration', confidence: 'MEDIUM' },
+      ];
+    }
+
+    // Default engineering fallbacks
+    return [
+      { value: '10ms', rationale: 'Safety-critical real-time response threshold', confidence: 'MEDIUM' },
+      { value: '50ms', rationale: 'Standard cyclic task deadline', confidence: 'MEDIUM' },
+    ];
+  };
+
+  const handleResolveTbd = async (targetToken, resolvedValue, rationale) => {
+    if (!resolvedValue || !resolvedValue.trim()) return;
+    setIsResolvingTbd(true);
+    try {
+      const valTrimmed = resolvedValue.trim();
+      const newText = requirement.text.replace(targetToken, valTrimmed);
+      const newScore = await calculateRubricScore(newText);
+
+      const updatedReq = {
+        ...requirement,
+        text: newText,
+        quality_score: newScore,
+        status: requirement.status === 'FLAGGED_TBD' ? 'PROVISIONAL_PM' : requirement.status,
+        sign_off: {
+          ...(requirement.sign_off || { requirement_id: requirement.id }),
+          pm_author: requirement.sign_off?.pm_author || (userRole === 'product_manager' ? 'PM Author' : 'Product Manager'),
+          pm_target_val: `Bound parameter: ${valTrimmed} (${rationale || 'Specified by engineering envelope'})`,
+          state: requirement.status === 'FLAGGED_TBD' ? 'PROVISIONAL_PM' : (requirement.sign_off?.state || 'PROVISIONAL_PM'),
+        },
+      };
+
+      const saved = await updateRequirement(requirement.id, updatedReq, userRole);
+      onRequirementUpdated(saved);
+      setActiveTbdToken(null);
+      setCustomTbdVal('');
+      setTbdResolvedMessage(`Resolved ${targetToken} ➔ "${valTrimmed}" (Rubric Quality: ${Math.round(newScore.overall)} pts)`);
+      setTimeout(() => setTbdResolvedMessage(''), 5000);
+    } catch (err) {
+      alert(`Failed to apply TBD parameter: ${err.message}`);
+    } finally {
+      setIsResolvingTbd(false);
+    }
+  };
+
   const renderHighlightedText = (text) => {
     const parts = text.split(/(\[TBD:[^\]]+\])/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('[TBD:') && part.endsWith(']')) {
-        return (
-          <span key={i} className="tbd-token-chip" title="Parameter [TBD]">
-            {part}
-          </span>
-        );
-      }
-      return <span key={i}>{part}</span>;
-    });
+    let tbdIndex = 0;
+
+    return (
+      <span>
+        {parts.map((part, i) => {
+          if (part.startsWith('[TBD:') && part.endsWith(']')) {
+            const currentTbdIndex = tbdIndex++;
+            const paramName = part.slice(5, -1).trim();
+            const isOpen = activeTbdToken && activeTbdToken.index === currentTbdIndex;
+            const suggestions = getSmartSuggestionsForParam(paramName);
+
+            return (
+              <span key={i} style={{ position: 'relative', display: 'inline-block', margin: '0 2px' }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveTbdToken(isOpen ? null : { token: part, param: paramName, index: currentTbdIndex });
+                  }}
+                  className="tbd-token-chip"
+                  style={{
+                    cursor: 'pointer',
+                    background: isOpen ? 'rgba(235, 87, 87, 0.32)' : 'rgba(235, 87, 87, 0.16)',
+                    color: '#ff6b6b',
+                    border: isOpen ? '1px solid #ff6b6b' : '1px solid rgba(235, 87, 87, 0.35)',
+                    boxShadow: isOpen ? '0 0 10px rgba(235, 87, 87, 0.3)' : 'none',
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '12.5px',
+                    fontWeight: '600',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.12s ease',
+                  }}
+                  title="Click to resolve parameter with Grammarly-style Smart Defaults"
+                >
+                  <span style={{ fontSize: '11px' }}>✨</span>
+                  <span>{part}</span>
+                  <span style={{ fontSize: '9px', opacity: 0.7 }}>▾</span>
+                </button>
+
+                {/* Grammarly-Style Floating Card Popover */}
+                {isOpen && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      left: '0',
+                      zIndex: 1000,
+                      width: '340px',
+                      background: '#242426',
+                      border: '1px solid rgba(255, 255, 255, 0.16)',
+                      borderRadius: '6px',
+                      boxShadow: '0 14px 40px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.4)',
+                      padding: '12px 14px',
+                      color: 'var(--text-primary)',
+                      textAlign: 'left',
+                    }}
+                  >
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '14px' }}>✨</span>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                          Resolve: <code style={{ color: '#ff7b72', background: 'rgba(255, 255, 255, 0.08)', padding: '1px 5px', borderRadius: '3px' }}>{paramName}</code>
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTbdToken(null)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          padding: '2px 4px',
+                          lineHeight: 1,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: '1.4' }}>
+                      Select a Smart Suggested Default from the engineering envelope, or enter a custom contractual value:
+                    </div>
+
+                    {/* Suggested Replacement Chips (Grammarly style 1-click accept) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+                        Smart Suggested Defaults
+                      </div>
+                      {suggestions.map((sug, sIdx) => (
+                        <div
+                          key={sIdx}
+                          onClick={() => handleResolveTbd(part, sug.value, sug.rationale)}
+                          style={{
+                            padding: '7px 9px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.10)',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.12s ease',
+                          }}
+                          className="tbd-suggestion-row"
+                        >
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: '700', color: '#57c07b', fontFamily: 'var(--font-mono)' }}>
+                                {sug.value}
+                              </span>
+                              <span style={{ fontSize: '9.5px', padding: '1px 4px', background: 'rgba(46, 133, 81, 0.2)', color: '#4dab72', borderRadius: '2px' }}>
+                                {sug.confidence}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              {sug.rationale}
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '11px', color: '#57c07b', fontWeight: '600', paddingLeft: '8px' }}>
+                            Apply ↵
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Custom Input Entry */}
+                    <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                      <div style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '4px' }}>
+                        Custom Engineering Value
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <input
+                          type="text"
+                          placeholder="e.g. 15ms or 55°C"
+                          value={customTbdVal}
+                          onChange={(e) => setCustomTbdVal(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleResolveTbd(part, customTbdVal, 'Custom user value');
+                            }
+                          }}
+                          className="input-squircle"
+                          style={{ flex: 1, fontSize: '12px', padding: '4px 8px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleResolveTbd(part, customTbdVal, 'Custom user value')}
+                          disabled={!customTbdVal.trim() || isResolvingTbd}
+                          className="notion-btn notion-btn-primary"
+                          style={{ padding: '4px 10px', fontSize: '11.5px', fontWeight: '600' }}
+                        >
+                          {isResolvingTbd ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </span>
+            );
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </span>
+    );
   };
 
   return (

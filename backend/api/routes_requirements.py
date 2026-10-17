@@ -271,3 +271,24 @@ async def dual_key_sign_off(
     if not updated:
         raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
     return updated
+
+
+@router.delete("/{req_id}")
+async def delete_requirement(
+    req_id: str,
+    project_id: Optional[str] = Query(None, description="Optional project workspace ID"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Delete a single requirement statement from the active project workspace.
+    Restricted: Executives are read-only.
+    """
+    role, _ = user_context
+    if role == UserRole.EXECUTIVE:
+        raise HTTPException(status_code=403, detail="Executive role is strictly read-only.")
+
+    deleted = store.delete(req_id, project_id=project_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
+    return {"status": "deleted", "id": req_id}
+

@@ -87,6 +87,18 @@ export default function App() {
     );
   };
 
+  const handleRequirementDeleted = (deletedId) => {
+    setRequirements((prev) => prev.filter((r) => r.id !== deletedId));
+    setSelectedReqId((prev) => {
+      if (prev === deletedId) {
+        const remaining = requirements.filter((r) => r.id !== deletedId);
+        return remaining.length > 0 ? remaining[0].id : null;
+      }
+      return prev;
+    });
+    loadProjects();
+  };
+
   const handleAddRequirement = async (newReq) => {
     try {
       const created = await createRequirement(newReq, userRole);
@@ -177,6 +189,7 @@ export default function App() {
           selectedRequirement={selectedRequirement}
           userRole={userRole}
           onRequirementUpdated={handleRequirementUpdated}
+          onRequirementDeleted={handleRequirementDeleted}
           onAdoptRequirement={handleAdoptRequirement}
           onIngestRequirements={handleIngestRequirements}
         />

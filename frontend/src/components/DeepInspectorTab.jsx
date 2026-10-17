@@ -7,6 +7,7 @@ import {
   signOffRequirement,
   calculateRubricScore,
   updateRequirement,
+  deleteRequirement,
 } from '../services/api';
 
 /**
@@ -18,6 +19,7 @@ export default function DeepInspectorTab({
   activeProjectId,
   userRole,
   onRequirementUpdated,
+  onRequirementDeleted,
 }) {
   const [activeDeckTab, setActiveDeckTab] = useState('xray');
   const [isRunningAI, setIsRunningAI] = useState(false);
@@ -317,6 +319,16 @@ export default function DeepInspectorTab({
       setIsEditingText(false);
     } catch (err) {
       alert(`Save edit failed: ${err.message}`);
+    }
+  };
+
+  const handleDeleteSelf = async () => {
+    if (!window.confirm(`Delete requirement ${requirement.id} from this project?`)) return;
+    try {
+      await deleteRequirement(requirement.id, activeProjectId, userRole);
+      onRequirementDeleted?.(requirement.id);
+    } catch (err) {
+      alert(`Delete failed: ${err.message}`);
     }
   };
 
@@ -703,13 +715,26 @@ export default function DeepInspectorTab({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', gap: '12px', paddingRight: '6px' }}>
       {/* 1. Notion Page Header & Title */}
       <div style={{ padding: '8px 4px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '24px', lineHeight: 1 }}>
-            {activeProjectId.includes('bms') ? '⚡' : activeProjectId.includes('flight') ? '✈' : activeProjectId.includes('med') ? '✚' : '📄'}
-          </span>
-          <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-            {requirement.id}: {requirement.category || 'Functional Requirement'}
-          </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '24px', lineHeight: 1 }}>
+              {activeProjectId.includes('bms') ? '⚡' : activeProjectId.includes('flight') ? '✈' : activeProjectId.includes('med') ? '✚' : '📄'}
+            </span>
+            <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+              {requirement.id}: {requirement.category || 'Functional Requirement'}
+            </h1>
+          </div>
+          {userRole !== 'executive' && (
+            <button
+              type="button"
+              onClick={handleDeleteSelf}
+              className="notion-btn notion-btn-danger"
+              style={{ fontSize: '11px', padding: '3px 8px', gap: '4px' }}
+              title="Delete this requirement from workspace"
+            >
+              <span>🗑️</span> Delete
+            </button>
+          )}
         </div>
 
         {/* 2. Notion Properties Table */}

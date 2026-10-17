@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "backend/api/routes_requirements.py": {
-    "mtime": 1792259011.8422065,
-    "seen": 1792259463.7668705,
-    "ast_hash": "1e2e05d5f764292d85d2a9b5c46c0085",
+    "mtime": 1792262928.3048267,
+    "seen": 1792263111.515093,
+    "ast_hash": "7dc50bf84d4b55495779a24309e008f6",
     "semantic_hash": ""
   },
   "backend/config.py": {
@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   "backend/services/document_parser.py": {
-    "mtime": 1792262073.7949772,
-    "seen": 1792262193.4796948,
-    "ast_hash": "9cc24d6526c77e1864e3c3c56bc19753",
+    "mtime": 1792262868.6178577,
+    "seen": 1792263111.5151114,
+    "ast_hash": "b016483f4320b5fcf4131ffe947a0299",
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
@@ -126,10 +126,10 @@
     "semantic_hash": ""
   },
   "backend/tests/test_parser.py": {
-    "mtime": 1792160657.6937752,
-    "seen": 1792179091.5241132,
-    "ast_hash": "6eaeeddb71f2a17235835b1516e73d61",
-    "semantic_hash": "6eaeeddb71f2a17235835b1516e73d61"
+    "mtime": 1792262811.5739057,
+    "seen": 1792263111.515151,
+    "ast_hash": "c5f74f3c36ea3a377ee68c963c5077e8",
+    "semantic_hash": ""
   },
   "backend/tests/test_pm_documents.py": {
     "mtime": 1792161302.446476,
@@ -480,9 +480,9 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1792255333.1869173,
-    "seen": 1792255454.1734324,
-    "ast_hash": "f0a76d212c2336b8d9c21c629fd9c488",
+    "mtime": 1792263077.277143,
+    "seen": 1792263111.515193,
+    "ast_hash": "e0bf126acea54cc9fb9cc979de6d5da9",
     "semantic_hash": ""
   },
   "frontend/src/components/ChatTab.jsx": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792262608.4906137,
-    "seen": 1792262624.252611,
-    "ast_hash": "f9c01dda10915d814adabcbcb43569f5",
+    "mtime": 1792263026.7863727,
+    "seen": 1792263111.5152013,
+    "ast_hash": "9772a1d85b9330a7033abc93c0e8de5b",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {
@@ -522,9 +522,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/MainStudio.jsx": {
-    "mtime": 1792260198.8721852,
-    "seen": 1792260215.9159691,
-    "ast_hash": "93fc1a3f3d84dc8b1be04a03a4bd3121",
+    "mtime": 1792263058.3968565,
+    "seen": 1792263111.5152116,
+    "ast_hash": "cf885563c28243179e7678c006ed295c",
     "semantic_hash": ""
   },
   "frontend/src/components/Sidebar.jsx": {
@@ -540,9 +540,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/api.js": {
-    "mtime": 1792261438.190596,
-    "seen": 1792261475.135728,
-    "ast_hash": "dec619e0f0517d782b03aa5c50216122",
+    "mtime": 1792262941.287034,
+    "seen": 1792263111.5152194,
+    "ast_hash": "873f5b0ff11bf7bdb8185d5ec5d86092",
     "semantic_hash": ""
   },
   "frontend/vite.config.js": {

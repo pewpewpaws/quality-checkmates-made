@@ -16,6 +16,7 @@ export default function MainStudio({
   selectedRequirement,
   userRole,
   onRequirementUpdated,
+  onRequirementDeleted,
   onAdoptRequirement,
   onIngestRequirements,
 }) {
@@ -118,6 +119,7 @@ export default function MainStudio({
             activeProjectId={activeProjectId}
             userRole={userRole}
             onRequirementUpdated={onRequirementUpdated}
+            onRequirementDeleted={onRequirementDeleted}
           />
         )}
 

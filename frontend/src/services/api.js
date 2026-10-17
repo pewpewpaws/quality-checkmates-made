@@ -92,6 +92,20 @@ export async function signOffRequirement(reqId, actionPayload, projectId = 'defa
   return res.json();
 }
 
+export async function deleteRequirement(reqId, projectId = 'default_project', role = 'product_manager') {
+  const res = await fetch(`${BASE_URL}/api/requirements/${encodeURIComponent(reqId)}?project_id=${encodeURIComponent(projectId)}`, {
+    method: 'DELETE',
+    headers: {
+      'X-User-Role': role,
+    },
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail || `Failed to delete requirement: ${res.statusText}`);
+  }
+  return res.json();
+}
+
 export async function calculateRubricScore(text) {
   const res = await fetch(`${BASE_URL}/api/analysis/score`, {
     method: 'POST',

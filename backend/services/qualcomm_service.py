@@ -761,6 +761,7 @@ class QualcommService:
         target_lower = target_req.text.lower()
         for c in candidates:
             c_lower = c.text.lower()
+            # 1. Telemetry Transmission vs Radio Silence
             if ("transmit" in target_lower and "no external" in c_lower) or ("transmit" in c_lower and "no external" in target_lower):
                 conflicts.append(
                     RequirementConflictCard(
@@ -772,6 +773,39 @@ class QualcommService:
                         conflicting_quote_b="no external network transmissions" if "transmit" in target_lower else "transmit cloud telemetry",
                         explanation="Contradictory network behavior under the same normal operation context.",
                         reconciliation_suggestion="Define dedicated low-power or silent mode conditions separate from normal telemetry mode."
+                    )
+                )
+            # 2. Regenerative Braking during ABS Intervention (Energy Recovery vs Anti-Lock Wheel Slip)
+            elif ("regenerative braking" in target_lower and "regenerative braking" in c_lower) and (
+                ("maintain" in target_lower and "0 nm" in c_lower) or ("0 nm" in target_lower and "maintain" in c_lower) or
+                ("maximize" in target_lower and "prevent wheel lockup" in c_lower) or ("prevent wheel lockup" in target_lower and "maximize" in c_lower)
+            ):
+                conflicts.append(
+                    RequirementConflictCard(
+                        req_id_a=target_req.id,
+                        req_id_b=c.id,
+                        conflict_type="Direct Contradiction",
+                        severity="BLOCKER",
+                        conflicting_quote_a="maintain regenerative braking torque to maximize energy recovery" if "maintain" in target_lower else "reduce regenerative braking torque to 0 Nm",
+                        conflicting_quote_b="reduce regenerative braking torque to 0 Nm to prevent wheel lockup" if "maintain" in target_lower else "maintain regenerative braking torque to maximize energy recovery",
+                        explanation="Severe safety hazard: maintaining regenerative braking torque during ABS counteracts wheel slip regulation and risks catastrophic vehicle skidding.",
+                        reconciliation_suggestion="Prioritize ISO 26262 ASIL-D braking stability: inhibit regenerative braking immediately upon ABS trigger."
+                    )
+                )
+            # 3. Autopilot Contradiction (Stall Disconnect vs Force Engage)
+            elif ("autopilot" in target_lower and "autopilot" in c_lower) and (
+                ("disconnect" in target_lower and "remain engaged" in c_lower) or ("remain engaged" in target_lower and "disconnect" in c_lower)
+            ):
+                conflicts.append(
+                    RequirementConflictCard(
+                        req_id_a=target_req.id,
+                        req_id_b=c.id,
+                        conflict_type="Direct Contradiction",
+                        severity="BLOCKER",
+                        conflicting_quote_a="disconnect autopilot" if "disconnect" in target_lower else "remain engaged",
+                        conflicting_quote_b="remain engaged" if "disconnect" in target_lower else "disconnect autopilot",
+                        explanation="Contradictory flight control laws under low airspeed aerodynamic envelope.",
+                        reconciliation_suggestion="Enforce aerodynamic stall protection: disengage autopilot and transition control to flight crew."
                     )
                 )
         return ConflictRadarResponse(total_conflicts_found=len(conflicts), conflicts=conflicts)

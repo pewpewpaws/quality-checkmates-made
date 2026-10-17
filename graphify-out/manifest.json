@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
-    "mtime": 1792230533.8299112,
-    "seen": 1792230795.1682513,
-    "ast_hash": "68050dd88ea8f5c9999b2aebfd5e923e",
+    "mtime": 1792232376.6839929,
+    "seen": 1792232495.5624971,
+    "ast_hash": "845f70c4d4b81211226d60e121273006",
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "backend/services/rubric_engine.py": {
-    "mtime": 1792232244.7055979,
-    "seen": 1792232315.3320792,
-    "ast_hash": "b895c44ac2cf9397db0ab1e756b8da47",
+    "mtime": 1792232439.63556,
+    "seen": 1792232495.5624983,
+    "ast_hash": "80a77634b1b00e3af64a3d1f24e2ca76",
     "semantic_hash": ""
   },
   "backend/tests/test_rubric_and_evidence.py": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_phase_0_to_2_e2e.py": {
-    "mtime": 1792232288.9470997,
-    "seen": 1792232315.332092,
-    "ast_hash": "efaab1df8d9e6173ffdac2d4868b0d55",
+    "mtime": 1792232472.4948344,
+    "seen": 1792232495.5625112,
+    "ast_hash": "d1c5422a1fba53ee675e4a3431c25daa",
     "semantic_hash": ""
   },
   "sample_data/pm_documents/aerospace_flight_charter.txt": {

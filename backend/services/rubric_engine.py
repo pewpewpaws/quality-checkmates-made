@@ -86,9 +86,18 @@ class RubricScoringEngine:
         text = text.strip() if text else ""
         receipt: List[str] = ["[Baseline Budget] Initial quality allocation: 100.0 pts"]
 
-        # Ensure all incoming issues are validated against source text
-        grounded_issues = evidence_validator.validate_and_ground_cards(issues or [], text)
-        conflicts = conflicts or []
+        # Ensure all incoming issues and conflicts are robustly normalized and validated
+        normalized_issues = [
+            IssueCard.model_validate(i) if isinstance(i, dict) else i
+            for i in (issues or [])
+        ]
+        grounded_issues = evidence_validator.validate_and_ground_cards(normalized_issues, text)
+
+        normalized_conflicts = [
+            RequirementConflictCard.model_validate(c) if isinstance(c, dict) else c
+            for c in (conflicts or [])
+        ]
+        conflicts = normalized_conflicts
 
         # 1. Clarity (Max 25 pts)
         clarity, clarity_receipt = self._score_clarity(text, grounded_issues)

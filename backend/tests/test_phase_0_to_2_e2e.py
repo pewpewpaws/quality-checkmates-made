@@ -19,11 +19,15 @@ from backend.services.storage import store
 from backend.services.document_parser import DocumentParser
 from backend.services.rubric_engine import rubric_engine
 from backend.services.evidence_validator import evidence_validator
-from backend.api.routes_chat import qualcomm
+from backend.api.routes_chat import qualcomm as chat_qualcomm
+from backend.api.routes_analysis import qualcomm as analysis_qualcomm
+from backend.api.routes_requirements import qualcomm as req_qualcomm
 from backend.models.schemas import RequirementStatus, UserRole
 
 client = TestClient(app)
-qualcomm.mock_mode = True  # Ensure fast, deterministic mock execution for test suite
+chat_qualcomm.mock_mode = True
+analysis_qualcomm.mock_mode = True
+req_qualcomm.mock_mode = True
 DOCS_DIR = Path("sample_data/pm_documents")
 
 
@@ -348,3 +352,54 @@ def test_phase_2_duplicate_detection_and_dual_key_signoff():
     assert exec_view.status_code == 200
 
     store.delete_project(pid)
+
+
+def test_phase_2_conflict_radar_contradictions():
+    """Verify Conflict Radar flags direct contradictions and applies consistency deductions."""
+    # 1. Contradictory Requirements Test (Telemetry Transmission vs Silence)
+    target_req_text = "The device shall transmit cloud telemetry every five seconds during normal operation."
+    contradictory_cand = "The device shall make no external network transmissions during normal operation."
+    orthogonal_cand = "The battery heater shall activate when ambient temperature drops below 0 degrees Celsius."
+
+    resp = client.post(
+        "/api/analysis/conflicts",
+        json={
+            "target_text": target_req_text,
+            "candidate_requirements": [
+                {"id": "REQ-CONF-CAND-01", "text": contradictory_cand, "category": "Network"},
+                {"id": "REQ-CONF-CAND-02", "text": orthogonal_cand, "category": "Thermal"}
+            ]
+        }
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["total_conflicts_found"] == 1
+    conflict = data["conflicts"][0]
+    assert conflict["conflict_type"] == "Direct Contradiction"
+    assert conflict["severity"] == "BLOCKER"
+    assert conflict["req_id_b"] == "REQ-CONF-CAND-01"
+    assert "transmit" in conflict["conflicting_quote_a"].lower()
+    assert "no external" in conflict["conflicting_quote_b"].lower()
+    assert len(conflict["explanation"]) > 10
+    assert len(conflict["reconciliation_suggestion"]) > 10
+
+    # 2. Rubric Score Impact of Conflict Card
+    # Consistency subscore MUST drop to 0.0 with mathematical receipt trace
+    score_with_conflict = rubric_engine.calculate_score(target_req_text, conflicts=data["conflicts"])
+    assert score_with_conflict.consistency == 0.0
+    assert any("Conflict detected" in r for r in score_with_conflict.receipt)
+    assert any("REQ-CONF-CAND-01" in r for r in score_with_conflict.receipt)
+
+    # 3. Negative Control: Mutually Compatible Requirements
+    clean_resp = client.post(
+        "/api/analysis/conflicts",
+        json={
+            "target_text": "The primary flight display shall refresh artificial horizon attitude indicators at 60 Hz.",
+            "candidate_requirements": [
+                {"id": "REQ-CLEAN-01", "text": "The cockpit audio module shall sound a warning chime when cabin altitude exceeds 10000 feet.", "category": "Audio"}
+            ]
+        }
+    )
+    assert clean_resp.status_code == 200
+    assert clean_resp.json()["total_conflicts_found"] == 0

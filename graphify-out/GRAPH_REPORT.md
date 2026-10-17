@@ -1,7 +1,7 @@
 # Graph Report - Oi-Thon  (2026-10-17)
 
 ## Corpus Check
-- 83 files · ~74,744 words
+- 83 files · ~73,782 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: .csv 3, (none) 2, .css 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1cacef2d`
+- Built from commit: `f301b728`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

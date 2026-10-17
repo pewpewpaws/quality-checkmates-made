@@ -1,58 +1,61 @@
-/* Antigravity 2.0 Pro Design System — Muted, Professional IDE Aesthetics */
+/* Apple Design System for Web — WWDC Fluid Interface & Craft Edition */
 :root {
-  /* Neutral Dark Slate / Charcoal Base (Antigravity 2.0) */
-  --bg-app: #0c0e12;
-  --bg-sidebar: #101217;
-  --bg-panel: #13161c;
-  --bg-card: #171b23;
-  --bg-card-hover: #1c212a;
-  --bg-card-selected: #1e2430;
-  --bg-input: #0f1116;
+  /* Apple Pro Dark Neutral Materials (WWDC macOS & iPadOS Dark) */
+  --bg-app: #0a0c10;
+  --bg-chrome-translucent: rgba(16, 19, 26, 0.76);
+  --bg-sidebar: rgba(13, 15, 21, 0.84);
+  --bg-panel: rgba(18, 22, 30, 0.80);
+  --bg-card: rgba(22, 27, 36, 0.70);
+  --bg-card-hover: rgba(28, 34, 46, 0.85);
+  --bg-card-active: #1d2330;
+  --bg-input: rgba(12, 14, 19, 0.88);
 
-  /* Crisp 1px Borders */
-  --border-subtle: #1e222b;
-  --border-medium: #272c38;
+  /* Materials: Subtle Hairline & Light-Catching Borders */
+  --border-subtle: rgba(255, 255, 255, 0.065);
+  --border-medium: rgba(255, 255, 255, 0.11);
+  --border-top-highlight: rgba(255, 255, 255, 0.14); /* Light catching the top glass edge */
   --border-glass: rgba(255, 255, 255, 0.08);
 
-  /* Typography Scale */
-  --text-primary: #e6edf3;
-  --text-secondary: #9198a1;
-  --text-muted: #656d76;
-  --text-dim: #484f58;
+  /* Apple Pro Typography Scale & Vibrancy */
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+  --text-dim: #48484a;
 
-  /* Muted, Desaturated Status Accents (No Vibe-Coded Neons) */
-  --accent-blue: #388bfd;
-  --accent-blue-subtle: rgba(56, 139, 253, 0.12);
-  --accent-blue-border: rgba(56, 139, 253, 0.35);
+  /* Muted Apple System Accents */
+  --system-blue: #2997ff;
+  --system-blue-subtle: rgba(41, 151, 255, 0.12);
+  --system-blue-border: rgba(41, 151, 255, 0.30);
 
-  --accent-green: #2ea043;
-  --accent-green-subtle: rgba(46, 160, 67, 0.12);
-  --accent-green-border: rgba(46, 160, 67, 0.35);
-  --text-green: #3fb950;
+  --system-green: #30d158;
+  --system-green-subtle: rgba(48, 209, 88, 0.12);
+  --system-green-border: rgba(48, 209, 88, 0.30);
 
-  --accent-amber: #d29922;
-  --accent-amber-subtle: rgba(210, 153, 34, 0.12);
-  --accent-amber-border: rgba(210, 153, 34, 0.35);
-  --text-amber: #e3b341;
+  --system-amber: #ffd60a;
+  --system-amber-subtle: rgba(255, 214, 10, 0.12);
+  --system-amber-border: rgba(255, 214, 10, 0.30);
 
-  --accent-red: #f85149;
-  --accent-red-subtle: rgba(248, 81, 73, 0.12);
-  --accent-red-border: rgba(248, 81, 73, 0.35);
-  --text-red: #ff7b72;
+  --system-red: #ff453a;
+  --system-red-subtle: rgba(255, 69, 58, 0.12);
+  --system-red-border: rgba(255, 69, 58, 0.30);
 
-  --accent-purple: #a371f7;
-  --accent-purple-subtle: rgba(163, 113, 247, 0.12);
-  --accent-purple-border: rgba(163, 113, 247, 0.35);
+  --system-purple: #bf5af2;
+  --system-purple-subtle: rgba(191, 90, 242, 0.12);
 
-  /* Font Families */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+  /* SF Pro Typography Hierarchy */
+  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", -apple-system-ui-sans-serif, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
 
-  /* Pro-Grade Refined Squircle Curvature (Subtle & Ergonomic) */
-  --squircle-xs: 5px;
-  --squircle-sm: 8px;
-  --squircle-md: 10px;
-  --squircle-lg: 14px;
+  /* Squircles: Apple Continuous Superellipse Radii */
+  --squircle-xs: 6px;
+  --squircle-sm: 9px;
+  --squircle-md: 12px;
+  --squircle-lg: 16px;
+  --squircle-xl: 22px;
+
+  /* Spring Physics Timing Constants */
+  --spring-press-timing: 100ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  --spring-settle-timing: 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -67,9 +70,11 @@ html, body {
   overflow: hidden;
   background-color: var(--bg-app);
   color: var(--text-primary);
-  font-family: var(--font-sans);
+  font-family: var(--font-system);
+  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -83,7 +88,80 @@ html, body {
 }
 
 /* ==========================================================================
-   REFINED SQUIRCLE GEOMETRY (Continuous Curvature)
+   1. TYPOGRAPHY: Optical Tracking & Leading (WWDC Principles)
+   ========================================================================== */
+h1, h2, h3, .heading-large {
+  letter-spacing: -0.022em;
+  line-height: 1.15;
+  font-weight: 600;
+  font-family: var(--font-system);
+}
+
+.heading-medium {
+  letter-spacing: -0.014em;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+body, p, .body-regular {
+  letter-spacing: -0.006em;
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+.caption-small {
+  letter-spacing: 0.025em;
+  line-height: 1.35;
+  font-size: 11px;
+}
+
+.tabular-nums {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+}
+
+/* ==========================================================================
+   2. MATERIALS & DEPTH: Translucency with Light-Catching Edges
+   ========================================================================== */
+.glass-chrome {
+  background: var(--bg-chrome-translucent);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border-bottom: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-top-highlight);
+}
+
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--border-top-highlight);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  transition: background 0.16s ease, border-color 0.16s ease, transform var(--spring-settle-timing);
+}
+
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-medium);
+}
+
+/* Response on Press — Kill Latency (Apple Principle 1) */
+.glass-card:active {
+  transform: scale(0.985);
+  transition: transform var(--spring-press-timing);
+}
+
+/* ==========================================================================
+   3. SQUIRCIES: Continuous Curvature Geometry (G2 Superellipse)
    ========================================================================== */
 .squircle-xs {
   border-radius: var(--squircle-xs);
@@ -105,29 +183,182 @@ html, body {
   clip-path: inset(0 round var(--squircle-lg));
 }
 
+.squircle-xl {
+  border-radius: var(--squircle-xl);
+  clip-path: inset(0 round var(--squircle-xl));
+}
+
 .squircle-pill {
   border-radius: 9999px;
   clip-path: inset(0 round 9999px);
 }
 
-/* Matte Pro Panels & Cards */
-.glass-panel {
-  background: var(--bg-panel);
-  border: 1px solid var(--border-subtle);
+/* ==========================================================================
+   4. BUTTONS & CONTROLS: Tactile Physical Response
+   ========================================================================== */
+.btn-squircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-system);
+  letter-spacing: -0.008em;
+  cursor: pointer;
+  border-radius: var(--squircle-sm);
+  transition: background 0.14s ease, border-color 0.14s ease, transform var(--spring-settle-timing), filter 0.14s ease;
+  user-select: none;
+  border: 1px solid transparent;
+  outline: none;
 }
 
-.glass-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+/* Instant feedback on pointerdown */
+.btn-squircle:active {
+  transform: scale(0.965);
+  transition: transform var(--spring-press-timing);
 }
 
-.glass-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-medium);
+.btn-primary {
+  background: #238636;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-/* Minimalist Dark Scrollbars */
+.btn-primary:hover {
+  background: #2ea043;
+}
+
+.btn-primary-blue {
+  background: #0071e3;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary-blue:hover {
+  background: #0077ed;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.btn-success {
+  background: var(--system-green-subtle);
+  color: var(--system-green);
+  border: 1px solid var(--system-green-border);
+}
+
+.btn-success:hover {
+  background: rgba(48, 209, 88, 0.20);
+}
+
+.btn-warning {
+  background: var(--system-amber-subtle);
+  color: var(--system-amber);
+  border: 1px solid var(--system-amber-border);
+}
+
+.btn-warning:hover {
+  background: rgba(255, 214, 10, 0.20);
+}
+
+/* ==========================================================================
+   5. STATUS BADGES: Subtle, Functional Hierarchy
+   ========================================================================== */
+.badge-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: var(--squircle-xs);
+  letter-spacing: 0.02em;
+}
+
+.badge-locked {
+  background: var(--system-green-subtle);
+  color: var(--system-green);
+  border: 1px solid var(--system-green-border);
+}
+
+.badge-provisional {
+  background: var(--system-amber-subtle);
+  color: var(--system-amber);
+  border: 1px solid var(--system-amber-border);
+}
+
+.badge-tbd {
+  background: var(--system-red-subtle);
+  color: var(--system-red);
+  border: 1px solid var(--system-red-border);
+}
+
+.badge-chip-cyan {
+  background: var(--system-blue-subtle);
+  color: var(--system-blue);
+  border: 1px solid var(--system-blue-border);
+}
+
+/* ==========================================================================
+   6. INPUTS & FIELDS
+   ========================================================================== */
+.input-squircle {
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--squircle-sm);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-family: var(--font-system);
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.input-squircle:focus {
+  border-color: var(--system-blue);
+  box-shadow: 0 0 0 3px rgba(41, 151, 255, 0.15);
+}
+
+/* In-Text [TBD] Chip */
+.tbd-token-chip {
+  background: var(--system-red-subtle);
+  color: var(--system-red);
+  border: 1px solid var(--system-red-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.tbd-token-chip:hover {
+  background: rgba(255, 69, 58, 0.20);
+}
+
+.tbd-token-chip:active {
+  transform: scale(0.97);
+}
+
+/* ==========================================================================
+   7. MINIMALIST SCROLLBARS
+   ========================================================================== */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -138,152 +369,36 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #252a36;
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #343b4c;
+  background: rgba(255, 255, 255, 0.25);
 }
 
-/* Antigravity Buttons (Flat, Matte, Crisp Borders) */
-.btn-squircle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  border-radius: var(--squircle-sm);
-  transition: all 0.14s ease;
-  user-select: none;
-  border: 1px solid transparent;
-  outline: none;
+/* ==========================================================================
+   8. ACCESSIBILITY: Reduced Motion & Reduced Transparency (Apple Principle 14)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transform: none !important;
+  }
 }
 
-.btn-primary {
-  background: #238636;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+@media (prefers-reduced-transparency: reduce) {
+  .glass-chrome, .glass-panel, .glass-card {
+    background: #12151c !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 
-.btn-primary:hover {
-  background: #2ea043;
-}
-
-.btn-primary-blue {
-  background: #1f6feb;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.btn-primary-blue:hover {
-  background: #388bfd;
-}
-
-.btn-secondary {
-  background: #171b22;
-  color: var(--text-primary);
-  border: 1px solid var(--border-medium);
-}
-
-.btn-secondary:hover {
-  background: #21262d;
-  border-color: #383f4d;
-}
-
-.btn-success {
-  background: rgba(46, 160, 67, 0.15);
-  color: var(--text-green);
-  border: 1px solid var(--accent-green-border);
-}
-
-.btn-success:hover {
-  background: rgba(46, 160, 67, 0.25);
-}
-
-.btn-warning {
-  background: rgba(210, 153, 34, 0.15);
-  color: var(--text-amber);
-  border: 1px solid var(--accent-amber-border);
-}
-
-.btn-warning:hover {
-  background: rgba(210, 153, 34, 0.25);
-}
-
-/* Muted Status Badge Chips */
-.badge-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 7px;
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: var(--squircle-xs);
-  letter-spacing: 0.2px;
-}
-
-.badge-locked {
-  background: var(--accent-green-subtle);
-  color: var(--text-green);
-  border: 1px solid var(--accent-green-border);
-}
-
-.badge-provisional {
-  background: var(--accent-amber-subtle);
-  color: var(--text-amber);
-  border: 1px solid var(--accent-amber-border);
-}
-
-.badge-tbd {
-  background: var(--accent-red-subtle);
-  color: var(--text-red);
-  border: 1px solid var(--accent-red-border);
-}
-
-.badge-chip-cyan {
-  background: var(--accent-blue-subtle);
-  color: var(--accent-blue);
-  border: 1px solid var(--accent-blue-border);
-}
-
-/* Sleek Dark Inputs */
-.input-squircle {
-  background: var(--bg-input);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--squircle-sm);
-  color: var(--text-primary);
-  padding: 6px 10px;
-  font-size: 12px;
-  font-family: var(--font-sans);
-  outline: none;
-  transition: border-color 0.14s ease;
-}
-
-.input-squircle:focus {
-  border-color: var(--accent-blue);
-}
-
-/* Subtle In-Text [TBD] Chip */
-.tbd-token-chip {
-  background: var(--accent-red-subtle);
-  color: var(--text-red);
-  border: 1px solid var(--accent-red-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  cursor: pointer;
-}
-
-.tbd-token-chip:hover {
-  background: rgba(248, 81, 73, 0.2);
+@media (prefers-contrast: more) {
+  .glass-card, .glass-panel {
+    border-color: rgba(255, 255, 255, 0.28) !important;
+  }
 }

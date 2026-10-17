@@ -1,0 +1,6 @@
+Requirement_ID,Category,Section,Statement
+REQ-ROB-01,Kinematics,Section 2.1,The robotic manipulator shall maintain end-effector positioning accuracy within +/- 0.5 mm during laparoscopic incision.
+REQ-ROB-02,Haptics,Section 2.2,The surgeon master console shall provide haptic force reflection with latency under 15ms.
+REQ-ROB-03,Safety E-Stop,Section 2.3,"When optical emergency stop pedal is pressed, the system shall disable motor drives within [TBD: estop_latency_ms]."
+REQ-ROB-04,Clarity Flaw,Section 2.4,The articulated arm shall execute wrist rotations fast and reliably.
+REQ-ROB-05,Sterilization,Section 2.5,The detachable instrument tool shall withstand 50 autoclave steam sterilization cycles at 134 degrees Celsius.

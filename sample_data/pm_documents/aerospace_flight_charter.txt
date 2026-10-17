@@ -1,0 +1,9 @@
+# Aerospace DO-178C Flight Control System Charter
+Author: Flight Controls PM & Chief Systems Engineer
+Target Aircraft: Dual-Turbofan Regional Jet
+Section 1. Pitch & Roll Autopilot Obligations
+1. When autopilot mode is engaged, the primary flight computer shall limit pitch angle between -15 degrees and +25 degrees.
+2. The actuator control unit shall command elevator deflection within 30ms of sidestick displacement.
+3. The flight control system shall disconnect autopilot whenever airspeed drops below [TBD: stall_warning_speed_knots].
+4. The system shall maintain smooth passenger comfort during normal turbulence where feasible.
+5. In the event of dual hydraulic bus loss, the backup electric trim motor shall activate within 100ms.

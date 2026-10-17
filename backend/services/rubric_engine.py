@@ -26,7 +26,8 @@ from backend.services.evidence_validator import evidence_validator
 SUBJECTIVE_TERMS_REGEX = re.compile(
     r"\b(fast|faster|quick|quickly|rapid|rapidly|slow|slowly|robust|scalable|flexible|seamless|seamlessly|"
     r"user-friendly|efficient|efficiently|high-performance|optimal|optimally|intuitive|adequate|adequately|"
-    r"instantaneous|instantaneously|easy|easily|appropriate|appropriately|sufficient|sufficiently|clean|clever)\b",
+    r"instantaneous|instantaneously|easy|easily|appropriate|appropriately|sufficient|sufficiently|clean|clever|"
+    r"reliable|reliably)\b",
     re.IGNORECASE
 )
 

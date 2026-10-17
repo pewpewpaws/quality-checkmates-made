@@ -96,10 +96,10 @@
     "semantic_hash": ""
   },
   "backend/services/document_parser.py": {
-    "mtime": 1792161265.863096,
-    "seen": 1792179091.5241055,
-    "ast_hash": "f39b5d9f59f594dd65e88433b1082822",
-    "semantic_hash": "f39b5d9f59f594dd65e88433b1082822"
+    "mtime": 1792232231.4814405,
+    "seen": 1792232315.3320744,
+    "ast_hash": "17cc4bca74aa7c1b8ff03e5729ab0af7",
+    "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
     "mtime": 1792230533.8299112,
@@ -396,15 +396,33 @@
     "semantic_hash": ""
   },
   "backend/services/rubric_engine.py": {
-    "mtime": 1792230469.6629605,
-    "seen": 1792230795.1682525,
-    "ast_hash": "9c6e7509db24851897fe994cc85a6e32",
+    "mtime": 1792232244.7055979,
+    "seen": 1792232315.3320792,
+    "ast_hash": "b895c44ac2cf9397db0ab1e756b8da47",
     "semantic_hash": ""
   },
   "backend/tests/test_rubric_and_evidence.py": {
     "mtime": 1792230673.1856465,
     "seen": 1792230795.168268,
     "ast_hash": "ba786e5716363e3e09221ffcbba2536c",
+    "semantic_hash": ""
+  },
+  "backend/tests/test_phase_0_to_2_e2e.py": {
+    "mtime": 1792232288.9470997,
+    "seen": 1792232315.332092,
+    "ast_hash": "efaab1df8d9e6173ffdac2d4868b0d55",
+    "semantic_hash": ""
+  },
+  "sample_data/pm_documents/aerospace_flight_charter.txt": {
+    "mtime": 1792232161.843369,
+    "seen": 1792232315.3321457,
+    "ast_hash": "aeeb07b54f8741057701d88bcf30f4fd",
+    "semantic_hash": ""
+  },
+  "sample_data/pm_documents/avionics_displays_srs.pdf": {
+    "mtime": 1792232253.113696,
+    "seen": 1792232315.3321574,
+    "ast_hash": "e7872fe81a4325cc9f3dc14109781997",
     "semantic_hash": ""
   }
 }

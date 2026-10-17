@@ -200,7 +200,7 @@ class DocumentParser:
             return []
 
         field_map = {name.lower().strip(): name for name in reader.fieldnames}
-        id_col = next((field_map[k] for k in ["id", "req_id", "req id", "key", "identifier", "issue key"] if k in field_map), None)
+        id_col = next((field_map[k] for k in ["id", "req_id", "req id", "requirement_id", "requirement id", "key", "identifier", "issue key"] if k in field_map), None)
         text_col = next((field_map[k] for k in ["text", "requirement", "description", "statement", "summary", "req_text", "obligation"] if k in field_map), None)
         cat_col = next((field_map[k] for k in ["category", "type", "module", "component", "subsystem"] if k in field_map), None)
         sec_col = next((field_map[k] for k in ["section", "source", "document", "chapter", "epic"] if k in field_map), None)

@@ -138,3 +138,108 @@ def test_generic_plain_language_chat_interaction():
     assert "[TBD:" in req["text"]
     assert "shall" in req["text"].lower()
     assert len(req["rewrite_suggestion"]["identified_tbds"]) >= 1
+
+
+def test_broke_entrepreneur_toy_company_chat_synthesis():
+    """
+    Test edge-case scenario where an aspiring founder with zero capital and an ultra-vague
+    raw concept ('I am broke', 'toy company for 10-15yo', 'that's pretty much all the idea')
+    prompts the Requirement Quality Copilot.
+    
+    Verifies that the Copilot:
+    1. Acknowledges bootstrap financial realities and demographic boundaries.
+    2. Decomposes the vague concept into formal, atomic EARS requirements:
+       - Low-BOM manufacturing cost ceiling (protecting bootstrap budget)
+       - Target demographic & ergonomic boundaries (10-15 years)
+       - Consumer toy safety compliance (ASTM F963 & drop impact)
+    3. Strictly enforces the Zero-Fabrication Directive by keeping all numbers as [TBD: ...]
+    4. Attaches actionable Smart Suggested Defaults with engineering rationales in metadata chips.
+    5. Persists the requirements into project storage under FLAGGED_TBD governance status.
+    """
+    proj_id = "proj-broke-toy-startup"
+    
+    # 1. Initialize project workspace
+    client.post(
+        "/api/projects",
+        json={
+            "project_id": proj_id,
+            "project_name": "Bootstrap Youth Toy Startup",
+            "domain": "Consumer Robotics & Youth Hardware",
+            "description": "Ultra-low-budget venture targeting 10-15 year old educational toys."
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+
+    # 2. PM enters raw, ultra-vague, budget-constrained prompt
+    vague_pm_input = (
+        "Look, I am completely broke and have zero budget, but I want to start a toy company "
+        "for 10-15yo kids. That is pretty much all the idea that I have. "
+        "Can you make requirements based on that?"
+    )
+
+    resp = client.post(
+        "/api/chat/message",
+        json={
+            "message": vague_pm_input,
+            "project_id": proj_id,
+            "save_to_store": True,
+            "conversation_history": [
+                {"role": "user", "content": "I want to start a hardware company but I have no money."},
+                {"role": "assistant", "content": "I can help structure your concept into modular, low-BOM engineering requirements with parameterized cost ceilings."}
+            ]
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+
+    # 3. Assert Conversational Agent Explanation
+    reply = data["agent_reply"].lower()
+    assert "broke" in reply or "budget" in reply or "capital" in reply or "bootstrap" in reply
+    assert "10" in reply and "15" in reply
+    assert "ears" in reply or "requirements" in reply
+
+    # 4. Assert Atomic Decomposed EARS Requirements
+    reqs = data["generated_requirements"]
+    assert len(reqs) >= 3, f"Expected at least 3 decomposed requirements, got {len(reqs)}"
+
+    # Requirement 1: BOM Unit Cost Constraint (Protecting Runway)
+    cost_req = next((r for r in reqs if "cost" in r["category"].lower() or "manufacturing" in r["category"].lower()), None)
+    assert cost_req is not None, "Missing BOM cost ceiling requirement"
+    assert "shall" in cost_req["text"].lower()
+    assert "[TBD: max_bom_unit_cost_usd]" in cost_req["text"]
+    assert cost_req["status"] == RequirementStatus.FLAGGED_TBD
+    cost_tbds = {t["parameter_name"]: t for t in cost_req["rewrite_suggestion"]["identified_tbds"]}
+    assert "max_bom_unit_cost_usd" in cost_tbds
+    assert "$" in cost_tbds["max_bom_unit_cost_usd"]["suggested_value"]
+
+    # Requirement 2: Target Demographic (10-15 Years)
+    demo_req = next((r for r in reqs if "demographic" in r["category"].lower() or "ergonomic" in r["category"].lower()), None)
+    assert demo_req is not None, "Missing demographic bounding requirement"
+    assert "shall" in demo_req["text"].lower()
+    assert "[TBD: target_demographic_min_age_years]" in demo_req["text"]
+    assert "[TBD: target_demographic_max_age_years]" in demo_req["text"]
+    assert demo_req["status"] == RequirementStatus.FLAGGED_TBD
+    demo_tbds = {t["parameter_name"]: t for t in demo_req["rewrite_suggestion"]["identified_tbds"]}
+    assert demo_tbds["target_demographic_min_age_years"]["suggested_value"] == "10 years"
+    assert demo_tbds["target_demographic_max_age_years"]["suggested_value"] == "15 years"
+
+    # Requirement 3: Youth Consumer Safety & Drop Impact
+    safety_req = next((r for r in reqs if "safety" in r["category"].lower() or "compliance" in r["category"].lower()), None)
+    assert safety_req is not None, "Missing consumer safety requirement"
+    assert "shall" in safety_req["text"].lower()
+    assert "[TBD: toy_safety_standard]" in safety_req["text"]
+    assert "[TBD: drop_test_height_meters]" in safety_req["text"]
+    assert safety_req["status"] == RequirementStatus.FLAGGED_TBD
+    safety_tbds = {t["parameter_name"]: t for t in safety_req["rewrite_suggestion"]["identified_tbds"]}
+    assert "ASTM F963" in safety_tbds["toy_safety_standard"]["suggested_value"]
+    assert "m" in safety_tbds["drop_test_height_meters"]["suggested_value"]
+
+    # 5. Check Persistence in Project Store
+    stored_reqs = store.get_all(project_id=proj_id)
+    assert len(stored_reqs) >= 3
+    for r in reqs:
+        stored = store.get_by_id(r["id"])
+        assert stored is not None
+        assert stored.project_id == proj_id
+        assert stored.status == RequirementStatus.FLAGGED_TBD

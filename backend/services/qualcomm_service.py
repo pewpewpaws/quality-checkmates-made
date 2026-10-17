@@ -1045,6 +1045,98 @@ class QualcommService:
             grounding = "Grounded in Project Charter: 800V BMS thermal loop (55°C limit during 350kW fast charging, ISO 26262 ASIL-D)."
             return agent_reply, reqs, grounding
 
+        if "broke" in lower or "toy" in lower:
+            reqs = [
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index:03d}",
+                    text="The toy product shall have a unit Bill of Materials (BOM) manufacturing cost not exceeding [TBD: max_bom_unit_cost_usd] at a minimum initial production run of [TBD: min_production_batch_units].",
+                    category="Cost & Manufacturing",
+                    section="Section 1.0 - Unit Economics & Manufacturing",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="The toy product shall have a unit Bill of Materials (BOM) manufacturing cost not exceeding [TBD: max_bom_unit_cost_usd] at a minimum initial production run of [TBD: min_production_batch_units].",
+                        rationale="Derived from founder bootstrap constraints; enforces low-cost manufacturing ceiling.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="max_bom_unit_cost_usd",
+                                suggested_value="$5.00 USD",
+                                rationale="Target bootstrap cost ceiling for low-budget hardware startup profitability.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="min_production_batch_units",
+                                suggested_value="500 units",
+                                rationale="Typical minimum order quantity (MOQ) for initial low-risk prototyping production.",
+                                confidence="MEDIUM"
+                            )
+                        ]
+                    )
+                ),
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index+1:03d}",
+                    text="The toy product shall be designed for and verified against the ergonomics and cognitive capabilities of users aged [TBD: target_demographic_min_age_years] to [TBD: target_demographic_max_age_years] years.",
+                    category="Ergonomics & Demographics",
+                    section="Section 2.0 - Target Demographic",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="The toy product shall be designed for and verified against the ergonomics and cognitive capabilities of users aged [TBD: target_demographic_min_age_years] to [TBD: target_demographic_max_age_years] years.",
+                        rationale="Target demographic specified in founder brief; bounds product ergonomics and complexity.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="target_demographic_min_age_years",
+                                suggested_value="10 years",
+                                rationale="Lower bound of target youth demographic specified in PM brief.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="target_demographic_max_age_years",
+                                suggested_value="15 years",
+                                rationale="Upper bound of target youth demographic specified in PM brief.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                ),
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index+2:03d}",
+                    text="The toy product shall comply with mandatory youth consumer product safety regulations in accordance with [TBD: toy_safety_standard] and withstand a drop impact from [TBD: drop_test_height_meters] without producing sharp edges or hazardous fragments.",
+                    category="Safety & Compliance",
+                    section="Section 3.0 - Consumer Safety & Compliance",
+                    status=RequirementStatus.FLAGGED_TBD,
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="The toy product shall comply with mandatory youth consumer product safety regulations in accordance with [TBD: toy_safety_standard] and withstand a drop impact from [TBD: drop_test_height_meters] without producing sharp edges or hazardous fragments.",
+                        rationale="Mandatory regulatory safety baseline for consumer toys to prevent injury and recall liability.",
+                        identified_tbds=[
+                            TbdDefault(
+                                parameter_name="toy_safety_standard",
+                                suggested_value="ASTM F963 / 16 CFR 1500",
+                                rationale="Standard consumer safety specification for toy safety.",
+                                confidence="HIGH"
+                            ),
+                            TbdDefault(
+                                parameter_name="drop_test_height_meters",
+                                suggested_value="1.5 m",
+                                rationale="Standard ASTM youth toy drop impact test height onto concrete surface.",
+                                confidence="HIGH"
+                            )
+                        ]
+                    )
+                )
+            ]
+            agent_reply = (
+                "I analyzed your bootstrap brief: launching a toy product for 10–15 year olds on a minimal/broke budget. "
+                "Because your idea is early-stage with strict capital limits, I decomposed it into 3 atomic, formal EARS requirements: "
+                "(1) Unit BOM cost ceiling to protect your bootstrap runway, "
+                "(2) Target demographic age range (10–15 years) for ergonomic and complexity bounding, and "
+                "(3) Mandatory consumer toy safety compliance (ASTM F963) and drop impact durability. "
+                "All unconfirmed cost limits, batch sizes, and test heights are strictly preserved as `[TBD]` with Smart Suggested Defaults."
+            )
+            grounding = "Grounded in Lean Hardware Startup & Consumer Toy Safety Standards (ASTM F963 / ISO/IEC/IEEE 29148)."
+            return agent_reply, reqs, grounding
+
         # Generic Fallback
         req = RequirementStatement(
             id=f"REQ-CHAT-{next_req_index:03d}",

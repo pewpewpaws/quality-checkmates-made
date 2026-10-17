@@ -68,22 +68,49 @@ def test_export_project_isolation():
 
 def test_export_rbac_executive_filtering():
     """Verify executive role export hides raw FLAGGED_TBD requirements."""
+    if not store.get_project("proj-export-rbac"):
+        store.create_project(
+            project_id="proj-export-rbac",
+            project_name="RBAC Export Isolation Test",
+            domain="Test",
+            description="Testing RBAC visibility"
+        )
+    from backend.models.schemas import RequirementStatement, RequirementStatus
+    store.upsert(RequirementStatement(
+        id="REQ-TEST-TBD",
+        project_id="proj-export-rbac",
+        text="The system shall be fast [TBD: latency_ms].",
+        status=RequirementStatus.FLAGGED_TBD
+    ))
+    store.upsert(RequirementStatement(
+        id="REQ-TEST-PROV",
+        project_id="proj-export-rbac",
+        text="The system shall respond within 50ms provisional.",
+        status=RequirementStatus.PROVISIONAL_PM
+    ))
+    store.upsert(RequirementStatement(
+        id="REQ-TEST-LOCK",
+        project_id="proj-export-rbac",
+        text="The system shall respond within 50ms verified.",
+        status=RequirementStatus.LOCKED_BASELINE
+    ))
+
     # Product manager export sees FLAGGED_TBD
     pm_resp = client.get(
-        "/api/requirements/export/csv?project_id=default_project",
+        "/api/requirements/export/csv?project_id=proj-export-rbac",
         headers={"X-User-Role": "product_manager"}
     )
     pm_rows = list(csv.reader(io.StringIO(pm_resp.text)))
     pm_req_ids = [r[0] for r in pm_rows[1:]]
-    assert "REQ-BMS-001" in pm_req_ids  # FLAGGED_TBD
+    assert "REQ-TEST-TBD" in pm_req_ids
 
     # Executive export hides FLAGGED_TBD
     exec_resp = client.get(
-        "/api/requirements/export/csv?project_id=default_project",
+        "/api/requirements/export/csv?project_id=proj-export-rbac",
         headers={"X-User-Role": "executive"}
     )
     exec_rows = list(csv.reader(io.StringIO(exec_resp.text)))
     exec_req_ids = [r[0] for r in exec_rows[1:]]
-    assert "REQ-BMS-001" not in exec_req_ids
-    assert "REQ-BMS-002" in exec_req_ids  # PROVISIONAL_PM is visible
-    assert "REQ-BMS-003" in exec_req_ids  # LOCKED_BASELINE is visible
+    assert "REQ-TEST-TBD" not in exec_req_ids
+    assert "REQ-TEST-PROV" in exec_req_ids
+    assert "REQ-TEST-LOCK" in exec_req_ids

@@ -1,12 +1,11 @@
 {
   "0": "UserRole",
   "1": "schemas.py",
-  "3": "main.py",
+  "3": "RequirementStatus",
   "11": "test_phase_3_pipelines.py",
-  "12": "test_live_duplicates_conflicts.py",
-  "13": "RequirementStatus",
+  "12": "QualcommService",
+  "13": "update_requirement",
   "14": "storage.py",
-  "15": "test_rbac_and_workspaces.py",
   "16": "UserRole",
   "17": "1. Feature Priority Breakdown",
   "18": "2. Multi-Domain Scenario Breakdown",
@@ -17,7 +16,5 @@
   "23": "delete_project",
   "24": "update_project",
   "25": "get_project_context",
-  "26": "test_api.py",
-  "27": "test_context_and_duplicates.py",
   "28": "delete_requirement"
 }

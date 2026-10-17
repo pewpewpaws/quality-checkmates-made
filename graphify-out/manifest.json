@@ -174,9 +174,9 @@
     "semantic_hash": "2d57f9278133b348d1bd32991d54924a"
   },
   "AGENTS.md": {
-    "mtime": 1792234353.4662433,
-    "seen": 1792234554.1284392,
-    "ast_hash": "37459167a3eae811db985e65566433fa",
+    "mtime": 1792234790.7805061,
+    "seen": 1792234859.4603193,
+    "ast_hash": "8e47f7b292a1814467722b7a104dba3f",
     "semantic_hash": ""
   },
   "HACKATHON.md": {
@@ -186,10 +186,10 @@
     "semantic_hash": ""
   },
   "docs/PROJECT_DOCUMENTATION.md": {
-    "mtime": 1792072625.287701,
-    "seen": 1792179091.5241323,
-    "ast_hash": "c7cc8f065ceab7315e55f7653be4f07f",
-    "semantic_hash": "c7cc8f065ceab7315e55f7653be4f07f"
+    "mtime": 1792234846.3012292,
+    "seen": 1792234859.460325,
+    "ast_hash": "c4bcd979f3e339d716a1a7570665575d",
+    "semantic_hash": ""
   },
   "docs/README.md": {
     "mtime": 1792072612.3875682,
@@ -447,6 +447,12 @@
     "mtime": 1792234239.7723696,
     "seen": 1792234554.1284223,
     "ast_hash": "5e4b78e113126b33767072826ad60aed",
+    "semantic_hash": ""
+  },
+  "docs/findings/phase_2_findings.md": {
+    "mtime": 1792234770.9212446,
+    "seen": 1792234859.4603465,
+    "ast_hash": "ff32d28f25414a3532ac36a64cf79f1f",
     "semantic_hash": ""
   }
 }

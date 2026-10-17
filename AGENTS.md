@@ -106,7 +106,7 @@ Keep documentation synchronized in these specific locations:
 | **Rubric Scoring & Math** | [`docs/project/architecture.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/project/architecture.md) |
 | **Feature Priorities & Milestones** | [`docs/PROJECT_DOCUMENTATION.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/PROJECT_DOCUMENTATION.md) & [`AGENTS.md`](file:///home/anair/Desktop/Coding/Oi-Thon/AGENTS.md) |
 | **Model Configs / Benchmarks** | [`docs/models/benchmark_results.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/models/benchmark_results.md) |
-| **Empirical Research & Phase Findings** | [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md) & [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md) |
+| **Empirical Research & Phase Findings** | [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md), [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md), & [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md) |
 | **Pitch Strategy, Differentiators & Ideas** | [`HACKATHON.md`](file:///home/anair/Desktop/Coding/Oi-Thon/HACKATHON.md) |
 | **Code Architecture & Dependency Graph** | [`graphify-out/graph.json`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/graph.json) & [`graphify-out/GRAPH_REPORT.md`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/GRAPH_REPORT.md) via `graphify update .` |
 

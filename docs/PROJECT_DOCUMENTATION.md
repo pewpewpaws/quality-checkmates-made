@@ -191,14 +191,17 @@ Scores are mathematically calculated from deductions across 5 core dimensions:
   - Analyzed problem statement PDF.
   - Documented Qualcomm Imagine APIs and SDK specifications.
   - Benchmarked live models on Qualcomm Cloud AI100 using API credentials.
-- [ ] **Milestone 1: Backend Foundation & Qualcomm Connector**
+- [x] **Milestone 1: Backend Foundation & Qualcomm Connector**
   - Setup FastAPI app and Pydantic schemas.
   - Implement Qualcomm client wrapper with automatic retry, timeout handling, and mock fallback.
   - Implement Document Parser (pasted text, CSV, TXT, PDF).
-- [ ] **Milestone 2: Deterministic Engine & Embeddings**
-  - Implement 100-point rubric scoring engine.
+  - Documented in [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md).
+- [x] **Milestone 2: Deterministic Engine & Embeddings**
+  - Implement 100-point rubric scoring engine with deterministic receipts.
+  - Implement Evidence Validator with character span offsets (`start_offset`, `end_offset`).
   - Implement Vector Duplicate Detection & Clustering using `bge-large`.
-- [ ] **Milestone 3: AI Core Features (X-Ray, Rewriter, Conflict, Duel)**
+  - Documented in [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md).
+- [x] **Milestone 3: AI Core Features (X-Ray, Rewriter, Conflict, Duel, Blueprint)**
   - Integrate `Llama-3.3-70B` tool calling for X-Ray issue extraction.
   - Integrate Smart Rewriter with Intent-Lock validation.
   - Integrate Interpretation Duel generator.

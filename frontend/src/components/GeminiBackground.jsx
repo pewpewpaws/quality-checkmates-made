@@ -38,14 +38,14 @@ export default function GeminiBackground() {
 
     window.addEventListener('pointermove', handlePointerMove);
 
-    // Muted, Low-Saturation Organic Blobs (Deep Space / Slate Tones)
+    // Authentic Apple Pro Neutral Graphite & Charcoal Fluid Blobs (Zero Blue Tint)
     const blobs = [
       {
         baseX: 0.3,
         baseY: 0.35,
         radius: 0.45,
-        colorStart: 'rgba(28, 48, 80, 0.22)',   // Muted Navy Slate
-        colorEnd: 'rgba(12, 14, 18, 0)',
+        colorStart: 'rgba(56, 56, 62, 0.28)',   // Neutral Charcoal
+        colorEnd: 'rgba(22, 22, 24, 0)',
         speedX: 0.0006,
         speedY: 0.0008,
         phase: 0,
@@ -54,8 +54,8 @@ export default function GeminiBackground() {
         baseX: 0.7,
         baseY: 0.45,
         radius: 0.5,
-        colorStart: 'rgba(40, 32, 68, 0.18)',   // Muted Deep Indigo
-        colorEnd: 'rgba(12, 14, 18, 0)',
+        colorStart: 'rgba(44, 44, 50, 0.24)',   // Deep Graphite
+        colorEnd: 'rgba(22, 22, 24, 0)',
         speedX: 0.0007,
         speedY: 0.0005,
         phase: Math.PI * 0.5,
@@ -64,8 +64,8 @@ export default function GeminiBackground() {
         baseX: 0.5,
         baseY: 0.7,
         radius: 0.42,
-        colorStart: 'rgba(22, 52, 62, 0.16)',   // Muted Teal Slate
-        colorEnd: 'rgba(12, 14, 18, 0)',
+        colorStart: 'rgba(68, 68, 76, 0.20)',   // Soft Smoky Slate Grey
+        colorEnd: 'rgba(22, 22, 24, 0)',
         speedX: 0.0005,
         speedY: 0.0009,
         phase: Math.PI,
@@ -80,8 +80,8 @@ export default function GeminiBackground() {
       mouse.x += (mouse.targetX - mouse.x) * 0.035;
       mouse.y += (mouse.targetY - mouse.y) * 0.035;
 
-      // Solid dark base
-      ctx.fillStyle = '#0c0e12';
+      // Authentic Apple Neutral Grey Base
+      ctx.fillStyle = '#161618';
       ctx.fillRect(0, 0, width, height);
 
       ctx.globalCompositeOperation = 'screen';

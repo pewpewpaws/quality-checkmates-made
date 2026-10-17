@@ -25,11 +25,11 @@ async def parse_text(
     reqs, format_detected = DocumentParser.parse_text(payload.text, default_category=category)
     for r in reqs:
         r.project_id = target_project
-    store.bulk_add(reqs, project_id=target_project)
+    saved = store.bulk_add(reqs, project_id=target_project)
 
     return DocumentParseResponse(
-        total_parsed=len(reqs),
-        requirements=reqs,
+        total_parsed=len(saved),
+        requirements=saved,
         format_detected=format_detected
     )
 
@@ -65,10 +65,10 @@ async def parse_file(
 
     for r in reqs:
         r.project_id = target_project
-    store.bulk_add(reqs, project_id=target_project)
+    saved = store.bulk_add(reqs, project_id=target_project)
 
     return DocumentParseResponse(
-        total_parsed=len(reqs),
-        requirements=reqs,
+        total_parsed=len(saved),
+        requirements=saved,
         format_detected=format_detected
     )

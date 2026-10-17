@@ -45,21 +45,21 @@ export default function Header({
         position: 'relative',
       }}
     >
-      {/* Brand & Qualcomm AI 100 Badge */}
+      {/* Brand Title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div
           className="squircle-xs"
           style={{
             width: '28px',
             height: '28px',
-            background: '#1b2230',
-            border: '1px solid #283347',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid var(--border-medium)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#388bfd" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2" />
             <polyline points="2 17 12 22 22 17" />
             <polyline points="2 12 12 17 22 12" />
@@ -69,19 +69,6 @@ export default function Header({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
             Requirement Quality Copilot
-          </span>
-          <span
-            className="badge-chip squircle-xs"
-            style={{
-              background: 'var(--accent-blue-subtle)',
-              color: 'var(--accent-blue)',
-              border: '1px solid var(--accent-blue-border)',
-              fontSize: '11px',
-              padding: '2px 8px',
-              fontWeight: '500',
-            }}
-          >
-            Qualcomm Cloud AI 100
           </span>
         </div>
       </div>

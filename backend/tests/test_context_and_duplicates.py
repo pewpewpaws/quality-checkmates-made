@@ -129,9 +129,24 @@ def test_duplicate_requirement_detection_and_collision_handling():
     assert req1.status_code == 200
     assert req1.json()["version"] == 1
 
-    # 2. Ingest EXACT Duplicate Text under different ID (REQ-DUP-002)
-    req2 = client.post(
+    # 2. Ingest EXACT Duplicate Text: Verify creation is strictly blocked with HTTP 409 Conflict
+    dup_blocked = client.post(
         "/api/requirements",
+        json={
+            "id": "REQ-DUP-002",
+            "project_id": pid,
+            "text": "The battery management system shall transmit telemetry data over CAN-FD every 50ms.",
+            "category": "Telemetry",
+            "status": "FLAGGED_TBD"
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert dup_blocked.status_code == 409
+    assert "duplicate" in dup_blocked.json()["detail"].lower()
+
+    # Allow duplicate explicitly to populate radar for detection testing
+    req2 = client.post(
+        "/api/requirements?allow_duplicate=true",
         json={
             "id": "REQ-DUP-002",
             "project_id": pid,

@@ -24,7 +24,7 @@ def test_list_requirements():
     resp = client.get("/api/requirements")
     assert resp.status_code == 200
     items = resp.json()
-    assert len(items) >= 4  # Preloaded demo items
+    assert len(items) >= 3  # Preloaded clean demo items (BMS-001, BMS-002, BMS-003)
 
 
 def test_dual_key_sign_off_flow():

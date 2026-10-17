@@ -85,13 +85,18 @@ async def list_requirements(
 @router.post("", response_model=RequirementStatement)
 async def create_requirement(
     req: RequirementStatement,
+    allow_duplicate: bool = Query(False, description="Allow duplicate requirement creation (false by default)"),
     role: UserRole = Depends(require_write_permission)
 ):
     """
     Add a new requirement statement.
     Restricted: Executives have read-only access.
+    Strictly prevents duplicate requirement creation by default (HTTP 409).
     """
-    return store.upsert(req, project_id=req.project_id)
+    try:
+        return store.upsert(req, project_id=req.project_id, allow_duplicate=allow_duplicate)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
 
 @router.get("/duplicates", response_model=List[Dict[str, Any]])
@@ -197,11 +202,13 @@ async def update_requirement(
     req_id: str,
     updated: RequirementStatement,
     project_id: Optional[str] = Query(None),
+    allow_duplicate: bool = Query(False, description="Allow duplicate requirement update (false by default)"),
     role: UserRole = Depends(require_write_permission)
 ):
     """
     Update requirement content.
     Restricted: Executives have read-only access.
+    Strictly prevents duplicate requirement text by default (HTTP 409).
     """
     existing = store.get_by_id(req_id, project_id=project_id)
     if not existing:
@@ -209,7 +216,10 @@ async def update_requirement(
     updated.id = req_id
     updated.project_id = existing.project_id
     updated.version = existing.version + 1
-    return store.upsert(updated, project_id=existing.project_id)
+    try:
+        return store.upsert(updated, project_id=existing.project_id, allow_duplicate=allow_duplicate)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
 
 @router.delete("/{req_id}")

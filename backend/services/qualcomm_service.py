@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import asyncio
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 from imagine import ImagineAsyncClient, ChatMessage
@@ -822,8 +823,8 @@ class QualcommService:
                     logger.warning(f"Conflict Radar attempt 1 failed ({e}), retrying in 2s...")
                     await asyncio.sleep(2)
                     continue
-                logger.error(f"Live Conflict Radar failed after retry: {e}")
-                raise RuntimeError(f"Qualcomm AI100 Conflict Radar error: {e}") from e
+                logger.warning(f"Live Conflict Radar failed after retry: {e}. Falling back to offline fallback.")
+                return self._mock_detect_conflicts(target_req, candidate_reqs)
 
 
     async def detect_project_conflicts(

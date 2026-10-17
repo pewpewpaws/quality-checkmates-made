@@ -1,21 +1,21 @@
 /* Apple Design System for Web — WWDC Fluid Interface & Craft Edition */
 :root {
-  /* Apple Pro Dark Neutral Materials */
-  --bg-app: #080a0f;
-  --bg-chrome-translucent: rgba(14, 18, 25, 0.88);
-  --bg-sidebar: rgba(11, 14, 20, 0.94);
-  --bg-panel: rgba(16, 20, 29, 0.92);
-  --bg-card: rgba(22, 28, 40, 0.85);
-  --bg-card-hover: rgba(30, 38, 54, 0.95);
-  --bg-card-active: #232c3d;
-  --bg-card-selected: #1c2638;
-  --bg-input: #0e121a;
+  /* Apple Pro Dark Neutral Materials (Zero Blue Tint - Pure System Greys) */
+  --bg-app: #161618;
+  --bg-chrome-translucent: rgba(22, 22, 24, 0.90);
+  --bg-sidebar: rgba(26, 26, 28, 0.96);
+  --bg-panel: rgba(30, 30, 34, 0.94);
+  --bg-card: rgba(38, 38, 42, 0.88);
+  --bg-card-hover: rgba(48, 48, 54, 0.96);
+  --bg-card-active: #3a3a40;
+  --bg-card-selected: #34343a;
+  --bg-input: #202023;
 
-  /* Materials: Subtle Hairline & Light-Catching Borders */
-  --border-subtle: rgba(255, 255, 255, 0.09);
-  --border-medium: rgba(255, 255, 255, 0.16);
-  --border-top-highlight: rgba(255, 255, 255, 0.22);
-  --border-glass: rgba(255, 255, 255, 0.12);
+  /* Materials: Subtle Hairline & Light-Catching Apple Specular Borders */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
+  --border-top-highlight: rgba(255, 255, 255, 0.20);
+  --border-glass: rgba(255, 255, 255, 0.10);
 
   /* High-Contrast Pro Typography Scale & Vibrancy */
   --text-primary: #ffffff;
@@ -148,10 +148,11 @@ body, p, .body-regular {
    ========================================================================== */
 .glass-chrome {
   background: var(--bg-chrome-translucent);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);
   border-top: 1px solid var(--border-top-highlight);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel {
@@ -160,7 +161,7 @@ body, p, .body-regular {
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-subtle);
   border-top: 1px solid var(--border-top-highlight);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), 0 4px 20px -2px rgba(0, 0, 0, 0.4);
 }
 
 .glass-card {
@@ -168,13 +169,15 @@ body, p, .body-regular {
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid var(--border-subtle);
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  transition: background 0.16s ease, border-color 0.16s ease, transform var(--spring-settle-timing);
+  border-top: 1px solid var(--border-top-highlight);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 2px 10px rgba(0, 0, 0, 0.25);
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform var(--spring-settle-timing);
 }
 
 .glass-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-medium);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.10), 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 /* Response on Press — Kill Latency (Apple Principle 1) */

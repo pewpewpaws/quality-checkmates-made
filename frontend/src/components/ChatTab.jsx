@@ -112,7 +112,7 @@ export default function ChatTab({ activeProjectId, activeProject, onAdoptRequire
               style={{
                 maxWidth: '85%',
                 padding: '12px 16px',
-                background: msg.sender === 'user' ? '#1c2638' : 'var(--bg-card)',
+                background: msg.sender === 'user' ? '#2c2c30' : 'var(--bg-card)',
                 border: msg.sender === 'user' ? '1px solid var(--border-medium)' : '1px solid var(--border-subtle)',
               }}
             >

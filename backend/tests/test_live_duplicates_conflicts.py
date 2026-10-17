@@ -59,9 +59,24 @@ def test_01_requirement_duplication_check_lexical_and_exact():
     )
     assert r1.status_code == 200
 
-    # Ingest Requirement B: Exact Text Duplicate (with case/whitespace variation)
-    r2 = client.post(
+    # Ingest Requirement B: Exact Text Duplicate -> verify blocked by default (HTTP 409)
+    r2_blocked = client.post(
         "/api/requirements",
+        json={
+            "id": "REQ-DUP-102",
+            "project_id": pid,
+            "text": "  The battery management system shall transmit pack telemetry over CAN-FD every 50ms.  ",
+            "category": "Telemetry",
+            "status": "FLAGGED_TBD"
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert r2_blocked.status_code == 409
+    assert "duplicate" in r2_blocked.json()["detail"].lower()
+
+    # Pass allow_duplicate=true to test duplicate detection radar endpoint
+    r2 = client.post(
+        "/api/requirements?allow_duplicate=true",
         json={
             "id": "REQ-DUP-102",
             "project_id": pid,

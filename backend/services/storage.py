@@ -1,4 +1,6 @@
+import os
 import uuid
+import re
 import json
 import sqlite3
 from pathlib import Path
@@ -15,7 +17,7 @@ from backend.models.schemas import (
     UserRole
 )
 
-DEFAULT_DB_PATH = Path(__file__).parent.parent / "data" / "quality_copilot.db"
+DEFAULT_DB_PATH = Path(os.environ.get("QUALITY_COPILOT_DB_PATH", str(Path(__file__).parent.parent / "data" / "quality_copilot.db")))
 
 
 class RequirementStore:
@@ -458,10 +460,40 @@ class RequirementStore:
         
         return found
 
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """Normalize requirement statement text for duplicate comparison (case/whitespace/punctuation agnostic)."""
+        if not text:
+            return ""
+        return re.sub(r"[^a-z0-9]", "", text.lower())
+
+    def is_duplicate(
+        self,
+        text: str,
+        project_id: str = "default_project",
+        exclude_id: Optional[str] = None
+    ) -> Optional[RequirementStatement]:
+        """
+        Check if a requirement statement duplicates an existing statement in the workspace.
+        Returns the existing matching RequirementStatement, or None.
+        """
+        norm_input = self.normalize_text(text)
+        if not norm_input:
+            return None
+
+        req_dict = self._requirements.get(project_id, {})
+        for req in req_dict.values():
+            if exclude_id and req.id == exclude_id:
+                continue
+            if self.normalize_text(req.text) == norm_input:
+                return req
+        return None
+
     def upsert(
         self,
         item: RequirementStatement,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
+        allow_duplicate: bool = False
     ) -> RequirementStatement:
         target_project = project_id or item.project_id or "default_project"
         if target_project not in self._requirements:
@@ -476,6 +508,14 @@ class RequirementStore:
             )
             self._projects[target_project] = ws
             self._persist_project_db(ws)
+
+        # Strict duplicate check: block duplicate statements within the same workspace
+        if not allow_duplicate:
+            dup = self.is_duplicate(item.text, project_id=target_project, exclude_id=item.id)
+            if dup:
+                raise ValueError(
+                    f"Duplicate requirement: A requirement with matching text already exists in '{target_project}' ({dup.id})."
+                )
         
         item.project_id = target_project
         item.updated_at = datetime.utcnow()
@@ -486,15 +526,29 @@ class RequirementStore:
     def bulk_add(
         self,
         items: List[RequirementStatement],
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
+        allow_duplicate: bool = False
     ) -> List[RequirementStatement]:
         target_project = project_id or "default_project"
+        if target_project not in self._requirements:
+            self._requirements[target_project] = {}
+
+        added_items: List[RequirementStatement] = []
+        seen_batch_norms = set()
+
         for item in items:
             item.project_id = target_project
+            norm = self.normalize_text(item.text)
+            if not allow_duplicate:
+                if norm in seen_batch_norms:
+                    continue
+                if self.is_duplicate(item.text, project_id=target_project, exclude_id=item.id):
+                    continue
+
+            seen_batch_norms.add(norm)
             item.updated_at = datetime.utcnow()
-            if target_project not in self._requirements:
-                self._requirements[target_project] = {}
             self._requirements[target_project][item.id] = item
+            added_items.append(item)
         
         if target_project not in self._projects:
             ws = ProjectWorkspace(
@@ -506,8 +560,9 @@ class RequirementStore:
             self._projects[target_project] = ws
             self._persist_project_db(ws)
 
-        self._persist_requirements_bulk_db(items)
-        return items
+        if added_items:
+            self._persist_requirements_bulk_db(added_items)
+        return added_items
 
     def delete(self, req_id: str, project_id: Optional[str] = None) -> bool:
         if project_id and project_id in self._requirements:

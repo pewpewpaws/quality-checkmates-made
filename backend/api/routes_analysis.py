@@ -12,11 +12,13 @@ from backend.models.schemas import (
     ConflictRadarResponse,
     RequirementConflictCard,
     QualityScore,
+    IntentLockReport,
 )
 from backend.services.qualcomm_service import QualcommService
 from backend.services.storage import store
 from backend.services.rubric_engine import rubric_engine
 from backend.services.evidence_validator import evidence_validator
+from backend.services.intent_lock import intent_lock_validator
 
 router = APIRouter(prefix="/api/analysis", tags=["Qualcomm AI100 Quality Pipelines"])
 qualcomm = QualcommService()
@@ -140,6 +142,21 @@ async def rewrite_requirement(payload: AnalysisRequest):
             store.upsert(req)
 
     return suggestion
+
+
+class IntentLockRequest(BaseModel):
+    original: str = Field(..., description="Original requirement statement")
+    revised: str = Field(..., description="Candidate rewritten statement to audit")
+
+
+@router.post("/intent-lock", response_model=IntentLockReport)
+async def validate_intent_lock(payload: IntentLockRequest):
+    """
+    Deterministic Intent-Lock Semantic Diff Validator outside the LLM.
+    Audits polarity/negation flips, modal demotions, actor shifts, dropped thresholds, and token-level diff stream.
+    """
+    return intent_lock_validator.validate(payload.original, payload.revised)
+
 
 
 @router.post("/blueprint", response_model=VerificationPlan)

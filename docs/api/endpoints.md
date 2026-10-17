@@ -386,10 +386,17 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * Auto-computes initial rubric score.
 * **Method**: `POST /api/analysis/duel`:
   * Stages 2 competing plausible interpretations using `Llama-3.1-8B` (`submit_interpretation_duel`).
+  * Auto-calculates `contrast_score` (divergence); automatically cascades to `Llama-3.3-70B` if contrast is weak.
 * **Method**: `POST /api/analysis/rewrite`:
   * Generates zero-fabrication EARS rewrites preserving `[TBD: ...]` tokens and smart suggested defaults (`submit_rewritten_requirements`).
+  * Automatically invokes `IntentLockValidator` outside the LLM to verify semantic preservation.
+  * Returns `intent_lock` audit report and token diff stream.
+* **Method**: `POST /api/analysis/intent-lock`:
+  * Direct deterministic Intent-Lock Semantic Diff Validator endpoint.
+  * Audits polarity flips (prohibitions), modal strength demotions, actor shifts, and threshold drops.
+  * Returns `IntentLockReport` with high-resolution token diff stream (`DiffToken` array for UI diff viewer).
 * **Method**: `POST /api/analysis/blueprint`:
-  * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint`).
+  * Generates audit-ready Verification Blueprint test cases and falsifiable PASS/FAIL acceptance criteria (`submit_verification_blueprint` on `Llama-3.3-70B`).
 * **Method**: `POST /api/analysis/semantic-duplicates`:
   * Computes 1024-dimensional normalized vector embeddings on Qualcomm AI 100 (`BAAI/bge-large-en-v1.5`) and pairwise cosine similarity matrix.
   * Detects semantically equivalent requirements across different vocabularies.

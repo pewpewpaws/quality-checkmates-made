@@ -20,6 +20,7 @@ from backend.models.schemas import (
     ConflictRadarResponse,
 )
 from backend.services.evidence_validator import evidence_validator
+from backend.services.intent_lock import intent_lock_validator
 
 logger = logging.getLogger(__name__)
 
@@ -401,17 +402,24 @@ class QualcommService:
             raise RuntimeError(f"Qualcomm AI100 X-Ray extraction error: {e}") from e
 
     async def stage_interpretation_duel(self, req_text: str) -> InterpretationDuel:
-        """Formulate two competing technical interpretations using Llama-3.1-8B."""
+        """Formulate two competing technical interpretations using Llama-3.1-8B with cascade to Llama-3.3-70B."""
         if self.mock_mode:
             return self._mock_interpretation_duel(req_text)
 
         system_prompt = (
-            "You are a Systems Engineering Conflict Engine. "
-            "Formulate TWO competing, mutually exclusive, plausible technical interpretations: "
+            "You are a Systems Engineering Conflict Engine.\n"
+            "Your purpose is to expose hidden architectural ambiguity by staging an 'Interpretation Duel' between two senior engineers.\n"
+            "Formulate TWO competing, mutually exclusive, and equally plausible technical interpretations: "
             "interpretation_a (e.g. low-latency, real-time, or time-based stance) vs "
-            "interpretation_b (e.g. high-throughput, batch, or count-based stance). "
+            "interpretation_b (e.g. high-throughput, batch, or count-based stance).\n"
+            "Special handling: For escape hatches ('where feasible', 'periodically') or vague frequencies, "
+            "formulate Card A as Best-Effort Opportunistic transfer without retry guarantees, "
+            "and Card B as Mandatory Guaranteed Delivery with persistent queue and retry backoff.\n"
             "Call submit_interpretation_duel."
         )
+
+        model_to_use = settings.MODEL_8B
+        cascaded = False
 
         try:
             resp = await self.client.chat(
@@ -419,7 +427,7 @@ class QualcommService:
                     ChatMessage(role="system", content=system_prompt),
                     ChatMessage(role="user", content=f'Analyze ambiguity and stage duel for: "{req_text}" Call submit_interpretation_duel.')
                 ],
-                model=settings.MODEL_8B,
+                model=model_to_use,
                 tools=TOOL_DUEL,
                 temperature=0.1
             )
@@ -428,6 +436,36 @@ class QualcommService:
 
             a = data.get("interpretation_a", {})
             b = data.get("interpretation_b", {})
+            spec_a = a.get("technical_meaning", "Immediate transmission on state change")
+            spec_b = b.get("technical_meaning", "Periodic aggregated transmission in batches")
+
+            # Calculate divergence/contrast
+            import difflib
+            similarity = difflib.SequenceMatcher(None, spec_a.lower(), spec_b.lower()).ratio()
+            contrast_score = round(max(0.0, min(1.0, 1.0 - similarity)), 3)
+
+            # Cascade to 70B if contrast is too weak (< 0.25) or specs identical
+            if contrast_score < 0.25:
+                logger.info(f"Low contrast on {settings.MODEL_8B} ({contrast_score}). Cascading to {settings.MODEL_70B}...")
+                cascaded = True
+                model_to_use = settings.MODEL_70B
+                resp_70b = await self.client.chat(
+                    messages=[
+                        ChatMessage(role="system", content=system_prompt),
+                        ChatMessage(role="user", content=f'Analyze ambiguity and stage duel with strong contrasting engineering stances for: "{req_text}" Call submit_interpretation_duel.')
+                    ],
+                    model=model_to_use,
+                    tools=TOOL_DUEL,
+                    temperature=0.1
+                )
+                tc_70b = resp_70b.choices[0].message.tool_calls[0]
+                data_70b = parse_tool_args(tc_70b.function.arguments)
+                a = data_70b.get("interpretation_a", a)
+                b = data_70b.get("interpretation_b", b)
+                spec_a = a.get("technical_meaning", spec_a)
+                spec_b = b.get("technical_meaning", spec_b)
+                similarity = difflib.SequenceMatcher(None, spec_a.lower(), spec_b.lower()).ratio()
+                contrast_score = round(max(0.0, min(1.0, 1.0 - similarity)), 3)
 
             return InterpretationDuel(
                 flaw_quote=data.get("source_flaw", req_text[:25]),
@@ -435,22 +473,33 @@ class QualcommService:
                 card_a=DuelCard(
                     title=a.get("title", "Interpretation A (Edge/Real-time)"),
                     stance=a.get("stance", "Low-latency stance"),
-                    technical_spec=a.get("technical_meaning", "Immediate transmission on state change"),
+                    technical_spec=spec_a,
                     architectural_impact=a.get("downstream_risk", "High bus utilization under burst conditions")
                 ),
                 card_b=DuelCard(
                     title=b.get("title", "Interpretation B (Batch/Throughput)"),
                     stance=b.get("stance", "High-throughput stance"),
-                    technical_spec=b.get("technical_meaning", "Periodic aggregated transmission in batches"),
+                    technical_spec=spec_b,
                     architectural_impact=b.get("downstream_risk", "Increased telemetry latency during fast transients")
-                )
+                ),
+                contrast_score=contrast_score,
+                model_used=model_to_use,
+                cascaded=cascaded
             )
         except Exception as e:
             logger.error(f"Live Interpretation Duel failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 Duel error: {e}") from e
 
-    async def rewrite_with_smart_defaults(self, req_text: str) -> RewriteSuggestion:
-        """Rewrite requirement preserving [TBD: ...] placeholders and suggesting defaults."""
+    async def rewrite_with_smart_defaults(
+        self,
+        req_text: str,
+        preferred_model: Optional[str] = None
+    ) -> RewriteSuggestion:
+        """
+        Rewrite requirement preserving [TBD: ...] placeholders and suggesting defaults.
+        Integrates Intent-Lock Semantic Diff Validation outside the LLM and supports
+        Adaptive Tiered Cascade (Llama-3.1-8B fast path -> Llama-3.3-70B high quality).
+        """
         if self.mock_mode:
             return self._mock_rewrite(req_text)
 
@@ -464,13 +513,16 @@ class QualcommService:
             "Call submit_rewritten_requirements."
         )
 
+        model_to_use = preferred_model or settings.MODEL_70B
+        cascaded = False
+
         try:
             resp = await self.client.chat(
                 messages=[
                     ChatMessage(role="system", content=system_prompt),
                     ChatMessage(role="user", content=f'Target: "{req_text}" Call submit_rewritten_requirements.')
                 ],
-                model=settings.MODEL_70B,
+                model=model_to_use,
                 tools=TOOL_REWRITER,
                 temperature=0.0
             )
@@ -486,6 +538,31 @@ class QualcommService:
                 revised_statements.append(stmt)
             revised_full = " ".join(revised_statements) if revised_statements else f"The system shall operate within [TBD: response_time_ms]."
 
+            # Deterministic Intent-Lock validation
+            intent_report = intent_lock_validator.validate(req_text, revised_full)
+
+            # If fast model (8B) had semantic drift or missing TBD, auto-cascade to 70B
+            if (model_to_use == settings.MODEL_8B) and (intent_report.semantic_drift_detected or "[tbd:" not in revised_full.lower()):
+                logger.info("Semantic drift or missing TBD on Llama-3.1-8B. Cascading rewrite to Llama-3.3-70B...")
+                cascaded = True
+                model_to_use = settings.MODEL_70B
+                resp_70b = await self.client.chat(
+                    messages=[
+                        ChatMessage(role="system", content=system_prompt),
+                        ChatMessage(role="user", content=f'Target: "{req_text}" Ensure strict zero-fabrication [TBD] parameterization and intent preservation. Call submit_rewritten_requirements.')
+                    ],
+                    model=model_to_use,
+                    tools=TOOL_REWRITER,
+                    temperature=0.0
+                )
+                tc_70b = resp_70b.choices[0].message.tool_calls[0]
+                data_70b = parse_tool_args(tc_70b.function.arguments)
+                reqs_70b = data_70b.get("rewritten_requirements", [])
+                tbds = data_70b.get("identified_tbds", tbds)
+                revised_statements = [r.get("statement") or r.get("pattern") or "" for r in reqs_70b]
+                revised_full = " ".join(revised_statements) if revised_statements else revised_full
+                intent_report = intent_lock_validator.validate(req_text, revised_full)
+
             identified = []
             for t in tbds:
                 identified.append(TbdDefault(
@@ -499,7 +576,10 @@ class QualcommService:
                 original=req_text,
                 revised=revised_full,
                 rationale=reqs[0].get("rationale", "Aligned with EARS syntax and zero-fabrication directives.") if reqs else "EARS compliance",
-                identified_tbds=identified
+                identified_tbds=identified,
+                intent_lock=intent_report,
+                model_used=model_to_use,
+                cascaded=cascaded
             )
         except Exception as e:
             logger.error(f"Live Rewriter failed: {e}")
@@ -549,8 +629,12 @@ class QualcommService:
                 acceptance_criteria={
                     "PASS": crit.get("pass_condition", "Response satisfies all parameterized [TBD] thresholds"),
                     "FAIL": crit.get("fail_condition", "Response exceeds timeout or omits telemetry")
-                }
+                },
+                model_used=settings.MODEL_70B
             )
+        except Exception as e:
+            logger.error(f"Live Verification Blueprint failed: {e}")
+            raise RuntimeError(f"Qualcomm AI100 Blueprint error: {e}") from e
         except Exception as e:
             logger.error(f"Live Verification Blueprint failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 Blueprint error: {e}") from e
@@ -559,12 +643,30 @@ class QualcommService:
         """Generate dense vector embeddings using BAAI/bge-large-en-v1.5."""
         if self.mock_mode:
             import numpy as np
-            # Generate deterministic synthetic 1024-dim vectors
             vectors = []
             for t in texts:
-                np.random.seed(abs(hash(t)) % (2**32))
-                v = np.random.normal(0, 1, 1024)
-                v = v / np.linalg.norm(v)
+                v = np.zeros(1024, dtype=np.float32)
+                words = re.findall(r"\w+", t.lower())
+                synonyms = {
+                    "accumulator": "battery", "pack": "battery", "bms": "battery",
+                    "voltage": "potential", "current": "amperage", "soc": "charge",
+                    "can-fd": "bus", "serial": "bus", "automotive": "bus",
+                    "broadcast": "transmit", "send": "transmit", "telemetry": "metrics"
+                }
+                expanded = []
+                for w in words:
+                    expanded.append(w)
+                    if w in synonyms:
+                        expanded.append(synonyms[w])
+                for w in expanded:
+                    h = abs(hash(w)) % 1024
+                    v[h] += 1.0
+                    v[(h * 31 + 7) % 1024] += 0.5
+                norm = np.linalg.norm(v)
+                if norm > 0:
+                    v = v / norm
+                else:
+                    v[0] = 1.0
                 vectors.append(v.tolist())
             return vectors
 
@@ -962,13 +1064,18 @@ class QualcommService:
                 stance="High-throughput periodic batching",
                 technical_spec="Buffer samples and flush every 1000ms in batched frames",
                 architectural_impact="Introduces up to 1000ms latency on critical sensor transitions"
-            )
+            ),
+            contrast_score=0.92,
+            model_used="MockEngine",
+            cascaded=False
         )
 
     def _mock_rewrite(self, req_text: str) -> RewriteSuggestion:
+        revised = "When telemetry data is generated, the system shall transmit telemetry packets within [TBD: max_packet_latency_ms]."
+        intent_report = intent_lock_validator.validate(req_text, revised)
         return RewriteSuggestion(
             original=req_text,
-            revised="When telemetry data is generated, the system shall transmit telemetry packets within [TBD: max_packet_latency_ms].",
+            revised=revised,
             rationale="Restructured into EARS ubiquitous/event-driven syntax. Subjective timing parameterized to guarantee zero-fabrication.",
             identified_tbds=[
                 TbdDefault(
@@ -977,7 +1084,10 @@ class QualcommService:
                     rationale="Standard nominal telemetry reporting cycle under ISO 11898-1.",
                     confidence="HIGH"
                 )
-            ]
+            ],
+            intent_lock=intent_report,
+            model_used="MockEngine",
+            cascaded=False
         )
 
     def _mock_verification_blueprint(self, req_text: str) -> VerificationPlan:
@@ -1000,7 +1110,8 @@ class QualcommService:
             acceptance_criteria={
                 "PASS": "Latency measured <= [TBD: max_packet_latency_ms] and packet checksum valid",
                 "FAIL": "Telemetry latency > [TBD: max_packet_latency_ms] or packet dropped under nominal load"
-            }
+            },
+            model_used="MockEngine"
         )
 
     def _mock_chat_requirements(

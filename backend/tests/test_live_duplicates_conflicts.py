@@ -11,7 +11,12 @@ qualcomm = QualcommService()
 
 @pytest.fixture(autouse=True)
 def clean_test_workspaces():
-    """Ensure clean workspace state before and after each test."""
+    """Ensure clean workspace state and live mode before and after each test."""
+    from backend.api.routes_requirements import qualcomm as req_qc
+    from backend.api.routes_analysis import qualcomm as ana_qc
+    req_qc.mock_mode = False
+    ana_qc.mock_mode = False
+
     pids = ["proj-dup-check", "proj-semantic-test", "proj-conflict-radar"]
     for pid in pids:
         store.delete_project(pid)

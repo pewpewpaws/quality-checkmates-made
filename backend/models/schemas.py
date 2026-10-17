@@ -87,6 +87,34 @@ class TbdDefault(BaseModel):
     confidence: Literal["HIGH", "MEDIUM", "LOW"] = Field("MEDIUM", description="Confidence level")
 
 
+class DiffTokenType(str, Enum):
+    PRESERVED = "PRESERVED"
+    ADDED = "ADDED"
+    REMOVED = "REMOVED"
+    TBD_PARAMETERIZED = "TBD_PARAMETERIZED"
+    MODAL_UPGRADED = "MODAL_UPGRADED"
+    MODAL_DOWNGRADED = "MODAL_DOWNGRADED"
+    NEGATION_DRIFT = "NEGATION_DRIFT"
+
+
+class DiffToken(BaseModel):
+    text: str
+    token_type: DiffTokenType
+    note: Optional[str] = None
+
+
+class IntentLockReport(BaseModel):
+    passed: bool = Field(..., description="True if no critical semantic drift detected")
+    semantic_drift_detected: bool = Field(..., description="True if critical intent change was detected")
+    drift_warnings: List[str] = Field(default_factory=list, description="Specific drift warning messages")
+    negation_preserved: bool = Field(True, description="Whether negative obligations (shall not) are preserved")
+    modal_verb_preserved: bool = Field(True, description="Whether modal binding strength was not downgraded")
+    actor_preserved: bool = Field(True, description="Whether the actor/system subject is preserved")
+    thresholds_preserved: bool = Field(True, description="Whether numerical limits were parameterized rather than dropped")
+    diff_tokens: List[DiffToken] = Field(default_factory=list, description="Token-level diff stream for UI diff viewer")
+    audit_summary: str = Field(..., description="Human-readable engineering verification summary")
+
+
 class RewriteSuggestion(BaseModel):
     original: str = Field(..., description="Source requirement text")
     revised: str = Field(..., description="Strict EARS/ISO formatted text preserving [TBD: ...] tokens")
@@ -95,6 +123,12 @@ class RewriteSuggestion(BaseModel):
         default_factory=list,
         description="1-click actionable UI chips for PM/Engineer resolution"
     )
+    intent_lock: Optional[IntentLockReport] = Field(
+        None,
+        description="Automated Intent-Lock verification and semantic drift report"
+    )
+    model_used: Optional[str] = Field(None, description="Qualcomm AI model used for rewrite")
+    cascaded: bool = Field(False, description="Whether 8B -> 70B cascade was triggered")
 
 
 class DuelCard(BaseModel):
@@ -109,6 +143,9 @@ class InterpretationDuel(BaseModel):
     flaw_type: str = Field(..., description="Underlying defect causing ambiguity")
     card_a: DuelCard
     card_b: DuelCard
+    contrast_score: float = Field(1.0, description="Divergence score between Card A and B (0.0 to 1.0)")
+    model_used: Optional[str] = Field(None, description="Qualcomm AI model used for duel")
+    cascaded: bool = Field(False, description="Whether cascade was triggered from 8B to 70B")
 
 
 class SemanticDuplicateMatch(BaseModel):
@@ -168,6 +205,7 @@ class VerificationPlan(BaseModel):
     acceptance_criteria: Dict[str, str] = Field(
         ..., description="Mathematically falsifiable PASS / FAIL thresholds"
     )
+    model_used: Optional[str] = Field(None, description="Qualcomm AI model used for blueprint generation")
 
 
 class RequirementStatement(BaseModel):

@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-17T16:25:40Z",
+  "hardware": "Qualcomm Cloud AI 100 (Cirrascale)",
+  "models": {
+    "xray": "Llama-3.3-70B",
+    "duel": "Llama-3.1-8B -> Llama-3.3-70B Cascade",
+    "rewriter": "Llama-3.3-70B + IntentLockValidator",
+    "blueprint": "Llama-3.3-70B"
+  },
+  "scorecard": {
+    "quote_grounding_accuracy": "100.0%",
+    "zero_fabrication_compliance": "100.0%",
+    "intent_lock_pass_rate": "100.0%",
+    "mean_duel_contrast": 0.471,
+    "blueprint_falsifiability": "100.0%"
+  }
+}

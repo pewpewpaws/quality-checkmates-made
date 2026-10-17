@@ -80,24 +80,32 @@ Each subscore starts at full budget and applies deterministic deductions clamped
 
 ---
 
-## 3. High-Impact Differentiators
+## 3. High-Impact Differentiators & Phase 3 Pipelines
 
-### A. Interpretation Duel
+### A. Interpretation Duel & Adaptive Tiered Cascade
 When a requirement is flagged as ambiguous, the copilot generates **two competing, equally plausible engineering interpretations**:
 * E.g., *"Retain recent diagnostic logs."*
   * **Option A**: Retention by time window (previous 24 hours).
   * **Option B**: Retention by event count (latest 1,000 entries).
+* **Tiered Cascade Protocol**:
+  1. Fast-path runs on `Llama-3.1-8B` (~2.2s, 85% cheaper).
+  2. Contrast divergence score is calculated: $\text{contrast\_score} = 1.0 - \text{sim}(A, B)$.
+  3. If contrast is weak ($< 0.25$) or options are trivial strawmen, auto-cascades to `Llama-3.3-70B`.
 * Forces engineers and product owners to resolve ambiguity before code is written.
 
-### B. Intent-Locked Change Validation
-When a rewrite is proposed:
-1. Regex and token diffing parses actors, actions, conditions, numerical thresholds, and modal verbs (*"shall"* vs *"should"*).
-2. If numbers, units, or negations are silently dropped or altered, a **CRITICAL: Semantic Drift Warning** is displayed.
-3. Rewrites cannot be accepted without explicit engineer sign-off.
+### B. Intent-Locked Semantic Diff Validator
+When an EARS rewrite is generated, the deterministic `IntentLockValidator` executes outside the LLM:
+1. **Negation & Polarity Verification**: Prohibits silent inversion of obligations (`shall not` $\longleftrightarrow$ `shall`).
+2. **Modal Verb Binding Strength**: Prevents demotion of mandatory obligations (`shall`/`must`) to non-binding suggestions (`should`/`may`).
+3. **Actor / Subject Integrity**: Verifies subject noun phrases are not displaced or reassigned.
+4. **Contractual Metric Safeguard**: Ensures explicit numbers/units from original text are either preserved or explicitly parameterized as `[TBD: <parameter_name_and_unit>]`.
+5. **Token Diff Stream**: Generates an opcode-level token stream (`PRESERVED`, `ADDED`, `REMOVED`, `TBD_PARAMETERIZED`, `MODAL_UPGRADED`, `MODAL_DOWNGRADED`, `NEGATION_DRIFT`) for high-fidelity UI side-by-side review.
+6. Rewrites cannot be accepted into `LOCKED_BASELINE` without explicit engineer sign-off.
 
 ### C. Verification Blueprint Generator
-Approved requirements automatically produce draft test cases:
-* Method: Test, Analysis, Inspection, or Demonstration.
-* Preconditions & setup steps.
-* Test cases: Positive path, Negative path, and Boundary condition.
-* Pass/Fail acceptance criteria.
+Approved requirements automatically produce deterministic, audit-ready test plans conforming to ISO 26262 and IEEE 829:
+* **Method**: Classified into Test, Demonstration, Inspection, or Analysis.
+* **Preconditions**: Machine state and bench instrumentation setups.
+* **Paired Test Cases**: Nominal (positive path) and Boundary/Fault Injection (negative path).
+* **Acceptance Criteria**: Mathematically falsifiable PASS/FAIL conditions referencing the requirement's obligations and any `[TBD]` parameterized limits.
+

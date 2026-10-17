@@ -19,9 +19,11 @@
   "25": "get_project_context",
   "26": "export_service.py",
   "27": "main.py",
-  "28": "delete_requirement",
+  "28": "api.js",
   "29": "test_rbac_and_workspaces.py",
-  "30": "qualcomm_service.py",
+  "30": "package.json",
   "31": "test_api.py",
-  "32": "Enum"
+  "32": "test_context_and_duplicates.py",
+  "33": ".oxlintrc.json",
+  "34": "React + Vite"
 }

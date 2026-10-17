@@ -466,5 +466,131 @@
     "seen": 1792254916.4499362,
     "ast_hash": "a1e234304f1cc0c56d4e0367b432c4a8",
     "semantic_hash": ""
+  },
+  "frontend/.oxlintrc.json": {
+    "mtime": 1792254970.4516153,
+    "seen": 1792255454.1734269,
+    "ast_hash": "5e6e3cea3e89137071c142dd7835b0ef",
+    "semantic_hash": ""
+  },
+  "frontend/package.json": {
+    "mtime": 1792254970.457908,
+    "seen": 1792255454.17343,
+    "ast_hash": "0aad932d75966fcc7fc6658c11731fd0",
+    "semantic_hash": ""
+  },
+  "frontend/src/App.jsx": {
+    "mtime": 1792255333.1869173,
+    "seen": 1792255454.1734324,
+    "ast_hash": "f0a76d212c2336b8d9c21c629fd9c488",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/ChatTab.jsx": {
+    "mtime": 1792255203.779112,
+    "seen": 1792255454.173435,
+    "ast_hash": "6b21918132b6f958af9ace6e389dc735",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/ConflictTab.jsx": {
+    "mtime": 1792255299.5169866,
+    "seen": 1792255454.1734376,
+    "ast_hash": "4161c37fd9aefefca6830ef6d0714c52",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/DeepInspectorTab.jsx": {
+    "mtime": 1792255280.3760207,
+    "seen": 1792255454.1734397,
+    "ast_hash": "059333d85bcf4ca038407459b01981b0",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/GeminiBackground.jsx": {
+    "mtime": 1792255096.5440812,
+    "seen": 1792255454.1734424,
+    "ast_hash": "0c406c6000224a017f03939484062cae",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/Header.jsx": {
+    "mtime": 1792255142.5401213,
+    "seen": 1792255454.1734445,
+    "ast_hash": "95059ea9c32823b37e8fec61930e409d",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/IngestTab.jsx": {
+    "mtime": 1792255225.716094,
+    "seen": 1792255454.1734498,
+    "ast_hash": "272027e5f802bd241bfb82a70a617a25",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/MainStudio.jsx": {
+    "mtime": 1792255315.2619557,
+    "seen": 1792255454.1734526,
+    "ast_hash": "82f1d1447df1f0289d0416dcb96fd997",
+    "semantic_hash": ""
+  },
+  "frontend/src/components/Sidebar.jsx": {
+    "mtime": 1792255181.4331229,
+    "seen": 1792255454.1734548,
+    "ast_hash": "3962583d20edca509c1bcdc8a63fc797",
+    "semantic_hash": ""
+  },
+  "frontend/src/main.jsx": {
+    "mtime": 1792254970.4576254,
+    "seen": 1792255454.1734571,
+    "ast_hash": "e13723e2574429d9a6d849727e3ff695",
+    "semantic_hash": ""
+  },
+  "frontend/src/services/api.js": {
+    "mtime": 1792255116.8821046,
+    "seen": 1792255454.1734595,
+    "ast_hash": "daa286cc7e5ef585a831f61b486a9eaf",
+    "semantic_hash": ""
+  },
+  "frontend/vite.config.js": {
+    "mtime": 1792255022.8219092,
+    "seen": 1792255454.1734617,
+    "ast_hash": "7105d6ca0eca7f688fa96dc3f8a4f3cd",
+    "semantic_hash": ""
+  },
+  "frontend/README.md": {
+    "mtime": 1792254970.4496865,
+    "seen": 1792255454.1735504,
+    "ast_hash": "75eb386f17caf77fd6fe3ce1d90968ee",
+    "semantic_hash": ""
+  },
+  "frontend/index.html": {
+    "mtime": 1792255036.2679517,
+    "seen": 1792255454.1735537,
+    "ast_hash": "9e4f711e6b8ad20f540ebc4bc7952340",
+    "semantic_hash": ""
+  },
+  "frontend/public/favicon.svg": {
+    "mtime": 1792254970.4536867,
+    "seen": 1792255454.1735897,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": ""
+  },
+  "frontend/public/icons.svg": {
+    "mtime": 1792254970.45462,
+    "seen": 1792255454.1735923,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": ""
+  },
+  "frontend/src/assets/hero.png": {
+    "mtime": 1792254970.4565017,
+    "seen": 1792255454.1735947,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": ""
+  },
+  "frontend/src/assets/react.svg": {
+    "mtime": 1792254970.4567049,
+    "seen": 1792255454.1735969,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "frontend/src/assets/vite.svg": {
+    "mtime": 1792254970.4570065,
+    "seen": 1792255454.1735995,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
   }
 }

@@ -1,5 +1,5 @@
 {
-  "0": "routes_requirements.py",
+  "0": "UserRole",
   "1": "schemas.py",
   "3": "main.py",
   "11": "test_chat_copilot.py",
@@ -13,7 +13,11 @@
   "19": "chat_synthesize_requirements",
   "20": "dual_key_sign_off",
   "21": "get_project",
+  "22": "test_rubric_and_evidence.py",
   "23": "delete_project",
+  "24": "update_project",
   "25": "get_project_context",
-  "26": "test_context_and_duplicates.py"
+  "26": "test_context_and_duplicates.py",
+  "27": "delete_requirement",
+  "28": "update_requirement"
 }

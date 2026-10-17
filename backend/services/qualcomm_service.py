@@ -18,6 +18,7 @@ from backend.models.schemas import (
     RequirementConflictCard,
     ConflictRadarResponse,
 )
+from backend.services.evidence_validator import evidence_validator
 
 logger = logging.getLogger(__name__)
 
@@ -386,21 +387,14 @@ class QualcommService:
             
             cards = []
             for item in raw_issues:
-                quote = item.get("evidence_quote", "")
-                # Ensure evidence quote exists in source; if slightly mismatched, trim or fallback
-                if quote not in req_text:
-                    for token in quote.split():
-                        if token in req_text:
-                            quote = token
-                            break
                 cards.append(IssueCard(
                     issue_type=item.get("issue_type", "Ambiguity"),
                     severity=item.get("severity", "Major"),
-                    evidence_quote=quote if quote in req_text else req_text[:25],
+                    evidence_quote=item.get("evidence_quote", req_text[:25]),
                     explanation=item.get("explanation", "Detected specification defect"),
                     suggested_action=item.get("suggested_action", "Clarify exact metric")
                 ))
-            return cards
+            return evidence_validator.validate_and_ground_cards(cards, req_text)
         except Exception as e:
             logger.error(f"Live X-Ray extraction failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 X-Ray extraction error: {e}") from e
@@ -916,7 +910,7 @@ class QualcommService:
                 explanation="Requirement lacks quantifiable pass/fail verification criteria.",
                 suggested_action="Bind requirement to falsifiable threshold limits."
             ))
-        return issues
+        return evidence_validator.validate_and_ground_cards(issues, req_text)
 
     def _mock_interpretation_duel(self, req_text: str) -> InterpretationDuel:
         return InterpretationDuel(

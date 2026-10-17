@@ -6,10 +6,12 @@ from backend.models.schemas import (
     UserRole,
     SemanticDuplicateMatch,
     ConflictRadarResponse,
+    QualityScore,
 )
 from backend.api.deps import get_user_role, require_write_permission, verify_dual_key_role_action
 from backend.services.storage import store
 from backend.services.qualcomm_service import QualcommService
+from backend.services.rubric_engine import rubric_engine
 
 router = APIRouter(prefix="/api/requirements", tags=["Requirements & Dual-Key Governance"])
 qualcomm = QualcommService()
@@ -100,6 +102,42 @@ async def get_requirement(
                 detail=f"Requirement '{req_id}' is in '{raw_req.status.value}' state and hidden from Executive review."
             )
         raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
+    return req
+
+
+@router.get("/{req_id}/score", response_model=QualityScore)
+async def get_requirement_quality_score(
+    req_id: str,
+    project_id: Optional[str] = Query(None, description="Optional project workspace ID"),
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Compute and retrieve the deterministic 100-point rubric score for a stored requirement.
+    """
+    role, _ = user_context
+    req = store.get_by_id(req_id, project_id=project_id, role=role)
+    if not req:
+        raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
+    
+    score = rubric_engine.calculate_score(req.text, issues=req.issues)
+    return score
+
+
+@router.post("/{req_id}/score", response_model=RequirementStatement)
+async def recalculate_and_save_score(
+    req_id: str,
+    project_id: Optional[str] = Query(None, description="Optional project workspace ID"),
+    role: UserRole = Depends(require_write_permission)
+):
+    """
+    Recalculate rubric quality score and persist it into the requirement store.
+    """
+    req = store.get_by_id(req_id, project_id=project_id)
+    if not req:
+        raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
+    
+    rubric_engine.score_requirement(req)
+    store.upsert(req, project_id=req.project_id)
     return req
 
 

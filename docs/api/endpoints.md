@@ -352,6 +352,8 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
 * **Method**: `GET /api/requirements/conflicts?project_id={id}`: Project-wide Conflict Radar scanning all requirements for mutual contradictions using `Llama-3.3-70B`.
 * **Method**: `POST /api/requirements`: Create requirement (Executives prohibited).
 * **Method**: `GET /api/requirements/{id}?project_id={id}`: Fetch single requirement (403 if executive attempts to view unapproved draft/TBD).
+* **Method**: `GET /api/requirements/{id}/score?project_id={id}`: Compute deterministic 100-point rubric score and itemized deduction receipt.
+* **Method**: `POST /api/requirements/{id}/score?project_id={id}`: Recalculate and persist quality score.
 * **Method**: `PUT /api/requirements/{id}`: Update requirement (increments version counter on collision).
 * **Method**: `DELETE /api/requirements/{id}`: Delete requirement.
 * **Method**: `POST /api/requirements/{id}/sign-off`: Dual-Key state transition.
@@ -375,9 +377,13 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
     Sets status to `🟢 LOCKED_BASELINE`. (Requires Systems Engineer persona).
 
 ## 5. AI Quality Pipelines (Qualcomm Cloud AI 100)
+* **Method**: `POST /api/analysis/score`:
+  * Evaluates text or stored requirement against deterministic 100-point rubric outside the LLM.
+  * Itemized deduction receipts for Clarity (25), Verifiability (25), Completeness (20), Atomicity (15), Consistency (15).
 * **Method**: `POST /api/analysis/xray`:
   * Detects flaws using `Llama-3.3-70B` tool calling (`submit_xray_issues`).
-  * Returns exact grounded evidence quotes.
+  * Returns exact grounded evidence quotes with 0-indexed character offsets (`start_offset`, `end_offset`).
+  * Auto-computes initial rubric score.
 * **Method**: `POST /api/analysis/duel`:
   * Stages 2 competing plausible interpretations using `Llama-3.1-8B` (`submit_interpretation_duel`).
 * **Method**: `POST /api/analysis/rewrite`:

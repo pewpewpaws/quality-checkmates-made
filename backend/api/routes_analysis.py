@@ -10,9 +10,13 @@ from backend.models.schemas import (
     SemanticDuplicateMatch,
     ConflictRadarRequest,
     ConflictRadarResponse,
+    RequirementConflictCard,
+    QualityScore,
 )
 from backend.services.qualcomm_service import QualcommService
 from backend.services.storage import store
+from backend.services.rubric_engine import rubric_engine
+from backend.services.evidence_validator import evidence_validator
 
 router = APIRouter(prefix="/api/analysis", tags=["Qualcomm AI100 Quality Pipelines"])
 qualcomm = QualcommService()
@@ -41,19 +45,64 @@ def resolve_text(payload: AnalysisRequest) -> str:
     raise HTTPException(status_code=400, detail="Either 'requirement_id' or 'text' must be provided.")
 
 
+class ScoreRequest(BaseModel):
+    requirement_id: Optional[str] = Field(None, description="Optional ID of existing requirement in store")
+    text: Optional[str] = Field(None, description="Direct text to score if requirement_id not provided")
+    issues: Optional[List[IssueCard]] = Field(None, description="Optional pre-extracted issues")
+    conflicts: Optional[List[RequirementConflictCard]] = Field(None, description="Optional conflict cards")
+    run_xray: bool = Field(False, description="Whether to invoke Qualcomm AI100 X-Ray if issues are not provided")
+
+
+@router.post("/score", response_model=QualityScore)
+async def score_requirement_endpoint(payload: ScoreRequest):
+    """
+    Deterministic 100-Point Rubric Scoring Engine outside the LLM.
+    Returns mathematically itemized deduction receipt across Clarity, Verifiability, Completeness, Atomicity, and Consistency.
+    """
+    target_text = ""
+    target_req = None
+    if payload.requirement_id:
+        target_req = store.get_by_id(payload.requirement_id)
+        if not target_req:
+            raise HTTPException(status_code=404, detail=f"Requirement '{payload.requirement_id}' not found.")
+        target_text = target_req.text
+    elif payload.text and payload.text.strip():
+        target_text = payload.text.strip()
+    else:
+        raise HTTPException(status_code=400, detail="Either 'requirement_id' or 'text' must be provided.")
+
+    issues = payload.issues
+    if issues is None and target_req and target_req.issues:
+        issues = target_req.issues
+    elif issues is None and payload.run_xray:
+        issues = await qualcomm.extract_xray_issues(target_text)
+
+    score = rubric_engine.calculate_score(target_text, issues=issues, conflicts=payload.conflicts)
+
+    if target_req:
+        target_req.quality_score = score
+        if issues and not target_req.issues:
+            target_req.issues = issues
+        store.upsert(target_req)
+
+    return score
+
+
 @router.post("/xray", response_model=List[IssueCard])
 async def analyze_xray(payload: AnalysisRequest):
     """
     Extract requirement defects and verbatim evidence quotes using Qualcomm AI 100 (Llama-3.3-70B).
+    Guarantees 100% evidence grounding outside the LLM and calculates initial rubric quality score.
     """
     target_text = resolve_text(payload)
     cards = await qualcomm.extract_xray_issues(target_text)
 
-    # If linked to stored requirement, update its issues list
+    # If linked to stored requirement, update its issues list and auto-compute rubric quality score
     if payload.requirement_id:
         req = store.get_by_id(payload.requirement_id)
         if req:
             req.issues = cards
+            rubric_engine.score_requirement(req)
             store.upsert(req)
 
     return cards

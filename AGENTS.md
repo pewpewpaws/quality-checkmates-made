@@ -173,16 +173,19 @@ Keep documentation synchronized in these specific locations:
 
 ---
 
-### ⏳ Phase 2: Deterministic Engine & Vector Clustering (CURRENT)
-- [ ] Implement 100-Point Rubric Scoring Engine outside the LLM.
-- [ ] Implement Evidence Validator (ensure `evidence_quote` is a strict substring of source).
-- [x] Implement Exact Hash & Lexical Jaccard Duplicate Detection (`store.find_duplicates`).
-- [x] Implement Vector Duplicate Detection & Neural Semantic Clustering with `bge-large` embeddings + `numpy` cosine similarity.
-- [ ] Update `docs/project/architecture.md` with final deduction math.
+### ✅ Phase 2: Deterministic Engine & Vector Clustering (COMPLETED)
+- [x] Implemented 100-Point Rubric Scoring Engine outside the LLM (`RubricScoringEngine`) across Clarity (25), Verifiability (25), Completeness (20), Atomicity (15), Consistency (15).
+- [x] Implemented Evidence Validator (`EvidenceValidator`) guaranteeing exact case-sensitive substring grounding and 0-indexed character offsets (`start_offset`, `end_offset`).
+- [x] Implemented Itemized Mathematical Deduction Receipts (`receipt: List[str]`) for every evaluation.
+- [x] Implemented Exact Hash & Lexical Jaccard Duplicate Detection (`store.find_duplicates`).
+- [x] Implemented Vector Duplicate Detection & Neural Semantic Clustering with `bge-large` embeddings + `numpy` cosine similarity.
+- [x] Added REST endpoints (`POST /api/analysis/score`, `GET/POST /api/requirements/{id}/score`).
+- [x] Updated `docs/project/architecture.md` with final deduction math and receipt structure.
+- [x] Verified complete unit and integration test suite (50/50 tests passing).
 
 ---
 
-### ⏳ Phase 3: AI Feature Pipelines
+### ⏳ Phase 3: AI Feature Pipelines (CURRENT)
 - [ ] Connect `Llama-3.3-70B` tool calling for X-Ray issue detection.
 - [x] Implement Conflict Radar on `Llama-3.3-70B` (overlap search + contradictory behavior reasoning via `TOOL_CONFLICT_RADAR`).
 - [ ] Implement Smart Rewriter on `Llama-3.1-8B` with Intent-Lock validation.

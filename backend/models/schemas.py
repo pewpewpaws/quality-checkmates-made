@@ -65,6 +65,9 @@ class IssueCard(BaseModel):
     evidence_quote: str = Field(..., description="Exact case-sensitive substring from source")
     explanation: str = Field(..., description="Why this constitutes a quality flaw")
     suggested_action: str = Field(..., description="Actionable recommendation to resolve flaw")
+    start_offset: Optional[int] = Field(None, description="0-indexed start character index in source text")
+    end_offset: Optional[int] = Field(None, description="0-indexed end character index in source text")
+    is_grounded: bool = Field(True, description="Whether evidence quote is strictly grounded in source")
 
 
 class QualityScore(BaseModel):

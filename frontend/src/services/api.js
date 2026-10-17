@@ -102,11 +102,13 @@ export async function calculateRubricScore(text) {
   return res.json();
 }
 
-export async function runXray(text, projectId = 'default_project') {
+export async function runXray(text, projectId = 'default_project', requirementId = null) {
+  const payload = { text, project_id: projectId };
+  if (requirementId) payload.requirement_id = requirementId;
   const res = await fetch(`${BASE_URL}/api/analysis/xray`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, project_id: projectId }),
+    body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error(`Failed to run X-Ray: ${res.statusText}`);
   return res.json();

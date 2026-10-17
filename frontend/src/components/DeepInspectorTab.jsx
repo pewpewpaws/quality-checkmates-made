@@ -83,11 +83,13 @@ export default function DeepInspectorTab({
   const handleTriggerXray = async () => {
     setIsRunningAI(true);
     try {
-      const res = await runXray(requirement.text, activeProjectId);
+      const res = await runXray(requirement.text, activeProjectId, requirement.id);
+      const issuesList = Array.isArray(res) ? res : (res.issues || []);
+      const rubric = await calculateRubricScore(requirement.text, issuesList);
       const updatedReq = {
         ...requirement,
-        issues: res.issues || [],
-        quality_score: res.rubric_score || requirement.quality_score,
+        issues: issuesList,
+        quality_score: rubric || requirement.quality_score,
       };
       const saved = await updateRequirement(requirement.id, updatedReq, userRole);
       onRequirementUpdated(saved);

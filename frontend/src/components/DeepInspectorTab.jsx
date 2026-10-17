@@ -35,6 +35,152 @@ export default function DeepInspectorTab({
   const [isResolvingTbd, setIsResolvingTbd] = useState(false);
   const [tbdResolvedMessage, setTbdResolvedMessage] = useState('');
 
+  // Upgraded Mathematical Ledger State
+  const [isLedgerExpanded, setIsLedgerExpanded] = useState(true);
+  const [copiedReceipt, setCopiedReceipt] = useState(false);
+
+  const handleCopyReceipt = () => {
+    if (!requirement?.quality_score?.receipt) return;
+    const textToCopy = [
+      `=== MATHEMATICAL DEDUCTION AUDIT RECEIPT ===`,
+      `Requirement: ${requirement.id} [${requirement.category || 'General'}]`,
+      `Text: "${requirement.text}"`,
+      `Final Rubric Score: ${requirement.quality_score.overall}/100`,
+      `-------------------------------------------`,
+      ...requirement.quality_score.receipt,
+      `===========================================`,
+    ].join('\n');
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedReceipt(true);
+    setTimeout(() => setCopiedReceipt(false), 2000);
+  };
+
+  const parseReceiptStep = (step) => {
+    if (step.startsWith('[Baseline Budget]')) {
+      return {
+        type: 'baseline',
+        dim: 'BASELINE',
+        pts: '+100.0 pts',
+        isDeduction: false,
+        text: step.replace('[Baseline Budget]', '').trim(),
+        color: '#57c07b',
+        bg: 'rgba(87, 192, 123, 0.15)',
+        border: 'rgba(87, 192, 123, 0.3)',
+      };
+    }
+    if (step.startsWith('[Summary]')) {
+      return {
+        type: 'summary',
+        dim: 'SUMMARY',
+        pts: 'Audit Tally',
+        isDeduction: false,
+        text: step.replace('[Summary]', '').trim(),
+        color: '#60a5fa',
+        bg: 'rgba(96, 165, 250, 0.12)',
+        border: 'rgba(96, 165, 250, 0.25)',
+      };
+    }
+
+    const match = step.match(/^\[([A-Za-z]+)\s*(-[\d.]+)\s*pts\]\s*(.*)$/);
+    if (match) {
+      const dim = match[1];
+      const pts = match[2];
+      const desc = match[3];
+
+      let color = '#f59e0b';
+      let bg = 'rgba(245, 158, 11, 0.15)';
+      let border = 'rgba(245, 158, 11, 0.3)';
+
+      if (dim === 'Clarity') {
+        color = '#f97316';
+        bg = 'rgba(249, 115, 22, 0.15)';
+        border = 'rgba(249, 115, 22, 0.3)';
+      } else if (dim === 'Verifiability') {
+        color = '#ec4899';
+        bg = 'rgba(236, 72, 153, 0.15)';
+        border = 'rgba(236, 72, 153, 0.3)';
+      } else if (dim === 'Completeness') {
+        color = '#38bdf8';
+        bg = 'rgba(56, 189, 248, 0.15)';
+        border = 'rgba(56, 189, 248, 0.3)';
+      } else if (dim === 'Atomicity') {
+        color = '#eab308';
+        bg = 'rgba(234, 179, 8, 0.15)';
+        border = 'rgba(234, 179, 8, 0.3)';
+      } else if (dim === 'Consistency') {
+        color = '#ef4444';
+        bg = 'rgba(239, 68, 68, 0.15)';
+        border = 'rgba(239, 68, 68, 0.3)';
+      }
+
+      return {
+        type: 'deduction',
+        dim: dim.toUpperCase(),
+        pts: `${pts} pts`,
+        isDeduction: true,
+        text: desc,
+        color,
+        bg,
+        border,
+      };
+    }
+
+    return {
+      type: 'note',
+      dim: 'AUDIT NOTE',
+      pts: 'Info',
+      isDeduction: false,
+      text: step,
+      color: '#9ca3af',
+      bg: 'rgba(156, 163, 175, 0.12)',
+      border: 'rgba(156, 163, 175, 0.25)',
+    };
+  };
+
+  const renderReceiptText = (rawText) => {
+    const parts = rawText.split(/('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|\[TBD:[^\]]+\])/g);
+    return parts.map((chunk, i) => {
+      if ((chunk.startsWith("'") && chunk.endsWith("'")) || (chunk.startsWith('"') && chunk.endsWith('"'))) {
+        return (
+          <code
+            key={i}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              color: '#ff7b72',
+              padding: '1px 5px',
+              borderRadius: '3px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              fontWeight: '600',
+            }}
+          >
+            {chunk}
+          </code>
+        );
+      }
+      if (chunk.startsWith('[TBD:') && chunk.endsWith(']')) {
+        return (
+          <code
+            key={i}
+            style={{
+              background: 'rgba(235, 87, 87, 0.2)',
+              color: '#ff6b6b',
+              padding: '1px 5px',
+              borderRadius: '3px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              fontWeight: '700',
+              border: '1px solid rgba(235, 87, 87, 0.35)',
+            }}
+          >
+            {chunk}
+          </code>
+        );
+      }
+      return chunk;
+    });
+  };
+
   if (!requirement) {
     return (
       <div
@@ -647,31 +793,249 @@ export default function DeepInspectorTab({
           </div>
         )}
 
+        {/* Upgraded Mathematical Deduction Audit Ledger */}
         {scoreObj?.receipt && scoreObj.receipt.length > 0 && (
-          <details style={{ marginTop: '8px' }}>
-            <summary style={{ fontSize: '12px', color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: '500' }}>
-              Mathematical Deduction Receipt ({scoreObj.receipt.length} steps)
-            </summary>
+          <div
+            className="squircle-xs"
+            style={{
+              marginTop: '12px',
+              background: 'rgba(0, 0, 0, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Ledger Header Bar */}
             <div
-              className="squircle-xs"
               style={{
-                marginTop: '6px',
-                padding: '10px 12px',
-                background: 'var(--bg-app)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11.5px',
-                color: 'var(--text-secondary)',
-                lineHeight: '1.5',
-                border: '1px solid var(--border-subtle)',
+                padding: '9px 12px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderBottom: isLedgerExpanded ? '1px solid rgba(255, 255, 255, 0.06)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
               }}
             >
-              {scoreObj.receipt.map((step, idx) => (
-                <div key={idx} style={{ color: step.includes('-') ? 'var(--text-red)' : 'var(--text-muted)', marginBottom: '2px' }}>
-                  {step}
+              <div
+                onClick={() => setIsLedgerExpanded(!isLedgerExpanded)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <span style={{ fontSize: '13px' }}>🧾</span>
+                <span style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  Mathematical Deduction Ledger
+                </span>
+                <span
+                  style={{
+                    fontSize: '10.5px',
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                    background: 'rgba(255, 255, 255, 0.07)',
+                    color: 'var(--text-muted)',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  {scoreObj.receipt.filter((s) => s.includes('pts]') && !s.includes('Baseline')).length} penalties
+                </span>
+                <span style={{ fontSize: '10px', color: 'var(--text-dim)', marginLeft: '2px' }}>
+                  {isLedgerExpanded ? '▲' : '▼'}
+                </span>
+              </div>
+
+              {/* Live Equation Chip & Copy Button */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--text-secondary)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  <span style={{ color: '#57c07b' }}>100.0</span>
+                  <span style={{ color: 'var(--text-dim)', margin: '0 4px' }}>−</span>
+                  <span style={{ color: '#ff6b6b' }}>{(100 - scoreObj.overall).toFixed(1)}</span>
+                  <span style={{ color: 'var(--text-dim)', margin: '0 4px' }}>=</span>
+                  <span style={{ color: scoreObj.overall >= 80 ? '#57c07b' : scoreObj.overall >= 60 ? '#f59e0b' : '#ff6b6b', fontWeight: '700' }}>
+                    {scoreObj.overall.toFixed(1)} pts
+                  </span>
                 </div>
-              ))}
+
+                <button
+                  type="button"
+                  onClick={handleCopyReceipt}
+                  className="notion-btn notion-btn-ghost"
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    height: '24px',
+                    gap: '4px',
+                  }}
+                  title="Copy full itemized mathematical deduction receipt to clipboard"
+                >
+                  <span>{copiedReceipt ? '✓' : '📋'}</span>
+                  <span>{copiedReceipt ? 'Copied!' : 'Copy Receipt'}</span>
+                </button>
+              </div>
             </div>
-          </details>
+
+            {/* Ledger Rows Body */}
+            {isLedgerExpanded && (
+              <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                {scoreObj.receipt.length === 2 && scoreObj.overall === 100 ? (
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      background: 'rgba(87, 192, 123, 0.10)',
+                      border: '1px solid rgba(87, 192, 123, 0.22)',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#57c07b',
+                    }}
+                  >
+                    <span>🛡️</span>
+                    <span style={{ fontWeight: '500' }}>
+                      Zero Deductions Applied — 100% Contractually Bound (100.0 / 100 pts)
+                    </span>
+                  </div>
+                ) : null}
+
+                {scoreObj.receipt.map((step, idx) => {
+                  const parsed = parseReceiptStep(step);
+                  const isSummary = parsed.type === 'summary';
+
+                  if (isSummary) {
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          marginTop: '4px',
+                          padding: '7px 10px',
+                          background: 'rgba(96, 165, 250, 0.08)',
+                          border: '1px solid rgba(96, 165, 250, 0.18)',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: '11.5px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              fontSize: '9.5px',
+                              fontWeight: '700',
+                              fontFamily: 'var(--font-mono)',
+                              background: 'rgba(96, 165, 250, 0.2)',
+                              color: '#60a5fa',
+                              padding: '2px 5px',
+                              borderRadius: '3px',
+                            }}
+                          >
+                            SUMMARY TALLY
+                          </span>
+                          <span style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>
+                            {parsed.text}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '6px 9px',
+                        background: parsed.type === 'baseline' ? 'rgba(87, 192, 123, 0.05)' : 'rgba(255, 255, 255, 0.02)',
+                        border: `1px solid ${parsed.type === 'baseline' ? 'rgba(87, 192, 123, 0.18)' : 'rgba(255, 255, 255, 0.05)'}`,
+                        borderRadius: '4px',
+                        display: 'grid',
+                        gridTemplateColumns: '32px 115px 80px 1fr',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '11.5px',
+                        transition: 'background 0.1s ease',
+                      }}
+                    >
+                      {/* Step Number */}
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontFamily: 'var(--font-mono)',
+                          color: 'var(--text-dim)',
+                        }}
+                      >
+                        #{String(idx + 1).padStart(2, '0')}
+                      </span>
+
+                      {/* Dimension Tag */}
+                      <div>
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontWeight: '700',
+                            fontFamily: 'var(--font-mono)',
+                            background: parsed.bg,
+                            color: parsed.color,
+                            border: `1px solid ${parsed.border}`,
+                            padding: '1.5px 5px',
+                            borderRadius: '3px',
+                            display: 'inline-block',
+                            letterSpacing: '0.3px',
+                          }}
+                        >
+                          {parsed.dim}
+                        </span>
+                      </div>
+
+                      {/* Delta Points Badge */}
+                      <div>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            fontFamily: 'var(--font-mono)',
+                            color: parsed.isDeduction ? '#ff6b6b' : '#57c07b',
+                            background: parsed.isDeduction ? 'rgba(235, 87, 87, 0.15)' : 'rgba(87, 192, 123, 0.15)',
+                            padding: '1.5px 6px',
+                            borderRadius: '3px',
+                            display: 'inline-block',
+                          }}
+                        >
+                          {parsed.pts}
+                        </span>
+                      </div>
+
+                      {/* Explanation with Quoted Tokens */}
+                      <div
+                        style={{
+                          color: 'var(--text-secondary)',
+                          lineHeight: '1.4',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {renderReceiptText(parsed.text)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

@@ -96,9 +96,9 @@
     "semantic_hash": ""
   },
   "backend/services/document_parser.py": {
-    "mtime": 1792232231.4814405,
-    "seen": 1792232315.3320744,
-    "ast_hash": "17cc4bca74aa7c1b8ff03e5729ab0af7",
+    "mtime": 1792262073.7949772,
+    "seen": 1792262193.4796948,
+    "ast_hash": "9cc24d6526c77e1864e3c3c56bc19753",
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792261451.707829,
-    "seen": 1792261475.1357098,
-    "ast_hash": "1e8cbff548aecc2bdbf50d265a4bee78",
+    "mtime": 1792262162.8521283,
+    "seen": 1792262193.4797914,
+    "ast_hash": "988ff36deab8a4e746887f85c18eff10",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {

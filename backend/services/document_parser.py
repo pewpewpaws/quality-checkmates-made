@@ -31,8 +31,11 @@ class DocumentParser:
 
     @staticmethod
     def parse_text(text: str, default_category: str = "Functional") -> Tuple[List[RequirementStatement], str]:
+        # Strip common PDF export footers/headers and print artifacts
+        clean_text = re.sub(r'\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?\s*Markdown to PDF[^\n]*', '', text, flags=re.IGNORECASE)
+        clean_text = re.sub(r'https?://(?:markdownlivepreview\.dev|localhost|\S+/\S+)\s*\d+/\d+', '', clean_text, flags=re.IGNORECASE)
         # Normalize various Unicode and PDF bullet characters to standard markdown dash
-        clean_text = re.sub(r'[\x7f\u2022\u2023\u25e6\u2043\u2219\uf0b7]', '- ', text).strip()
+        clean_text = re.sub(r'[\x7f\u2022\u2023\u25e6\u2043\u2219\uf0b7]', '- ', clean_text).strip()
         if not clean_text:
             return [], "empty"
 

@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import logging
 from typing import List, Dict, Any, Optional, Tuple
@@ -1250,17 +1251,30 @@ class QualcommService:
             grounding = "Grounded in Mobile Silicon Architecture & Secure Firmware OTA Standards (Qualcomm Snapdragon / ARM TrustZone / ISO/IEC/IEEE 29148)."
             return agent_reply, reqs, grounding
 
-        # Generic Fallback
+        # Generic Fallback with strict EARS transformation
+        msg = pm_message.strip().rstrip(".")
+        if re.match(r"^(when|if|while|during|upon)\b", msg, re.IGNORECASE):
+            parts = re.split(r",\s*", msg, maxsplit=1)
+            if len(parts) == 2:
+                trigger, action = parts[0], parts[1]
+                action_clean = re.sub(r"^(the system\s+|we need to\s+|make sure to\s+|it should\s+)", "", action, flags=re.IGNORECASE).strip()
+                ears_text = f"{trigger}, the system shall {action_clean} within [TBD: max_response_latency_ms]."
+            else:
+                ears_text = f"{msg}, the system shall respond within [TBD: max_response_latency_ms]."
+        else:
+            action_clean = re.sub(r"^(we need the system to|we need to|make sure the system|the system should|the system needs to)\s*", "", msg, flags=re.IGNORECASE).strip()
+            ears_text = f"The system shall {action_clean} within [TBD: max_response_latency_ms]."
+
         req = RequirementStatement(
             id=f"REQ-CHAT-{next_req_index:03d}",
-            text=f"The system shall process {pm_message.strip()} within [TBD: max_response_latency_ms].",
+            text=ears_text,
             category="Functional",
             section="Section 3.0 - General Systems",
             status=RequirementStatus.FLAGGED_TBD,
             rewrite_suggestion=RewriteSuggestion(
                 original=pm_message,
-                revised=f"The system shall process {pm_message.strip()} within [TBD: max_response_latency_ms].",
-                rationale="Formatted into EARS syntax from conversational PM prompt.",
+                revised=ears_text,
+                rationale="Formatted into EARS trigger/action syntax from conversational PM prompt.",
                 identified_tbds=[
                     TbdDefault(
                         parameter_name="max_response_latency_ms",

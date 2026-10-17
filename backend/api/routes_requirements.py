@@ -216,6 +216,31 @@ async def update_requirement(
     updated.id = req_id
     updated.project_id = existing.project_id
     updated.version = existing.version + 1
+
+    # Dual-Key Governance Enforcement:
+    # 1. If text contains [TBD:] or [TBD], requirement must be FLAGGED_TBD (red).
+    # 2. When resolving/changing TBD to a value or from provisioned to a value:
+    #    keep it strictly as PROVISIONAL_PM (yellow).
+    # 3. Only Lead Systems Engineer (Senior Engineer) sign-off can lock baseline (green).
+    has_tbds = ("[TBD:" in updated.text or "[TBD]" in updated.text)
+    if has_tbds:
+        updated.status = RequirementStatus.FLAGGED_TBD
+        if updated.sign_off:
+            updated.sign_off.tech_lead_approver = None
+            updated.sign_off.hardware_rationale = None
+            updated.sign_off.signed_off_at = None
+            updated.sign_off.state = RequirementStatus.FLAGGED_TBD
+    else:
+        text_changed = (updated.text.strip() != existing.text.strip())
+        if text_changed or existing.status != RequirementStatus.LOCKED_BASELINE:
+            # Demote to PROVISIONAL_PM (yellow) if text changed or if attempting to jump directly to LOCKED_BASELINE
+            updated.status = RequirementStatus.PROVISIONAL_PM
+            if updated.sign_off:
+                updated.sign_off.tech_lead_approver = None
+                updated.sign_off.hardware_rationale = None
+                updated.sign_off.signed_off_at = None
+                updated.sign_off.state = RequirementStatus.PROVISIONAL_PM
+
     try:
         return store.upsert(updated, project_id=existing.project_id, allow_duplicate=allow_duplicate)
     except ValueError as exc:
@@ -259,15 +284,19 @@ async def dual_key_sign_off(
     """
     verify_dual_key_role_action(payload.action, user_context)
 
-    updated = store.apply_dual_key_transition(
-        req_id=req_id,
-        action=payload.action,
-        pm_author=payload.pm_author,
-        pm_target_val=payload.pm_target_val,
-        tech_lead_approver=payload.tech_lead_approver,
-        hardware_rationale=payload.hardware_rationale,
-        project_id=project_id
-    )
+    try:
+        updated = store.apply_dual_key_transition(
+            req_id=req_id,
+            action=payload.action,
+            pm_author=payload.pm_author,
+            pm_target_val=payload.pm_target_val,
+            tech_lead_approver=payload.tech_lead_approver,
+            hardware_rationale=payload.hardware_rationale,
+            project_id=project_id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
     if not updated:
         raise HTTPException(status_code=404, detail=f"Requirement '{req_id}' not found.")
     return updated

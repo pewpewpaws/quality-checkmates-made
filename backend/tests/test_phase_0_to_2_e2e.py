@@ -293,9 +293,9 @@ def test_phase_2_duplicate_detection_and_dual_key_signoff():
     )
     assert r1.status_code == 200
 
-    # Ingest Exact Duplicate
+    # Ingest Exact Duplicate (with allow_duplicate=true)
     r2 = client.post(
-        "/api/requirements",
+        "/api/requirements?allow_duplicate=true",
         json={
             "id": "REQ-GOV-02",
             "project_id": pid,

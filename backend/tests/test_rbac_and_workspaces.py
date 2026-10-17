@@ -437,3 +437,90 @@ def test_sqlite_write_through_rehydration(tmp_path):
     assert req.text == "The fail-safe relay shall open within 2ms of power loss."
     assert req.status == RequirementStatus.LOCKED_BASELINE
 
+
+def test_tbd_resolution_and_provisional_demotion_governance():
+    """
+    Verify strict Dual-Key Governance:
+    - Resolving TBD from red to concrete value sets status to PROVISIONAL_PM (yellow), NOT green.
+    - Resolving while already provisional keeps status as PROVISIONAL_PM (yellow).
+    - Cannot lock baseline if [TBD] placeholders remain (HTTP 400).
+    - If requirement was LOCKED_BASELINE (green) and text/parameters are modified, it demotes to PROVISIONAL_PM (yellow).
+    - ONLY Lead Systems Engineer sign-off can transition to LOCKED_BASELINE (green).
+    """
+    pid = "proj-gov-demotion"
+    store.create_project(pid, "Demotion Testbed", "Automotive", "Strict sign-off verification")
+
+    # 1. Ingest with [TBD:] -> FLAGGED_TBD (red)
+    r1 = client.post(
+        f"/api/requirements?project_id={pid}",
+        json={
+            "id": "REQ-DEMO-01",
+            "project_id": pid,
+            "text": "The controller shall broadcast status within [TBD: latency in ms].",
+            "status": "FLAGGED_TBD"
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert r1.status_code == 200
+    assert r1.json()["status"] == RequirementStatus.FLAGGED_TBD
+
+    # 2. Senior Engineer attempts to lock baseline while [TBD:] remains -> 400 Rejected
+    lock_fail = client.post(
+        f"/api/requirements/REQ-DEMO-01/sign-off?project_id={pid}",
+        json={
+            "action": "lock_baseline",
+            "tech_lead_approver": "Chief Engineer",
+            "hardware_rationale": "Hardware envelope check"
+        },
+        headers={"X-User-Role": "systems_engineer"}
+    )
+    assert lock_fail.status_code == 400
+    assert "contains unresolved [TBD] parameters" in lock_fail.json()["detail"]
+
+    # 3. Resolve TBD to a selected value ('15ms') via PUT -> Must become PROVISIONAL_PM (yellow), NEVER green
+    r1_updated = client.put(
+        f"/api/requirements/REQ-DEMO-01?project_id={pid}",
+        json={
+            "id": "REQ-DEMO-01",
+            "project_id": pid,
+            "text": "The controller shall broadcast status within 15ms.",
+            "status": "LOCKED_BASELINE"  # Attempting to forge green baseline in PUT
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert r1_updated.status_code == 200
+    # Strict check: Server enforced PROVISIONAL_PM (yellow)
+    assert r1_updated.json()["status"] == RequirementStatus.PROVISIONAL_PM
+    assert r1_updated.json()["sign_off"] is None or r1_updated.json()["sign_off"]["tech_lead_approver"] is None
+
+    # 4. Senior Systems Engineer explicitly reviews and grants technical sign-off -> Now LOCKED_BASELINE (green)
+    lock_success = client.post(
+        f"/api/requirements/REQ-DEMO-01/sign-off?project_id={pid}",
+        json={
+            "action": "lock_baseline",
+            "tech_lead_approver": "Chief Avionics Engineer",
+            "hardware_rationale": "15ms fits within 20ms CAN bus cyclic budget"
+        },
+        headers={"X-User-Role": "systems_engineer"}
+    )
+    assert lock_success.status_code == 200
+    assert lock_success.json()["status"] == RequirementStatus.LOCKED_BASELINE
+    assert lock_success.json()["sign_off"]["tech_lead_approver"] == "Chief Avionics Engineer"
+
+    # 5. Subsequent text/parameter edit by PM demotes LOCKED_BASELINE immediately back to PROVISIONAL_PM (yellow)
+    r1_re_edited = client.put(
+        f"/api/requirements/REQ-DEMO-01?project_id={pid}",
+        json={
+            "id": "REQ-DEMO-01",
+            "project_id": pid,
+            "text": "The controller shall broadcast status within 25ms.",
+            "status": "LOCKED_BASELINE"
+        },
+        headers={"X-User-Role": "product_manager"}
+    )
+    assert r1_re_edited.status_code == 200
+    # Demoted back to yellow!
+    assert r1_re_edited.json()["status"] == RequirementStatus.PROVISIONAL_PM
+    # Senior sign-off invalidated and cleared
+    assert r1_re_edited.json()["sign_off"] is None or r1_re_edited.json()["sign_off"]["tech_lead_approver"] is None
+

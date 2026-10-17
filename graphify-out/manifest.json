@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "backend/api/routes_requirements.py": {
-    "mtime": 1792262928.3048267,
-    "seen": 1792263111.515093,
-    "ast_hash": "7dc50bf84d4b55495779a24309e008f6",
+    "mtime": 1792263544.7377844,
+    "seen": 1792263721.4508495,
+    "ast_hash": "bb4c0f1a6c7d7aa23b186fa65a3dc457",
     "semantic_hash": ""
   },
   "backend/config.py": {
@@ -108,9 +108,9 @@
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
-    "mtime": 1792259412.7346244,
-    "seen": 1792259463.7669103,
-    "ast_hash": "bac8c55c9eb4d350fa50ec698a64f561",
+    "mtime": 1792263884.0522785,
+    "seen": 1792263922.377739,
+    "ast_hash": "de5199fe4ca5fe7f2d01258ea1e191e4",
     "semantic_hash": ""
   },
   "backend/tests/test_api.py": {
@@ -330,10 +330,10 @@
     "semantic_hash": "c09c2a766e7758082a27983eacccc971"
   },
   "backend/tests/test_rbac_and_workspaces.py": {
-    "mtime": 1792178100.1187372,
-    "seen": 1792179091.5241156,
-    "ast_hash": "ec4e03acea6b3d4105f1c2f11aab267a",
-    "semantic_hash": "ec4e03acea6b3d4105f1c2f11aab267a"
+    "mtime": 1792263799.7071767,
+    "seen": 1792263922.3777766,
+    "ast_hash": "3c074ceb7588ced438f9540c325e0d2e",
+    "semantic_hash": ""
   },
   "backend/tests/test_context_and_duplicates.py": {
     "mtime": 1792259048.6155515,
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "backend/tests/test_phase_0_to_2_e2e.py": {
-    "mtime": 1792232472.4948344,
-    "seen": 1792232495.5625112,
-    "ast_hash": "d1c5422a1fba53ee675e4a3431c25daa",
+    "mtime": 1792263489.6530356,
+    "seen": 1792263721.4509134,
+    "ast_hash": "24edabcb5ffa5432e3f3816bcf224a3a",
     "semantic_hash": ""
   },
   "sample_data/pm_documents/aerospace_flight_charter.txt": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792263026.7863727,
-    "seen": 1792263111.5152013,
-    "ast_hash": "9772a1d85b9330a7033abc93c0e8de5b",
+    "mtime": 1792263671.252481,
+    "seen": 1792263721.4509583,
+    "ast_hash": "c3f8e547b17db2e53b451e056083e0d5",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {

@@ -308,11 +308,26 @@ export default function DeepInspectorTab({
   const handleSaveTextEdit = async () => {
     if (!editedText.trim()) return;
     try {
-      const score = await calculateRubricScore(editedText);
+      const textTrimmed = editedText.trim();
+      const score = await calculateRubricScore(textTrimmed);
+      const hasRemainingTbd = textTrimmed.includes('[TBD:') || textTrimmed.includes('[TBD]');
+      // Strict Dual-Key Governance:
+      // Even if previously locked/green, any text edit demotes status to PROVISIONAL_PM (yellow)
+      // or FLAGGED_TBD (red if TBDs remain). Senior Engineer approval is strictly cleared.
+      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
+
       const updatedReq = {
         ...requirement,
-        text: editedText.trim(),
+        text: textTrimmed,
         quality_score: score,
+        status: nextStatus,
+        sign_off: {
+          ...(requirement.sign_off || { requirement_id: requirement.id }),
+          tech_lead_approver: null,
+          hardware_rationale: null,
+          signed_off_at: null,
+          state: nextStatus,
+        },
       };
       const saved = await updateRequirement(requirement.id, updatedReq, userRole);
       onRequirementUpdated(saved);
@@ -464,17 +479,28 @@ export default function DeepInspectorTab({
       const valTrimmed = resolvedValue.trim();
       const newText = requirement.text.replace(targetToken, valTrimmed);
       const newScore = await calculateRubricScore(newText);
+      const hasRemainingTbd = newText.includes('[TBD:') || newText.includes('[TBD]');
+
+      // Strict Dual-Key Governance:
+      // Changing TBD from red to something or from provisioned to a selected value:
+      // Keep it strictly yellow (PROVISIONAL_PM) if free of [TBD].
+      // If [TBD] tokens remain, it stays red (FLAGGED_TBD).
+      // It can NEVER become green (LOCKED_BASELINE) until a senior systems engineer explicitly approves it!
+      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
 
       const updatedReq = {
         ...requirement,
         text: newText,
         quality_score: newScore,
-        status: requirement.status === 'FLAGGED_TBD' ? 'PROVISIONAL_PM' : requirement.status,
+        status: nextStatus,
         sign_off: {
           ...(requirement.sign_off || { requirement_id: requirement.id }),
           pm_author: requirement.sign_off?.pm_author || (userRole === 'product_manager' ? 'PM Author' : 'Product Manager'),
           pm_target_val: `Bound parameter: ${valTrimmed} (${rationale || 'Specified by engineering envelope'})`,
-          state: requirement.status === 'FLAGGED_TBD' ? 'PROVISIONAL_PM' : (requirement.sign_off?.state || 'PROVISIONAL_PM'),
+          tech_lead_approver: null, // Reset senior engineer sign-off!
+          hardware_rationale: null,
+          signed_off_at: null,
+          state: nextStatus,
         },
       };
 
@@ -482,12 +508,53 @@ export default function DeepInspectorTab({
       onRequirementUpdated(saved);
       setActiveTbdToken(null);
       setCustomTbdVal('');
-      setTbdResolvedMessage(`Resolved "${targetToken}" ➔ "${valTrimmed}" (Rubric Quality: ${Math.round(newScore.overall)} pts)`);
-      setTimeout(() => setTbdResolvedMessage(''), 5000);
+      setTbdResolvedMessage(
+        hasRemainingTbd
+          ? `Updated parameter "${valTrimmed}" (Pending further [TBD] resolution 🔴)`
+          : `Selected value "${valTrimmed}" ➔ Saved as Provisional PM 🟡 (Awaiting Lead Systems Engineer sign-off to Lock Baseline 🟢)`
+      );
+      setTimeout(() => setTbdResolvedMessage(''), 6000);
     } catch (err) {
       alert(`Failed to apply parameter: ${err.message}`);
     } finally {
       setIsResolvingTbd(false);
+    }
+  };
+
+  const handleApplyRewrite = async () => {
+    if (!requirement.rewrite_suggestion?.revised) return;
+    try {
+      const revisedText = requirement.rewrite_suggestion.revised.trim();
+      const score = await calculateRubricScore(revisedText);
+      const hasRemainingTbd = revisedText.includes('[TBD:') || revisedText.includes('[TBD]');
+      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
+
+      const updatedReq = {
+        ...requirement,
+        text: revisedText,
+        quality_score: score,
+        status: nextStatus,
+        sign_off: {
+          ...(requirement.sign_off || { requirement_id: requirement.id }),
+          pm_author: requirement.sign_off?.pm_author || (userRole === 'product_manager' ? 'PM Author' : 'Product Manager'),
+          pm_target_val: `EARS Statement Applied: ${requirement.rewrite_suggestion.rationale || 'Modal rewrite'}`,
+          tech_lead_approver: null,
+          hardware_rationale: null,
+          signed_off_at: null,
+          state: nextStatus,
+        },
+      };
+
+      const saved = await updateRequirement(requirement.id, updatedReq, userRole);
+      onRequirementUpdated(saved);
+      setTbdResolvedMessage(
+        hasRemainingTbd
+          ? 'EARS Statement applied with contractual [TBD] placeholders 🔴'
+          : 'EARS Statement applied ➔ Saved as Provisional PM 🟡 (Awaiting Lead Systems Engineer sign-off 🟢)'
+      );
+      setTimeout(() => setTbdResolvedMessage(''), 6000);
+    } catch (err) {
+      alert(`Apply rewrite failed: ${err.message}`);
     }
   };
 
@@ -1219,11 +1286,21 @@ export default function DeepInspectorTab({
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-              Dual-Key Governance Gate
+            <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Dual-Key Governance Gate</span>
+              <span
+                className={`badge-chip ${isLocked ? 'badge-locked' : isProv ? 'badge-provisional' : 'badge-tbd'}`}
+                style={{ fontSize: '11px', padding: '2px 8px' }}
+              >
+                {isLocked
+                  ? '🟢 LOCKED BASELINE (Technical Sign-Off Complete)'
+                  : isProv
+                  ? '🟡 PROVISIONAL PM (Awaiting Senior Engineer Approval)'
+                  : '🔴 FLAGGED TBD (Parameters Unbound)'}
+              </span>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              PM target parameter ➔ Lead Systems Engineer hardware sign-off
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Step 1: PM sets/selects parameter value ➔ Step 2: Senior Systems Engineer validates & grants green baseline sign-off
             </div>
           </div>
         </div>
@@ -1242,52 +1319,77 @@ export default function DeepInspectorTab({
               className="input-squircle"
               style={{ width: '100%', fontSize: '13px', padding: '6px 10px' }}
             />
+            <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '3px' }}>
+              PM parameter bound: <span style={{ color: 'var(--text-secondary)' }}>{requirement.sign_off?.pm_target_val || 'Not yet bound'}</span>
+            </div>
           </div>
 
           <div>
             <label style={{ fontSize: '12px', fontWeight: '500', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-              Step 2: Hardware / Architecture Rationale
+              Step 2: Hardware / Architecture Rationale (Senior Engineer Sign-Off)
             </label>
             <input
               type="text"
-              placeholder="e.g. Validated against CAN-FD bus budget"
+              placeholder="e.g. Validated against CAN-FD bus budget & ISO 26262 ASIL-D timing"
               value={hwRationale}
               onChange={(e) => setHwRationale(e.target.value)}
               disabled={userRole !== 'systems_engineer'}
               className="input-squircle"
               style={{ width: '100%', fontSize: '13px', padding: '6px 10px' }}
             />
+            <div style={{ fontSize: '11px', color: 'var(--text-dim)', marginTop: '3px' }}>
+              Sign-off Approver: <span style={{ color: isLocked ? 'var(--text-green)' : 'var(--text-secondary)' }}>{requirement.sign_off?.tech_lead_approver || 'Pending Systems Engineer'}</span>
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-          {userRole === 'product_manager' && (
-            <button
-              onClick={() => handleDualKeyAction('provisional_pm')}
-              disabled={isSigning || !pmValue.trim()}
-              className="btn-squircle btn-warning"
-              style={{ fontSize: '12px', padding: '6px 12px', fontWeight: '500' }}
-            >
-              Set Provisional PM
-            </button>
-          )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+            {isLocked ? (
+              <span style={{ color: 'var(--text-green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>✓</span> Baseline locked. Any parameter modification will immediately demote status back to Provisional PM 🟡.
+              </span>
+            ) : isProv ? (
+              <span style={{ color: 'var(--text-amber)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>⏱</span> Parameter provisioned by PM (Yellow). Requires Lead Systems Engineer approval to turn Green 🟢.
+              </span>
+            ) : (
+              <span style={{ color: 'var(--text-red)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span>⚠</span> Unresolved [TBD] parameters present (Red). Resolve parameters before senior engineering sign-off.
+              </span>
+            )}
+          </div>
 
-          {userRole === 'systems_engineer' && (
-            <button
-              onClick={() => handleDualKeyAction('lock_baseline')}
-              disabled={isSigning || !hwRationale.trim()}
-              className="btn-squircle btn-success"
-              style={{ fontSize: '12px', padding: '6px 12px', fontWeight: '500' }}
-            >
-              Sign-Off & Lock Baseline
-            </button>
-          )}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {userRole === 'product_manager' && (
+              <button
+                onClick={() => handleDualKeyAction('provisional_pm')}
+                disabled={isSigning || !pmValue.trim()}
+                className="btn-squircle btn-warning"
+                style={{ fontSize: '12px', padding: '6px 14px', fontWeight: '500' }}
+              >
+                {isSigning ? 'Updating...' : 'Set Provisional PM 🟡'}
+              </button>
+            )}
 
-          {userRole === 'executive' && (
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-              Executive View: Read-Only Audit Baseline.
-            </div>
-          )}
+            {userRole === 'systems_engineer' && (
+              <button
+                onClick={() => handleDualKeyAction('lock_baseline')}
+                disabled={isSigning || !hwRationale.trim() || requirement.text.includes('[TBD:') || requirement.status === 'FLAGGED_TBD'}
+                className="btn-squircle btn-success"
+                style={{ fontSize: '12px', padding: '6px 14px', fontWeight: '500' }}
+                title={requirement.text.includes('[TBD:') ? 'Resolve all [TBD] placeholders before technical sign-off' : ''}
+              >
+                {isSigning ? 'Signing Off...' : '✓ Approve & Lock Baseline 🟢'}
+              </button>
+            )}
+
+            {userRole === 'executive' && (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px 0' }}>
+                Executive View: Read-Only Audit Lens.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1436,6 +1538,17 @@ export default function DeepInspectorTab({
                   <div style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: '1.55', fontWeight: '450' }}>
                     {renderHighlightedText(requirement.rewrite_suggestion.revised)}
                   </div>
+                  {userRole !== 'executive' && (
+                    <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={handleApplyRewrite}
+                        className="notion-btn notion-btn-primary"
+                        style={{ fontSize: '11.5px', padding: '4px 10px', fontWeight: '500' }}
+                      >
+                        ✓ Apply Proposed EARS Statement
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {requirement.rewrite_suggestion.identified_tbds?.length > 0 && (

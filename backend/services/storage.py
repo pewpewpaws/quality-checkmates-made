@@ -42,6 +42,11 @@ class RequirementStore:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         conn.row_factory = sqlite3.Row
+        # Guarantee schema presence across ephemeral test unlinks & restarts
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS projects (project_id TEXT PRIMARY KEY, data TEXT NOT NULL, updated_at TEXT NOT NULL);")
+        cursor.execute("CREATE TABLE IF NOT EXISTS requirements (id TEXT NOT NULL, project_id TEXT NOT NULL, data TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (id, project_id));")
+        conn.commit()
         return conn
 
     def _init_db(self):
@@ -607,15 +612,24 @@ class RequirementStore:
         if action == "provisional_pm":
             sign_off.pm_author = pm_author or "Product Manager"
             sign_off.pm_target_val = pm_target_val
+            # Reset senior engineer approval when PM provisions or updates values
+            sign_off.tech_lead_approver = None
+            sign_off.hardware_rationale = None
+            sign_off.signed_off_at = None
             sign_off.state = RequirementStatus.PROVISIONAL_PM
             item.status = RequirementStatus.PROVISIONAL_PM
         elif action == "lock_baseline":
+            if "[TBD:" in item.text or "[TBD]" in item.text:
+                raise ValueError("Cannot lock baseline: requirement contains unresolved [TBD] parameters. Must be resolved to provisional values first.")
             sign_off.tech_lead_approver = tech_lead_approver or "Lead Systems Engineer"
             sign_off.hardware_rationale = hardware_rationale or "Validated against hardware envelope"
             sign_off.signed_off_at = datetime.utcnow()
             sign_off.state = RequirementStatus.LOCKED_BASELINE
             item.status = RequirementStatus.LOCKED_BASELINE
         elif action == "flag_tbd":
+            sign_off.tech_lead_approver = None
+            sign_off.hardware_rationale = None
+            sign_off.signed_off_at = None
             sign_off.state = RequirementStatus.FLAGGED_TBD
             item.status = RequirementStatus.FLAGGED_TBD
         elif action == "reject":
@@ -625,8 +639,8 @@ class RequirementStore:
         item.sign_off = sign_off
         item.version += 1
         item.updated_at = datetime.utcnow()
-        # Save back in appropriate namespace and persist
-        self.upsert(item, project_id=item.project_id)
+        # Save back in appropriate namespace and persist (allow_duplicate=True since text is existing)
+        self.upsert(item, project_id=item.project_id, allow_duplicate=True)
         return item
 
     def find_duplicates(

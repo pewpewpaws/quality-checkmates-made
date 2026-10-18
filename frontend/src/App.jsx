@@ -5,6 +5,7 @@ import StartProjectHero from './components/StartProjectHero';
 import RequirementDetail from './components/RequirementDetail';
 import WorkspaceOverview from './components/WorkspaceOverview';
 import ChatAndIngestTab from './components/ChatAndIngestTab';
+import ExecutiveVerificationTab from './components/ExecutiveVerificationTab';
 import IngestModal from './components/IngestModal';
 import ClickSpark from './components/ClickSpark';
 import DotGrid from './components/DotGrid';
@@ -68,8 +69,13 @@ export default function App() {
   useEffect(() => {
     if (role) {
       localStorage.setItem('copilot_role', role);
+      if (role === 'executive' && activeView === 'chat') {
+        setActiveView('executive_verification');
+      } else if (role !== 'executive' && activeView === 'executive_verification') {
+        setActiveView('overview');
+      }
     }
-  }, [role]);
+  }, [role, activeView]);
 
   useEffect(() => {
     localStorage.setItem('copilot_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
@@ -368,26 +374,50 @@ export default function App() {
                       <span>📊 Workspace Overview</span>
                     </button>
 
-                    <button
-                      onClick={() => handleSelectView('chat')}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        borderRadius: '6px',
-                        border: '1px solid',
-                        borderColor: activeView === 'chat' ? '#181715' : '#E5E0D5',
-                        backgroundColor: activeView === 'chat' ? '#181715' : '#FFFFFF',
-                        color: activeView === 'chat' ? '#FAF8F5' : '#57534E',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <span>💬 AI Copilot & Ingest</span>
-                    </button>
+                    {role === 'executive' ? (
+                      <button
+                        onClick={() => handleSelectView('executive_verification')}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          border: '1px solid',
+                          borderColor: activeView === 'executive_verification' ? '#181715' : '#D6CEBE',
+                          backgroundColor: activeView === 'executive_verification' ? '#181715' : '#FAF8F5',
+                          color: activeView === 'executive_verification' ? '#FAF8F5' : '#181715',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: activeView === 'executive_verification' ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>🎖️ Executive Master Test Cases & Certification</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleSelectView('chat')}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          border: '1px solid',
+                          borderColor: activeView === 'chat' ? '#181715' : '#E5E0D5',
+                          backgroundColor: activeView === 'chat' ? '#181715' : '#FFFFFF',
+                          color: activeView === 'chat' ? '#FAF8F5' : '#57534E',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>💬 AI Copilot & Ingest</span>
+                      </button>
+                    )}
 
                     {selectedReqId && (
                       <button
@@ -425,12 +455,22 @@ export default function App() {
                     requirements={requirements}
                     onSelectRequirement={handleSelectRequirement}
                     onOpenChat={() => handleSelectView('chat')}
+                    onOpenExecutiveSuite={() => handleSelectView('executive_verification')}
                     onOpenIngest={() => setIsIngestModalOpen(true)}
                     role={role}
                   />
                 )}
 
-                {activeView === 'chat' && (
+                {activeView === 'executive_verification' && role === 'executive' && (
+                  <ExecutiveVerificationTab
+                    project={currentProject}
+                    role={role}
+                    onBackToOverview={() => handleSelectView('overview')}
+                    onSelectRequirement={handleSelectRequirement}
+                  />
+                )}
+
+                {activeView === 'chat' && role !== 'executive' && (
                   <ChatAndIngestTab
                     project={currentProject}
                     role={role}

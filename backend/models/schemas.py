@@ -267,6 +267,10 @@ class ProjectWorkspace(BaseModel):
     is_locked: bool = Field(False, description="Whether architecture charter and boundaries are frozen")
     locked_at: Optional[datetime] = Field(None, description="Timestamp when architecture was locked")
     locked_by: Optional[str] = Field(None, description="Persona or user who locked the project")
+    executive_certified: bool = Field(False, description="Whether master baseline has received final executive approval")
+    executive_certified_by: Optional[str] = Field(None, description="Senior Executive approver name")
+    executive_certified_at: Optional[datetime] = Field(None, description="Timestamp of executive baseline certification")
+    executive_notes: Optional[str] = Field(None, description="Executive certification remarks or scope notes")
     documents: List[ProjectDocumentContext] = Field(default_factory=list, description="Attached project architecture documents")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -290,6 +294,11 @@ class ProjectLockRequest(BaseModel):
     locked_by: Optional[str] = Field(None, description="User/Persona requesting the lock state change")
 
 
+class ExecutiveCertifyRequest(BaseModel):
+    approver_name: str = Field("Senior Manager", description="Executive identity signing off the baseline")
+    notes: Optional[str] = Field(None, description="Executive remarks or verification seal comments")
+
+
 class ProjectSummary(BaseModel):
     project_id: str
     project_name: str
@@ -301,6 +310,8 @@ class ProjectSummary(BaseModel):
     provisional_pm_count: int
     flagged_tbd_count: int
     total_documents: int
+    executive_certified: bool = False
+    executive_certified_by: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from backend.models.schemas import (
     ProjectWorkspace,
@@ -6,7 +6,9 @@ from backend.models.schemas import (
     ProjectCreateRequest,
     ProjectUpdateRequest,
     ProjectLockRequest,
+    ExecutiveCertifyRequest,
     ProjectDocumentContext,
+    RequirementStatus,
     UserRole
 )
 from backend.api.deps import get_user_role, require_write_permission
@@ -185,3 +187,107 @@ async def delete_project_document(
         return {"status": "deleted", "document_id": doc_id, "project_id": project_id}
     except ValueError as e:
         raise HTTPException(status_code=423, detail=str(e))
+
+
+@router.post("/{project_id}/executive-certify", response_model=ProjectWorkspace)
+async def executive_certify_project(
+    project_id: str,
+    payload: ExecutiveCertifyRequest,
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Formally approve and certify the master engineering baseline as Senior Executive / Senior Manager.
+    Prerequisite: All requirements in the workspace must be in LOCKED_BASELINE status.
+    """
+    role, _ = user_context
+    if role != UserRole.EXECUTIVE:
+        raise HTTPException(status_code=403, detail="Only Senior Executives / Senior Managers can certify the master baseline.")
+
+    ws = store.get_project(project_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail=f"Project workspace '{project_id}' not found.")
+
+    reqs = store.get_all(project_id)
+    if not reqs:
+        raise HTTPException(status_code=400, detail="Cannot certify an empty workspace with no requirements.")
+
+    unlocked = [r for r in reqs if r.status != RequirementStatus.LOCKED_BASELINE]
+    if unlocked:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot certify baseline: {len(unlocked)} requirement(s) are not yet locked by Lead Systems Engineer ({', '.join(r.id for r in unlocked[:3])})."
+        )
+
+    certified_ws = store.certify_project_executive(
+        project_id=project_id,
+        certified_by=payload.approver_name,
+        notes=payload.notes
+    )
+    return certified_ws
+
+
+@router.get("/{project_id}/master-test-suite")
+async def get_master_test_suite(
+    project_id: str,
+    user_context: Tuple[UserRole, bool] = Depends(get_user_role)
+):
+    """
+    Retrieve the synthesized Master Test Case Suite for all LOCKED_BASELINE requirements.
+    Accessible exclusively to Executives and Systems Engineers.
+    """
+    ws = store.get_project(project_id)
+    if not ws:
+        raise HTTPException(status_code=404, detail=f"Project workspace '{project_id}' not found.")
+
+    reqs = store.get_all(project_id)
+    locked_reqs = [r for r in reqs if r.status == RequirementStatus.LOCKED_BASELINE]
+    
+    test_cases_suite = []
+    from backend.api.routes_analysis import qualcomm
+    import logging
+    log = logging.getLogger(__name__)
+
+    for r in locked_reqs:
+        bp = r.verification_plan
+        if not bp:
+            try:
+                bp = await qualcomm.generate_verification_blueprint(r.text)
+                r.verification_plan = bp
+                store.update(r.id, r, project_id=project_id)
+            except Exception as e:
+                log.warning(f"Could not synthesize blueprint for {r.id}: {e}")
+                continue
+
+        test_cases_suite.append({
+            "requirement_id": r.id,
+            "statement": r.text,
+            "category": r.category or "Functional",
+            "section": r.section or "System Safety",
+            "pm_target_val": r.sign_off.pm_target_val if r.sign_off else None,
+            "technical_approver": r.sign_off.tech_lead_approver if r.sign_off else None,
+            "hardware_rationale": r.sign_off.hardware_rationale if r.sign_off else None,
+            "signed_off_at": r.sign_off.signed_off_at if r.sign_off else None,
+            "verification_method": bp.verification_method,
+            "preconditions": bp.preconditions,
+            "positive_test_case": bp.positive_test_case.model_dump() if hasattr(bp.positive_test_case, 'model_dump') else bp.positive_test_case,
+            "negative_boundary_test_case": bp.negative_boundary_test_case.model_dump() if hasattr(bp.negative_boundary_test_case, 'model_dump') else bp.negative_boundary_test_case,
+            "acceptance_criteria": bp.acceptance_criteria,
+            "model_used": bp.model_used
+        })
+
+    is_all_locked = len(locked_reqs) == len(reqs) and len(reqs) > 0
+
+    return {
+        "project_id": project_id,
+        "project_name": ws.project_name,
+        "domain": ws.domain,
+        "is_all_locked": is_all_locked,
+        "total_requirements": len(reqs),
+        "locked_count": len(locked_reqs),
+        "pending_count": len(reqs) - len(locked_reqs),
+        "executive_certified": getattr(ws, "executive_certified", False),
+        "executive_certified_by": getattr(ws, "executive_certified_by", None),
+        "executive_certified_at": getattr(ws, "executive_certified_at", None),
+        "executive_notes": getattr(ws, "executive_notes", None),
+        "test_suite": test_cases_suite
+    }

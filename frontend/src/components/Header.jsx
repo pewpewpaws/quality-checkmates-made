@@ -33,7 +33,7 @@ export default function Header({
   const roles = [
     { id: 'product_manager', label: 'Product Manager', icon: '👔', desc: 'Authoring & TBD Value Proposals' },
     { id: 'systems_engineer', label: 'Lead Systems Engineer', icon: '🛠️', desc: 'Technical Sign-Off & Baseline Lock' },
-    { id: 'executive', label: 'Senior Executive', icon: '🎖️', desc: 'Read-Only Shielded Lens' }
+    { id: 'executive', label: 'Senior Executive', icon: '🎖️', desc: 'Master Test Cases & Baseline Certification' }
   ];
 
   const currentRoleObj = roles.find(r => r.id === role) || roles[0];

@@ -440,3 +440,25 @@ REST API endpoints provided by the local FastAPI service (`http://localhost:8000
   * Contains executive header banner, project workspace metadata, rubric scoring summary metrics, color-coded status badges (`🟢 LOCKED_BASELINE`, `🟡 PROVISIONAL_PM`, `🔴 FLAGGED_TBD`), and dual-key governance sign-off audit cards with PM and Lead Systems Engineer signatures.
   * RBAC Filtering: `executive` role shields `DRAFT` and `FLAGGED_TBD` requirements.
 
+## 8. Executive Verification & Master Test Cases Endpoints
+* **Method**: `GET /api/projects/{project_id}/master-test-suite`:
+  * Dedicated executive lens endpoint compiling the complete paired verification test matrix across all requirements in the workspace.
+  * Enforces `is_all_locked` readiness check (`locked_count == total_requirements`).
+  * If unapproved requirements exist, returns `is_all_locked: false` with pending counts to engage the Baseline Readiness Gatekeeper.
+  * When all requirements are locked by the Lead Systems Engineer, returns synthesized Verification Blueprints on Qualcomm Cloud AI 100 (`Llama-3.3-70B`) with paired nominal positive test cases, boundary/stress negative test cases, preconditions, and falsifiable PASS/FAIL acceptance criteria.
+  * Accessible to `executive` and `systems_engineer` roles.
+
+* **Method**: `POST /api/projects/{project_id}/executive-certify`:
+  * Formally seals and certifies the master engineering baseline as Senior Executive / Senior Manager.
+  * Role requirement: `executive` (`X-User-Role: executive`).
+  * Prerequisite: All requirements must be in `LOCKED_BASELINE` status (fails with HTTP 400 if any pending).
+  * Payload:
+    ```json
+    {
+      "approver_name": "Dr. Sarah Lin, VP Systems",
+      "notes": "Certified for flight hardware build baseline v1.0 under DO-178C Level A."
+    }
+    ```
+  * Response: Returns updated `ProjectWorkspace` with `executive_certified: true`, `executive_certified_by`, `executive_certified_at`, and `executive_notes`.
+
+

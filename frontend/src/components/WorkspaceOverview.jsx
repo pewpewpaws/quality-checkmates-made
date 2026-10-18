@@ -16,7 +16,8 @@ import {
   BarChart3,
   CheckCircle2,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Award
 } from 'lucide-react';
 import StarBorder from './StarBorder';
 import { api } from '../services/api';
@@ -26,6 +27,7 @@ export default function WorkspaceOverview({
   requirements = [],
   onSelectRequirement,
   onOpenChat,
+  onOpenExecutiveSuite,
   onOpenIngest,
   role
 }) {
@@ -103,29 +105,55 @@ export default function WorkspaceOverview({
 
           {/* Quick Action Buttons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <StarBorder
-              as="button"
-              onClick={onOpenChat}
-              color="#ffffff"
-              trailColor="#ffffff"
-              duration={4}
-              direction="clockwise"
-              stars={1}
-              trailLength={0.3}
-              thickness={1}
-              radius={8}
-              glow={0.6}
-              hover="lap"
-              sparkle={false}
-              clickPulse
-              theme="dark"
-              backgroundColor="#181715"
-              textColor="#FAF8F5"
-              style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <MessageSquare size={14} />
-              <span>AI Copilot & Ingest</span>
-            </StarBorder>
+            {role === 'executive' ? (
+              <StarBorder
+                as="button"
+                onClick={onOpenExecutiveSuite}
+                color="#ffffff"
+                trailColor="#ffffff"
+                duration={4}
+                direction="clockwise"
+                stars={1}
+                trailLength={0.3}
+                thickness={1}
+                radius={8}
+                glow={0.6}
+                hover="lap"
+                sparkle={false}
+                clickPulse
+                theme="dark"
+                backgroundColor="#181715"
+                textColor="#FAF8F5"
+                style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Award size={14} />
+                <span>Executive Master Test Suite</span>
+              </StarBorder>
+            ) : (
+              <StarBorder
+                as="button"
+                onClick={onOpenChat}
+                color="#ffffff"
+                trailColor="#ffffff"
+                duration={4}
+                direction="clockwise"
+                stars={1}
+                trailLength={0.3}
+                thickness={1}
+                radius={8}
+                glow={0.6}
+                hover="lap"
+                sparkle={false}
+                clickPulse
+                theme="dark"
+                backgroundColor="#181715"
+                textColor="#FAF8F5"
+                style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <MessageSquare size={14} />
+                <span>AI Copilot & Ingest</span>
+              </StarBorder>
+            )}
 
             <a
               href={api.getExportPdfUrl(project.project_id)}

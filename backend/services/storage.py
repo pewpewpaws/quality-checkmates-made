@@ -233,6 +233,8 @@ class RequirementStore:
                     provisional_pm_count=prov_count,
                     flagged_tbd_count=tbd_count,
                     total_documents=len(ws.documents),
+                    executive_certified=getattr(ws, "executive_certified", False),
+                    executive_certified_by=getattr(ws, "executive_certified_by", None),
                     created_at=ws.created_at,
                     updated_at=ws.updated_at
                 )
@@ -288,6 +290,24 @@ class RequirementStore:
         ws.is_locked = is_locked
         ws.locked_at = datetime.utcnow() if is_locked else None
         ws.locked_by = locked_by if is_locked else None
+        ws.updated_at = datetime.utcnow()
+        self._persist_project_db(ws)
+        return ws
+
+    def certify_project_executive(
+        self,
+        project_id: str,
+        certified_by: str,
+        notes: Optional[str] = None
+    ) -> Optional[ProjectWorkspace]:
+        ws = self._projects.get(project_id)
+        if not ws:
+            return None
+
+        ws.executive_certified = True
+        ws.executive_certified_by = certified_by
+        ws.executive_certified_at = datetime.utcnow()
+        ws.executive_notes = notes
         ws.updated_at = datetime.utcnow()
         self._persist_project_db(ws)
         return ws

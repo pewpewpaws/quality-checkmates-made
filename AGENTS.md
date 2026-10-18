@@ -239,8 +239,12 @@ Keep documentation synchronized in these specific locations:
 - [x] Built Collapsible Left Sidebar (`Sidebar.jsx`) with isolated project requirement trees, live search, and status filtering (`All`, `🔴 TBD`, `🟡 Provisional`, `🟢 Locked`).
 - [x] Built 1-Click Header Persona Switcher (`Header.jsx`) (`👔 PM` $\longleftrightarrow$ `🛠️ Lead Systems Engineer` $\longleftrightarrow$ `🎖️ Executive`) with live RBAC visibility shielding.
 - [x] Built 1-Click Export Menu (`Header.jsx`) triggering server-side CSV and publication-grade structured PDF downloads.
-- [x] Built Multi-Tab Center Studio (`MainStudio.jsx`): Conversational Copilot (`ChatTab.jsx`), Document Ingest & Parser (`IngestTab.jsx`), Deep Requirement Inspector (`DeepInspectorTab.jsx`: 100-pt Rubric Receipt, in-text `[TBD]` chip highlighting, X-Ray Evidence Highlighting, Interpretation Duel, Intent-Locked Rewriter Diff with suggested defaults, Dual-Key Sign-off Gate, Verification Blueprint), and Conflict Radar (`ConflictTab.jsx`).
 - [x] Built Mock / Live API Adapter toggle (`Cloud AI100` $\longleftrightarrow$ `Offline Stage`).
+- [x] Built Executive-Only Master Test Cases & Baseline Certification Screen (`ExecutiveVerificationTab.jsx`):
+  - Baseline Integrity Shield / Gatekeeper when requirements are pending Lead Systems Engineer technical lock.
+  - Qualcomm AI 100 synthesized Master Test Suite with paired nominal positive & boundary stress test cases, preconditions, and falsifiable acceptance criteria upon 100% `LOCKED_BASELINE`.
+  - Senior Executive formal baseline certification deck with approver signature, release directives, and gold certification seal.
+  - Integrated with REST endpoints `GET /api/projects/{id}/master-test-suite` and `POST /api/projects/{id}/executive-certify`.
 
 ---
 

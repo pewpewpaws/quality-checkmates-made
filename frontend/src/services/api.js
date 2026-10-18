@@ -245,6 +245,36 @@ export const api = {
     return `${API_BASE}/requirements/export/pdf?project_id=${encodeURIComponent(projectId)}`;
   },
 
+  // Executive Master Verification & Certification
+  async getMasterTestSuite(projectId, role = 'executive') {
+    const res = await fetch(`${API_BASE}/projects/${encodeURIComponent(projectId)}/master-test-suite`, {
+      headers: {
+        'X-User-Role': role
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch executive master test suite');
+    }
+    return res.json();
+  },
+
+  async executiveCertifyProject(projectId, approverName = 'Senior Manager', notes = '', role = 'executive') {
+    const res = await fetch(`${API_BASE}/projects/${encodeURIComponent(projectId)}/executive-certify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Role': role
+      },
+      body: JSON.stringify({ approver_name: approverName, notes })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to certify master baseline');
+    }
+    return res.json();
+  },
+
   // Health
   async getHealth() {
     const res = await fetch('/health');

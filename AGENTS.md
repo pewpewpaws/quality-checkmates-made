@@ -71,6 +71,31 @@ export IMAGINE_API_KEY="278b88a2-8f68-42f7-818e-0442a7d294a3"
 export IMAGINE_ENDPOINT_URL="https://aisuite.cirrascale.com/apis/v2"
 ```
 
+### 2.1 Quickstart & Development Run Instructions
+
+#### 1. Backend Server (FastAPI on Port 8000)
+Run from repository root using `uv`:
+```bash
+/home/anair/.local/bin/uv run uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+```
+- **API Root**: `http://127.0.0.1:8000`
+- **Swagger Docs**: `http://127.0.0.1:8000/docs`
+- **Health Check**: `http://127.0.0.1:8000/health`
+
+#### 2. Frontend Development Server (Vite + React on Port 5173)
+Run from `frontend/` directory (or use `--prefix`):
+```bash
+cd frontend && npm run dev
+# or from root:
+npm --prefix frontend run dev
+```
+- **Web UI**: `http://localhost:5173`
+- **Reverse Proxy**: Vite automatically proxies `/api/*` requests to `http://127.0.0.1:8000`.
+
+#### 3. Full Stack Verification
+- Run tests: `/home/anair/.local/bin/uv run pytest backend/tests/`
+- Build frontend: `npm --prefix frontend run build`
+
 ---
 
 ## 3. Approved Qualcomm AI Model Assignments

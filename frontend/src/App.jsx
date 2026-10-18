@@ -3,6 +3,8 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import StartProjectHero from './components/StartProjectHero';
 import RequirementDetail from './components/RequirementDetail';
+import WorkspaceOverview from './components/WorkspaceOverview';
+import ChatAndIngestTab from './components/ChatAndIngestTab';
 import IngestModal from './components/IngestModal';
 import ClickSpark from './components/ClickSpark';
 import DotGrid from './components/DotGrid';
@@ -15,10 +17,13 @@ export default function App() {
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [role, setRole] = useState('product_manager'); // 'product_manager' | 'systems_engineer' | 'executive'
   
+  // Navigation View: 'overview' | 'chat' | 'detail'
+  const [activeView, setActiveView] = useState('overview');
+
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showStartProject, setShowStartProject] = useState(true);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // 1. Initial Load: Projects
   useEffect(() => {
@@ -67,17 +72,28 @@ export default function App() {
     }
   };
 
-  // Switch project
+  // Switch project -> invite user with Overview screen
   const handleSelectProject = (pid) => {
     setCurrentProjectId(pid);
     setShowStartProject(false);
-    loadRequirements(pid, role, true);
+    setSelectedReqId(null);
+    setActiveView('overview');
+    loadRequirements(pid, role, false);
   };
 
-  // Select requirement
+  // Select requirement -> switch to Detail view
   const handleSelectRequirement = (id) => {
     setSelectedReqId(id);
     setShowStartProject(false);
+    setActiveView('detail');
+  };
+
+  // Switch view tabs
+  const handleSelectView = (view) => {
+    setActiveView(view);
+    if (view === 'overview') {
+      setSelectedReqId(null);
+    }
   };
 
   // Create project handler
@@ -87,6 +103,8 @@ export default function App() {
       await loadProjects();
       setCurrentProjectId(created.project_id);
       setShowStartProject(false);
+      setSelectedReqId(null);
+      setActiveView('overview');
     } catch (err) {
       alert(`Could not create project: ${err.message}`);
     }
@@ -97,13 +115,18 @@ export default function App() {
     setRequirements(prev => prev.map(r => r.id === updatedReq.id ? updatedReq : r));
   };
 
-  // When new specs are ingested
+  // When new specs are ingested from modal or chat
   const handleIngestSuccess = (newReqs) => {
     loadRequirements(currentProjectId, role);
     if (newReqs && newReqs.length > 0) {
       setSelectedReqId(newReqs[0].id);
+      setActiveView('detail');
       setShowStartProject(false);
     }
+  };
+
+  const handleRequirementsIngested = (newReqs) => {
+    loadRequirements(currentProjectId, role);
   };
 
   const currentProject = projects.find(p => p.project_id === currentProjectId) || null;
@@ -133,6 +156,8 @@ export default function App() {
           }}
           collapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          activeView={activeView}
+          onSelectView={handleSelectView}
         />
 
         {/* Main Canvas */}
@@ -184,7 +209,7 @@ export default function App() {
 
           {/* Center Content Viewport */}
           <main className="content-viewport" style={{ position: 'relative', zIndex: 1 }}>
-            {showStartProject || (!selectedReqId && !loading && requirements.length === 0) ? (
+            {showStartProject || !currentProjectId ? (
               <StartProjectHero
                 projects={projects}
                 onSelectProject={handleSelectProject}
@@ -192,12 +217,119 @@ export default function App() {
                 onOpenIngest={() => setIsIngestModalOpen(true)}
               />
             ) : (
-              <RequirementDetail
-                requirement={currentRequirement || requirements[0]}
-                project={currentProject}
-                role={role}
-                onRequirementUpdated={handleRequirementUpdated}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+                {/* Workspace Top View Navigation Bar */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid #E5E0D5',
+                  paddingBottom: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      onClick={() => handleSelectView('overview')}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: activeView === 'overview' ? '#181715' : '#E5E0D5',
+                        backgroundColor: activeView === 'overview' ? '#181715' : '#FFFFFF',
+                        color: activeView === 'overview' ? '#FAF8F5' : '#57534E',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>📊 Workspace Overview</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleSelectView('chat')}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: activeView === 'chat' ? '#181715' : '#E5E0D5',
+                        backgroundColor: activeView === 'chat' ? '#181715' : '#FFFFFF',
+                        color: activeView === 'chat' ? '#FAF8F5' : '#57534E',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>💬 AI Copilot & Ingest</span>
+                    </button>
+
+                    {selectedReqId && (
+                      <button
+                        onClick={() => handleSelectView('detail')}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          border: '1px solid',
+                          borderColor: activeView === 'detail' ? '#181715' : '#E5E0D5',
+                          backgroundColor: activeView === 'detail' ? '#181715' : '#FFFFFF',
+                          color: activeView === 'detail' ? '#FAF8F5' : '#57534E',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>📋 Requirement {selectedReqId}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ fontSize: '11px', color: '#78716C', fontFamily: 'var(--font-mono)' }}>
+                    Workspace: <strong style={{ color: '#181715' }}>{currentProject?.project_id}</strong>
+                  </div>
+                </div>
+
+                {/* View Switcher */}
+                {activeView === 'overview' && (
+                  <WorkspaceOverview
+                    project={currentProject}
+                    requirements={requirements}
+                    onSelectRequirement={handleSelectRequirement}
+                    onOpenChat={() => handleSelectView('chat')}
+                    onOpenIngest={() => setIsIngestModalOpen(true)}
+                    role={role}
+                  />
+                )}
+
+                {activeView === 'chat' && (
+                  <ChatAndIngestTab
+                    project={currentProject}
+                    role={role}
+                    onRequirementsIngested={handleRequirementsIngested}
+                    onSelectRequirement={handleSelectRequirement}
+                    onBackToOverview={() => handleSelectView('overview')}
+                  />
+                )}
+
+                {activeView === 'detail' && (
+                  <RequirementDetail
+                    requirement={currentRequirement || requirements[0]}
+                    project={currentProject}
+                    role={role}
+                    onRequirementUpdated={handleRequirementUpdated}
+                    onBackToOverview={() => handleSelectView('overview')}
+                  />
+                )}
+              </div>
             )}
           </main>
         </div>

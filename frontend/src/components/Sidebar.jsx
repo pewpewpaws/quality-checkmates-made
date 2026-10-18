@@ -22,7 +22,9 @@ export default function Sidebar({
   onSelectRequirement,
   onOpenNewProject,
   collapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  activeView,
+  onSelectView
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -171,6 +173,53 @@ export default function Sidebar({
         </div>
       </div>
 
+      {/* Workspace Quick Views (when a project is selected) */}
+      {currentProjectId && onSelectView && (
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid #E5E0D5', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+          <button
+            onClick={() => onSelectView('overview')}
+            style={{
+              padding: '6px 8px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              borderRadius: '6px',
+              border: '1px solid',
+              borderColor: activeView === 'overview' ? '#181715' : '#E5E0D5',
+              backgroundColor: activeView === 'overview' ? '#181715' : '#FFFFFF',
+              color: activeView === 'overview' ? '#FAF8F5' : '#57534E',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px'
+            }}
+          >
+            <span>📊 Overview</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('chat')}
+            style={{
+              padding: '6px 8px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              borderRadius: '6px',
+              border: '1px solid',
+              borderColor: activeView === 'chat' ? '#181715' : '#E5E0D5',
+              backgroundColor: activeView === 'chat' ? '#181715' : '#FFFFFF',
+              color: activeView === 'chat' ? '#FAF8F5' : '#57534E',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px'
+            }}
+          >
+            <span>💬 Chat & Ingest</span>
+          </button>
+        </div>
+      )}
+
       {/* Search Input */}
       <div style={{ padding: '10px 14px', borderBottom: '1px solid #E5E0D5' }}>
         <div style={{ position: 'relative', width: '100%' }}>
@@ -241,7 +290,8 @@ export default function Sidebar({
         ) : (
           filteredRequirements.map(req => {
             const isSelected = selectedReqId === req.id;
-            const score = req.quality_score?.composite_score ?? null;
+            const score = req.quality_score?.overall ?? req.quality_score?.composite_score ?? null;
+            const displayScore = score !== null ? Math.round(score * 10) / 10 : null;
 
             return (
               <div
@@ -266,9 +316,9 @@ export default function Sidebar({
                     {req.id}
                   </span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {score !== null && (
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: score >= 80 ? '#047857' : score >= 60 ? '#B45309' : '#B91C1C' }}>
-                        {score}
+                    {displayScore !== null && (
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: displayScore >= 80 ? '#047857' : displayScore >= 60 ? '#B45309' : '#B91C1C' }}>
+                        {displayScore}
                       </span>
                     )}
                     {getStatusBadge(req.status)}

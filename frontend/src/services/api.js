@@ -140,7 +140,70 @@ export const api = {
     return res.json();
   },
 
-  // Conversational Copilot Drafting
+  async parseFile(file, category = 'Functional', projectId = 'default_project', role = 'product_manager') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', category);
+    formData.append('project_id', projectId);
+
+    const res = await fetch(`${API_BASE}/parse/file`, {
+      method: 'POST',
+      headers: {
+        'X-User-Role': role
+      },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to parse file');
+    }
+    return res.json();
+  },
+
+  // Conversational Copilot Drafting & Chat
+  async sendChatMessage(message, projectId = 'default_project', history = [], saveToStore = false, role = 'product_manager') {
+    const res = await fetch(`${API_BASE}/chat/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Role': role
+      },
+      body: JSON.stringify({
+        project_id: projectId,
+        message,
+        conversation_history: history,
+        save_to_store: saveToStore
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to send chat message');
+    }
+    return res.json();
+  },
+
+  async uploadContextDocument(title, category = 'Architecture', projectId = 'default_project', file = null, text = null, role = 'product_manager') {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('category', category);
+    formData.append('project_id', projectId);
+    if (file) formData.append('file', file);
+    if (text) formData.append('text', text);
+
+    const res = await fetch(`${API_BASE}/chat/context/document`, {
+      method: 'POST',
+      headers: {
+        'X-User-Role': role
+      },
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload context document');
+    }
+    return res.json();
+  },
+
   async chatDraft(userPrompt, projectId = 'default_project', role = 'product_manager') {
     const res = await fetch(`${API_BASE}/chat/draft`, {
       method: 'POST',

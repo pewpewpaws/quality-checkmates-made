@@ -25,7 +25,8 @@ export default function RequirementDetail({
   requirement, 
   project, 
   role, 
-  onRequirementUpdated 
+  onRequirementUpdated,
+  onBackToOverview
 }) {
   const [activeTab, setActiveTab] = useState('xray'); // 'xray' | 'rewrite' | 'duel' | 'blueprint'
   const [pmValueInput, setPmValueInput] = useState('');
@@ -51,13 +52,14 @@ export default function RequirementDetail({
   if (!requirement) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: '#8A857C' }}>
-        Select a requirement from the sidebar to inspect quality score and dual-key governance.
+        Select a requirement from the sidebar or overview to inspect quality score and dual-key governance.
       </div>
     );
   }
 
   const score = requirement.quality_score;
-  const compositeScore = score?.composite_score ?? 0;
+  const compositeScore = score?.overall ?? score?.composite_score ?? 0;
+  const displayScore = Math.round(compositeScore * 10) / 10;
   const issues = requirement.issues || [];
   const signOff = requirement.sign_off || {};
 
@@ -153,6 +155,16 @@ export default function RequirementDetail({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3mm)', maxWidth: '980px', margin: '0 auto', width: '100%' }}>
+      {onBackToOverview && (
+        <button
+          onClick={onBackToOverview}
+          className="btn-subtle-cream"
+          style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <span>← Back to Workspace Overview</span>
+        </button>
+      )}
+
       {/* 1. Header Card */}
       <div className="cream-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -182,7 +194,7 @@ export default function RequirementDetail({
                 color: compositeScore >= 80 ? '#047857' : compositeScore >= 60 ? '#B45309' : '#B91C1C'
               }}
             >
-              <span>Rubric Score: {compositeScore} / 100</span>
+              <span>Rubric Score: {displayScore} / 100</span>
             </div>
 
             {/* Status Badge */}
@@ -197,6 +209,31 @@ export default function RequirementDetail({
             )}
           </div>
         </div>
+
+        {/* Provisional Alert Banner */}
+        {requirement.status === 'PROVISIONAL_PM' && (
+          <div 
+            style={{ 
+              background: '#FFFBEB', 
+              border: '1px solid #FDE68A', 
+              borderRadius: '8px', 
+              padding: '10px 14px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px' 
+            }}
+          >
+            <AlertTriangle size={18} className="text-amber-600" style={{ flexShrink: 0 }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#B45309' }}>
+                Provisional Requirement — Pending Technical Sign-Off
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#92400E' }}>
+                PM target value proposed: <strong style={{ fontFamily: 'var(--font-mono)' }}>{signOff.pm_target_val || 'Pending proposal'}</strong>. Awaiting Lead Systems Engineer technical sign-off and verification blueprint synthesis before baseline lock.
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Interactive Statement Text */}
         <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '14px 16px' }}>

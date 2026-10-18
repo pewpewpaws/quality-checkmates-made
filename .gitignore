@@ -9,4 +9,4 @@ graphify-out/20*/
 *.sig
 *.db
 backend/data/
-
+*.zip

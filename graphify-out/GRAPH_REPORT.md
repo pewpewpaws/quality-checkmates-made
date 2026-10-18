@@ -1,7 +1,7 @@
 # Graph Report - Oi-Thon  (2026-10-19)
 
 ## Corpus Check
-- 90 files · ~94,112 words
+- 90 files · ~95,293 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 5, .csv 3, (none) 2)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `05b05de4`
+- Built from commit: `27602279`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -138,7 +138,7 @@ Nodes (4): ConflictRadarResponse, QualcommService, test_xray_pipeline_extracts_a
 
 ### Community 14 - "StarBorder"
 Cohesion: 0.09
-Nodes (43): App(), ChatAndIngestTab(), channels(), clamp(), ClickSpark, EASINGS, SHAPES, smoothstep() (+35 more)
+Nodes (42): App(), ChatAndIngestTab(), channels(), clamp(), ClickSpark, EASINGS, SHAPES, smoothstep() (+34 more)
 
 ### Community 15 - "package.json"
 Cohesion: 0.07
@@ -214,7 +214,7 @@ Nodes (3): extract_chat_data(), parse_tool_args(), run_aitl_evaluation()
 
 ## Knowledge Gaps
 - **13 isolated node(s):** `@types/react`, `@types/react-dom`, `oxlint`, `Documentation Standards & Continuous Sync Rules`, `Git Commit Workflow Rule` (+8 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 310 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 311 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions

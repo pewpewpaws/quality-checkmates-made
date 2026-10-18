@@ -238,14 +238,20 @@ export default function RequirementDetail({
         {/* Interactive Statement Text */}
         <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '14px 16px' }}>
           <div style={{ fontSize: '11px', color: '#8A857C', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>
-            Requirement Statement (Interactive TBD Hover)
+            Requirement Statement (Grammarly Flaw & TBD Inspection — Click token to inspect)
           </div>
           <InteractiveText
             text={requirement.text}
             requirementId={requirement.id}
+            status={requirement.status}
+            signOff={requirement.sign_off || {}}
+            issues={requirement.issues || []}
             identifiedTbds={rewriteData?.identified_tbds || requirement.rewrite_suggestion?.identified_tbds || []}
+            qualityScore={requirement.quality_score}
             projectDomain={project?.domain || 'Engineering Specification'}
+            role={role}
             onAcceptSuggestion={handleAcceptTbdSuggestion}
+            onSignOff={handleSignOff}
           />
         </div>
       </div>

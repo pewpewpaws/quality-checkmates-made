@@ -1,69 +1,383 @@
-import React from 'react';
-import TbdPopover from './TbdPopover';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Sparkles, 
+  Check, 
+  Info, 
+  ShieldCheck, 
+  Loader2, 
+  AlertTriangle, 
+  X, 
+  ArrowRight, 
+  Lock, 
+  Scale, 
+  CornerDownRight 
+} from 'lucide-react';
+import { api } from '../services/api';
 
 /**
- * Parses requirement text and converts [TBD: ...] placeholders into interactive popover chips.
+ * Grammarly-style Interactive Requirement Text Component
+ * Highlights defects in red, provisional items in amber, and provides click-to-open inspection popovers.
  */
 export default function InteractiveText({ 
   text, 
-  projectDomain, 
   requirementId,
+  status = 'FLAGGED_TBD',
+  signOff = {},
+  issues = [],
   identifiedTbds = [],
-  onAcceptSuggestion, 
-  evidenceQuote 
+  qualityScore = null,
+  projectDomain = 'Engineering Standard',
+  role = 'product_manager',
+  onAcceptSuggestion,
+  onSignOff
 }) {
+  const [activeSpanId, setActiveSpanId] = useState(null);
+  const containerRef = useRef(null);
+
+  // Close popover when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setActiveSpanId(null);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setActiveSpanId(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   if (!text) return null;
 
-  // Regex to match [TBD: ...] or [TBD]
-  const tbdRegex = /(\[TBD(?::\s*[^\]]+)?\])/g;
-  const parts = text.split(tbdRegex);
+  // 1. Build all highlighted spans
+  const spans = [];
+  const claimedIndices = new Set();
+
+  const isOverlap = (start, end) => {
+    for (let i = start; i < end; i++) {
+      if (claimedIndices.has(i)) return true;
+    }
+    return false;
+  };
+
+  const claimSpan = (start, end) => {
+    for (let i = start; i < end; i++) claimedIndices.add(i);
+  };
+
+  // A. Match TBD placeholders: [TBD: ...] or [TBD]
+  const tbdRegex = /\[TBD(?::\s*[^\]]+)?\]/gi;
+  let match;
+  while ((match = tbdRegex.exec(text)) !== null) {
+    const start = match.index;
+    const end = start + match[0].length;
+    if (!isOverlap(start, end)) {
+      claimSpan(start, end);
+      const isProvisional = status === 'PROVISIONAL_PM' || match[0].includes('=');
+      const cleanParam = match[0].replace(/^\[TBD:?/, '').replace(/\]$/, '').trim();
+
+      // Find matched TBD default
+      const matchedTbd = identifiedTbds.find(t => 
+        t.parameter_name?.toLowerCase() === cleanParam.toLowerCase() ||
+        cleanParam.toLowerCase().includes(t.parameter_name?.toLowerCase() || '')
+      );
+
+      spans.push({
+        id: `tbd-${start}`,
+        start,
+        end,
+        text: match[0],
+        type: isProvisional ? 'provisional' : 'tbd',
+        color: isProvisional ? 'amber' : 'red',
+        paramName: cleanParam,
+        title: isProvisional ? 'Provisional Parameter' : 'Unbound Parameter Placeholder',
+        suggestedValue: matchedTbd?.suggested_value || (isProvisional && signOff?.pm_target_val ? signOff.pm_target_val : null),
+        rationale: matchedTbd?.rationale || (isProvisional ? 'Proposed PM parameter awaiting engineering verification.' : 'Contractual limit requires concrete quantifiable threshold.'),
+        confidence: matchedTbd?.confidence || 'HIGH'
+      });
+    }
+  }
+
+  // B. Match Flaw Cards from requirement.issues
+  issues.forEach((issue, idx) => {
+    const quote = issue.evidence_quote;
+    if (quote && quote.trim()) {
+      const lowerText = text.toLowerCase();
+      const lowerQuote = quote.toLowerCase().trim();
+      let pos = 0;
+      while ((pos = lowerText.indexOf(lowerQuote, pos)) !== -1) {
+        const start = pos;
+        const end = start + lowerQuote.length;
+        if (!isOverlap(start, end)) {
+          claimSpan(start, end);
+          const isMinor = issue.severity?.toUpperCase() === 'MINOR';
+          spans.push({
+            id: `flaw-${idx}-${start}`,
+            start,
+            end,
+            text: text.slice(start, end),
+            type: 'flaw',
+            color: isMinor ? 'amber' : 'red',
+            title: `${issue.issue_type || 'Defect'} (${issue.severity || 'Major'})`,
+            explanation: issue.explanation || 'Requirement statement contains non-verifiable or ambiguous terms.',
+            suggestedAction: issue.suggested_action || 'Parameterize with falsifiable numeric metric and boundary tolerance.'
+          });
+          break; // Match first occurrence per card
+        }
+        pos += lowerQuote.length;
+      }
+    }
+  });
+
+  // C. Match specific rubric deductions from receipt if not already claimed (e.g. 'quickly', 'normal limits')
+  if (qualityScore && qualityScore.receipt) {
+    qualityScore.receipt.forEach((line, rIdx) => {
+      const quoteMatch = line.match(/'([^']+)'/);
+      if (quoteMatch && quoteMatch[1]) {
+        const quote = quoteMatch[1];
+        const lowerText = text.toLowerCase();
+        const lowerQuote = quote.toLowerCase();
+        const start = lowerText.indexOf(lowerQuote);
+        if (start !== -1) {
+          const end = start + lowerQuote.length;
+          if (!isOverlap(start, end)) {
+            claimSpan(start, end);
+            const penaltyMatch = line.match(/\[([A-Za-z]+)\s+([-\d.]+)\s*pts\]/);
+            const dimension = penaltyMatch ? penaltyMatch[1] : 'Rubric';
+            const penalty = penaltyMatch ? penaltyMatch[2] : '-5.0';
+            spans.push({
+              id: `rubric-${rIdx}-${start}`,
+              start,
+              end,
+              text: text.slice(start, end),
+              type: 'rubric_flaw',
+              color: 'red',
+              title: `${dimension} Deduction (${penalty} pts)`,
+              explanation: line.replace(/^\[[^\]]+\]\s*/, ''),
+              suggestedAction: `Refine '${quote}' with falsifiable quantitative parameters conforming to ISO 29148.`
+            });
+          }
+        }
+      }
+    });
+  }
+
+  // Sort spans strictly by start index
+  spans.sort((a, b) => a.start - b.start);
+
+  // 2. Build final segmented DOM
+  const elements = [];
+  let currentIndex = 0;
+
+  spans.forEach((span) => {
+    // Plain text before span
+    if (span.start > currentIndex) {
+      elements.push(
+        <span key={`text-${currentIndex}`}>
+          {text.slice(currentIndex, span.start)}
+        </span>
+      );
+    }
+
+    const isActive = activeSpanId === span.id;
+
+    // Render Grammarly-style Interactive Chip
+    elements.push(
+      <span 
+        key={span.id}
+        style={{ position: 'relative', display: 'inline-block' }}
+      >
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            setActiveSpanId(isActive ? null : span.id);
+          }}
+          className={span.color === 'red' ? 'grammarly-highlight-red' : 'grammarly-highlight-amber'}
+          style={{
+            backgroundColor: span.color === 'red' ? '#FEF2F2' : '#FFFBEB',
+            color: span.color === 'red' ? '#B91C1C' : '#B45309',
+            borderBottom: span.color === 'red' ? '2px dashed #EF4444' : '2px dashed #F59E0B',
+            padding: '1px 5px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontFamily: span.type === 'tbd' || span.type === 'provisional' ? 'var(--font-mono)' : 'inherit',
+            fontSize: span.type === 'tbd' || span.type === 'provisional' ? '12.5px' : 'inherit',
+            boxShadow: isActive ? (span.color === 'red' ? '0 0 0 2px rgba(239,68,68,0.25)' : '0 0 0 2px rgba(245,158,11,0.25)') : 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px',
+            margin: '0 2px'
+          }}
+          title="Click to inspect Grammarly flaw & suggested fix"
+        >
+          {span.color === 'red' ? (
+            <span style={{ fontSize: '10px' }}>🔴</span>
+          ) : (
+            <span style={{ fontSize: '10px' }}>🟡</span>
+          )}
+          <span>{span.text}</span>
+        </span>
+
+        {/* Click-to-Open Popover Card */}
+        {isActive && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '340px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E5E0D5',
+              borderRadius: '10px',
+              padding: '12px 14px',
+              boxShadow: 'var(--shadow-popover)',
+              zIndex: 1000,
+              color: '#181715',
+              fontSize: '12px',
+              fontFamily: 'var(--font-sans)',
+              textAlign: 'left',
+              lineHeight: 1.4,
+              cursor: 'default'
+            }}
+          >
+            {/* Popover Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid #F0ECE4', paddingBottom: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '12px', color: span.color === 'red' ? '#B91C1C' : '#B45309' }}>
+                {span.color === 'red' ? <AlertTriangle size={13} /> : <Sparkles size={13} />}
+                <span>{span.title}</span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveSpanId(null);
+                }}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px', color: '#8A857C' }}
+              >
+                <X size={13} />
+              </button>
+            </div>
+
+            {/* Explanation / Content */}
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ fontSize: '11px', color: '#78716C', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>
+                Flagged Token:
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: '#181715', fontSize: '12px', background: '#F9F6F0', padding: '3px 6px', borderRadius: '4px', margin: '3px 0' }}>
+                {span.text}
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#44403C', marginTop: '4px' }}>
+                {span.explanation || span.rationale}
+              </div>
+            </div>
+
+            {/* Suggested Default / Action from Qualcomm AI 100 */}
+            {(span.suggestedValue || span.suggestedAction) && (
+              <div style={{ background: span.color === 'red' ? '#FEF2F2' : '#FFFBEB', border: '1px solid', borderColor: span.color === 'red' ? '#FCA5A5' : '#FDE68A', borderRadius: '6px', padding: '8px 10px', marginBottom: '10px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: span.color === 'red' ? '#991B1B' : '#92400E', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ShieldCheck size={12} />
+                  <span>AI Recommended Resolution:</span>
+                </div>
+                {span.suggestedValue && (
+                  <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#181715', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>
+                    {span.suggestedValue}
+                  </div>
+                )}
+                {span.suggestedAction && (
+                  <div style={{ fontSize: '11px', color: '#57534E', marginTop: '2px' }}>
+                    {span.suggestedAction}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Inline Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {span.type === 'tbd' && onAcceptSuggestion && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const val = span.suggestedValue || 'Validated limit';
+                    const rat = span.rationale || `Grounded in ${projectDomain} specification.`;
+                    onAcceptSuggestion(span.paramName, val, rat);
+                    setActiveSpanId(null);
+                  }}
+                  className="btn-subtle-black"
+                  style={{ width: '100%', padding: '6px 10px', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                >
+                  <Sparkles size={12} />
+                  <span>Apply Default to PM Proposal ({span.suggestedValue || 'Recommended'})</span>
+                </button>
+              )}
+
+              {span.type === 'provisional' && role === 'systems_engineer' && onSignOff && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSignOff('lock_baseline');
+                    setActiveSpanId(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 10px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    backgroundColor: '#047857',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Lock size={12} />
+                  <span>Approve & Lock Baseline (🟢)</span>
+                </button>
+              )}
+
+              {span.type === 'provisional' && role !== 'systems_engineer' && (
+                <div style={{ fontSize: '11px', color: '#B45309', background: '#FEF3C7', padding: '4px 8px', borderRadius: '4px', textAlign: 'center', fontWeight: 600 }}>
+                  🟡 Provisional: Switch to Lead Systems Engineer to sign off.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </span>
+    );
+
+    currentIndex = span.end;
+  });
+
+  // Plain text after last span
+  if (currentIndex < text.length) {
+    elements.push(
+      <span key={`text-${currentIndex}`}>
+        {text.slice(currentIndex)}
+      </span>
+    );
+  }
 
   return (
-    <span style={{ lineHeight: '1.6', fontSize: '14.5px', color: '#181715' }}>
-      {parts.map((part, index) => {
-        if (tbdRegex.test(part)) {
-          return (
-            <TbdPopover
-              key={index}
-              tbdString={part}
-              requirementId={requirementId}
-              identifiedTbds={identifiedTbds}
-              projectDomain={projectDomain}
-              onAcceptSuggestion={onAcceptSuggestion}
-            />
-          );
-        }
-
-        // If evidenceQuote is present, highlight the exact substring with subtle amber underlay
-        if (evidenceQuote && part.includes(evidenceQuote)) {
-          const subParts = part.split(evidenceQuote);
-          return (
-            <React.Fragment key={index}>
-              {subParts.map((sub, sIdx) => (
-                <React.Fragment key={sIdx}>
-                  {sub}
-                  {sIdx < subParts.length - 1 && (
-                    <mark
-                      style={{
-                        backgroundColor: '#FEF3C7',
-                        color: '#92400E',
-                        padding: '1px 3px',
-                        borderRadius: '3px',
-                        borderBottom: '1.5px solid #F59E0B'
-                      }}
-                      title={`Flagged Flaw: "${evidenceQuote}"`}
-                    >
-                      {evidenceQuote}
-                    </mark>
-                  )}
-                </React.Fragment>
-              ))}
-            </React.Fragment>
-          );
-        }
-
-        return <span key={index}>{part}</span>;
-      })}
-    </span>
+    <div 
+      ref={containerRef}
+      style={{ 
+        lineHeight: '1.7', 
+        fontSize: '14.5px', 
+        color: '#181715',
+        position: 'relative'
+      }}
+    >
+      {elements}
+    </div>
   );
 }

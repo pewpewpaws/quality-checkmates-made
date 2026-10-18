@@ -265,3 +265,25 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #BFB8A9;
 }
+
+/* Grammarly-style Inline Highlight Badges */
+.grammarly-highlight-red {
+  transition: all 0.15s ease;
+}
+
+.grammarly-highlight-red:hover {
+  background-color: #FEE2E2 !important;
+  border-bottom: 2px solid #DC2626 !important;
+  box-shadow: 0 1px 4px rgba(220, 38, 38, 0.2);
+}
+
+.grammarly-highlight-amber {
+  transition: all 0.15s ease;
+}
+
+.grammarly-highlight-amber:hover {
+  background-color: #FEF3C7 !important;
+  border-bottom: 2px solid #D97706 !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.2);
+}
+

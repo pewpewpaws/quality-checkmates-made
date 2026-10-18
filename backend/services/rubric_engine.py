@@ -87,11 +87,25 @@ class RubricScoringEngine:
         receipt: List[str] = ["[Baseline Budget] Initial quality allocation: 100.0 pts"]
 
         # Ensure all incoming issues and conflicts are robustly normalized and validated
+        # Ensure all incoming issues and conflicts are robustly normalized and validated
         normalized_issues = [
             IssueCard.model_validate(i) if isinstance(i, dict) else i
             for i in (issues or [])
         ]
-        grounded_issues = evidence_validator.validate_and_ground_cards(normalized_issues, text)
+        # Strictly reject ungrounded cards whose defective quotes no longer exist in text
+        grounded_issues = evidence_validator.validate_and_ground_cards(normalized_issues, text, reject_ungrounded=True)
+
+        # Drop any flaw card whose evidence quote is now inside a provisioned parameter envelope ([TBD: ... = ...])
+        provisioned_spans: List[Tuple[int, int]] = [
+            (m.start(), m.end()) for m in re.finditer(r"\[TBD:[^\]]+=[^\]]+\]", text)
+        ]
+        clean_grounded = []
+        for c in grounded_issues:
+            c_s = c.start_offset if c.start_offset is not None else -1
+            c_e = c.end_offset if c.end_offset is not None else -1
+            if not any(p_s <= c_s and c_e <= p_e for p_s, p_e in provisioned_spans):
+                clean_grounded.append(c)
+        grounded_issues = clean_grounded
 
         normalized_conflicts = [
             RequirementConflictCard.model_validate(c) if isinstance(c, dict) else c
@@ -100,11 +114,11 @@ class RubricScoringEngine:
         conflicts = normalized_conflicts
 
         # 1. Clarity (Max 25 pts)
-        clarity, clarity_receipt = self._score_clarity(text, grounded_issues)
+        clarity, clarity_receipt = self._score_clarity(text, grounded_issues, provisioned_spans)
         receipt.extend(clarity_receipt)
 
         # 2. Verifiability (Max 25 pts)
-        verifiability, verifiability_receipt = self._score_verifiability(text, grounded_issues)
+        verifiability, verifiability_receipt = self._score_verifiability(text, grounded_issues, provisioned_spans)
         receipt.extend(verifiability_receipt)
 
         # 3. Completeness (Max 20 pts)
@@ -138,26 +152,34 @@ class RubricScoringEngine:
             receipt=receipt
         )
 
-    def _score_clarity(self, text: str, issues: List[IssueCard]) -> Tuple[float, List[str]]:
+    def _score_clarity(
+        self, text: str, issues: List[IssueCard], provisioned_spans: Optional[List[Tuple[int, int]]] = None
+    ) -> Tuple[float, List[str]]:
         score = self.MAX_CLARITY
         receipt = []
         covered_spans: List[Tuple[int, int]] = []
         covered_phrases: Set[str] = set()
+        p_spans = provisioned_spans or []
 
         # Heuristic 1: Escape hatches (take precedence over single subjective words)
         for m in ESCAPE_HATCHES_REGEX.finditer(text):
+            m_start, m_end = m.start(), m.end()
+            if any(p_s <= m_start and m_end <= p_e for p_s, p_e in p_spans):
+                continue
             phrase = m.group(0).lower()
             if phrase not in covered_phrases:
                 penalty = 8.0
                 score -= penalty
                 covered_phrases.add(phrase)
-                covered_spans.append((m.start(), m.end()))
+                covered_spans.append((m_start, m_end))
                 receipt.append(f"[Clarity -{penalty:.1f} pts] Non-committal escape-hatch detected: '{m.group(0)}'")
 
-        # Heuristic 2: Subjective vague words (suppress if word falls within an already penalized escape hatch)
+        # Heuristic 2: Subjective vague words (suppress if word falls within an already penalized escape hatch or provisioned span)
         for m in SUBJECTIVE_TERMS_REGEX.finditer(text):
-            word = m.group(0).lower()
             m_start, m_end = m.start(), m.end()
+            if any(p_s <= m_start and m_end <= p_e for p_s, p_e in p_spans):
+                continue
+            word = m.group(0).lower()
             # If this word is part of an already penalized escape hatch span, do not double-charge
             if any(e_start <= m_start and m_end <= e_end for e_start, e_end in covered_spans):
                 continue
@@ -197,32 +219,41 @@ class RubricScoringEngine:
         score = round(max(0.0, min(self.MAX_CLARITY, score)), 1)
         return score, receipt
 
-    def _score_verifiability(self, text: str, issues: List[IssueCard]) -> Tuple[float, List[str]]:
+    def _score_verifiability(
+        self, text: str, issues: List[IssueCard], provisioned_spans: Optional[List[Tuple[int, int]]] = None
+    ) -> Tuple[float, List[str]]:
         score = self.MAX_VERIFIABILITY
         receipt = []
         covered_spans: List[Tuple[int, int]] = []
         covered_phrases: Set[str] = set()
+        p_spans = provisioned_spans or []
 
         # Heuristic 1: Untestable claims or absolutes
         for m in UNTESTABLE_SUPERLATIVES_REGEX.finditer(text):
+            m_start, m_end = m.start(), m.end()
+            if any(p_s <= m_start and m_end <= p_e for p_s, p_e in p_spans):
+                continue
             word = m.group(0).lower()
             if word not in covered_phrases:
                 penalty = 10.0
                 score -= penalty
                 covered_phrases.add(word)
-                covered_spans.append((m.start(), m.end()))
+                covered_spans.append((m_start, m_end))
                 receipt.append(f"[Verifiability -{penalty:.1f} pts] Untestable absolute/superlative: '{m.group(0)}'")
 
         # Heuristic 2: Performance metric words without numbers or explicit TBD placeholder
         has_number_or_tbd = bool(re.search(r"\d+", text)) or bool(TBD_PATTERN_REGEX.search(text))
         if not has_number_or_tbd:
             for m in METRIC_WORDS_WITHOUT_NUMBER_REGEX.finditer(text):
+                m_start, m_end = m.start(), m.end()
+                if any(p_s <= m_start and m_end <= p_e for p_s, p_e in p_spans):
+                    continue
                 metric = m.group(0).lower()
                 if metric not in covered_phrases:
                     penalty = 8.0
                     score -= penalty
                     covered_phrases.add(metric)
-                    covered_spans.append((m.start(), m.end()))
+                    covered_spans.append((m_start, m_end))
                     receipt.append(f"[Verifiability -{penalty:.1f} pts] Quantitative metric without numeric threshold: '{m.group(0)}'")
 
         # Flaw cards: Unverifiability

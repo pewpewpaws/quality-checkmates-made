@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "backend/api/routes_requirements.py": {
-    "mtime": 1792295942.8206878,
-    "seen": 1792296053.2047324,
-    "ast_hash": "5418f536209614bb5c378931c722b324",
+    "mtime": 1792296228.4400742,
+    "seen": 1792296809.0217712,
+    "ast_hash": "6a3a66e5309feca9f34d75331e35964f",
     "semantic_hash": ""
   },
   "backend/config.py": {
@@ -330,9 +330,9 @@
     "semantic_hash": "c09c2a766e7758082a27983eacccc971"
   },
   "backend/tests/test_rbac_and_workspaces.py": {
-    "mtime": 1792263799.7071767,
-    "seen": 1792263922.3777766,
-    "ast_hash": "3c074ceb7588ced438f9540c325e0d2e",
+    "mtime": 1792296254.6621904,
+    "seen": 1792296809.0218446,
+    "ast_hash": "a6baaebfe938a50fb5b752710ac0355d",
     "semantic_hash": ""
   },
   "backend/tests/test_context_and_duplicates.py": {
@@ -390,15 +390,15 @@
     "semantic_hash": ""
   },
   "backend/services/evidence_validator.py": {
-    "mtime": 1792230415.6068485,
-    "seen": 1792230795.1682498,
-    "ast_hash": "5debb6bd0cc3f4796c3b7d0cec53f18b",
+    "mtime": 1792296555.1732695,
+    "seen": 1792296809.0217934,
+    "ast_hash": "d4339429ee46b34d81432428c3f24e21",
     "semantic_hash": ""
   },
   "backend/services/rubric_engine.py": {
-    "mtime": 1792295462.2643511,
-    "seen": 1792296053.2047658,
-    "ast_hash": "1fd7465fe37f6727ab9ed3ed00cd29be",
+    "mtime": 1792296614.3810844,
+    "seen": 1792296809.0218055,
+    "ast_hash": "9d0053274ca63dcf967346231fbdadf7",
     "semantic_hash": ""
   },
   "backend/tests/test_rubric_and_evidence.py": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/DeepInspectorTab.jsx": {
-    "mtime": 1792295750.988384,
-    "seen": 1792296053.2048602,
-    "ast_hash": "02ba3318ea8fc8d7ee3c056ecaa7f8ee",
+    "mtime": 1792296705.2377534,
+    "seen": 1792296809.0218854,
+    "ast_hash": "6fcb6f2a5b4afcc9b4e9ab1c3c98fd02",
     "semantic_hash": ""
   },
   "frontend/src/components/GeminiBackground.jsx": {
@@ -603,6 +603,12 @@
     "mtime": 1792256882.8793693,
     "seen": 1792259463.7670536,
     "ast_hash": "9fb0754ca4c4fa6525d13d6f4a26ead2",
+    "semantic_hash": ""
+  },
+  "sample_data/pm_documents/flying_car_evtol_specification.txt": {
+    "mtime": 1792296639.4393344,
+    "seen": 1792296809.0220065,
+    "ast_hash": "d1430e15e02fcd307915c449802a8b05",
     "semantic_hash": ""
   }
 }

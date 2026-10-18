@@ -1,0 +1,23 @@
+# Urban Air Mobility (UAM) eVTOL Flying Car Systems Engineering Specification
+Document: AeroCab Autonomous Urban Air Mobility Architecture
+Author: Lead Flight Systems Architect & Autonomous Mobility PM
+Target Platform: AeroCab Quad-Rotor Passenger eVTOL (Urban Air Taxi)
+Safety Standard: DO-178C Level A / DO-254 DAL A
+
+Section 1: Transition & Autonomous Flight Controls
+REQ-UAM-001: When switching from vertical takeoff to forward cruise flight, the flight control computer shall complete rotor tilt transition within 4.5 seconds.
+REQ-UAM-002: The autonomous navigation system should steer the aircraft smoothly and provide a pleasant passenger ride quality during gusts.
+REQ-UAM-003: If primary GPS telemetry is lost for more than 500ms, the navigation computer shall immediately revert to visual inertial odometry and LiDAR dead-reckoning.
+REQ-UAM-004: The flight envelope protection system shall limit bank angle to a maximum of 30 degrees during automated urban corridor navigation.
+REQ-UAM-005: In the event of dual rotor motor failure, the emergency flight system shall deploy the ballistic recovery parachute within [TBD: parachute_deployment_max_latency_ms].
+
+Section 2: Battery Management & Energy Reserves
+REQ-UAM-006: The high-voltage battery management system shall continuously monitor 800V bus cell temperature and broadcast thermal warnings over CAN bus within 20ms.
+REQ-UAM-007: When remaining battery state-of-charge drops below [TBD: emergency_landing_reserve_pct], the flight director shall abort mission route and command immediate landing at the nearest vertiport.
+REQ-UAM-008: The onboard fast-charging subsystem shall charge batteries rapidly without causing excessive battery cell degradation.
+
+Section 3: Detect-and-Avoid (DAA) & Ground Hazards
+REQ-UAM-009: When an uncooperative air traffic intruder is detected within 500 meters, the collision avoidance computer shall execute an evasive altitude separation maneuver within 1.2 seconds.
+REQ-UAM-010: The terrain awareness and warning system shall warn the pilot and sound an acoustic horn and illuminate cockpit caution indicators if ground proximity distance drops below 50 meters.
+REQ-UAM-011: During ground taxi and vertiport docking, the obstacle avoidance radar shall detect pedestrians within 15 meters and stop wheel drive within 800ms.
+REQ-UAM-012: The aircraft doors must be locked whenever ground velocity exceeds 5 km/h or rotor blades are spinning above 100 RPM.

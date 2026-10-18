@@ -70,10 +70,8 @@ class EvidenceValidator:
         if not is_grounded:
             if strict:
                 raise ValueError(f"Ungrounded evidence quote '{card.evidence_quote}' not found in source text.")
-            # For non-strict, if ungrounded, fallback to first 25 chars or whole text
-            card.evidence_quote = source_text[: min(len(source_text), 30)]
-            card.start_offset = 0
-            card.end_offset = min(len(source_text), 30)
+            card.start_offset = None
+            card.end_offset = None
             card.is_grounded = False
             return card
 

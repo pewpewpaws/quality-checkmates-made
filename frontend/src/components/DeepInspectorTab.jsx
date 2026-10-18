@@ -536,8 +536,18 @@ export default function DeepInspectorTab({
         replacementToken = `[TBD: ${cleanParam || 'param'} = ${cleanVal}]`;
       }
 
+      // Filter out any issue cards that were resolved by this parameter substitution
+      const cleanIssues = (requirement.issues || []).filter((issue) => {
+        const q = (issue.evidence_quote || '').trim().toLowerCase();
+        if (!q) return false;
+        if (targetToken.toLowerCase().includes(q) || q.includes(targetToken.toLowerCase())) {
+          return false;
+        }
+        return true;
+      });
+
       const newText = requirement.text.replace(targetToken, replacementToken);
-      const newScore = await calculateRubricScore(newText);
+      const newScore = await calculateRubricScore(newText, cleanIssues);
       const remainingUnbound = getUnboundTbds(newText);
 
       // Strict Dual-Key Governance:
@@ -551,6 +561,7 @@ export default function DeepInspectorTab({
       const updatedReq = {
         ...requirement,
         text: newText,
+        issues: cleanIssues,
         quality_score: newScore,
         status: nextStatus,
         sign_off: {
@@ -639,8 +650,26 @@ export default function DeepInspectorTab({
     ];
 
     const issueQuotes = (requirement?.issues || [])
+      .filter((i) => i.is_grounded !== false)
       .map((i) => i.evidence_quote?.trim())
-      .filter((q) => q && q.length > 2 && q.length < 35 && !q.includes('\n'));
+      .filter((q) => {
+        if (!q || q.length < 2 || q.length > 35 || q.includes('\n')) return false;
+        const lower = q.toLowerCase();
+        // Never treat contractual TBD tags or proper subject entities as vague terms
+        if (lower.startsWith('[tbd:') || lower.includes('[tbd') || lower.includes('tbd:')) return false;
+        if ([
+          'the battery management system',
+          'battery management system',
+          'the system',
+          'the module',
+          'the controller',
+          'the device',
+          'the vehicle',
+          'the sensor',
+          'the actuator'
+        ].includes(lower)) return false;
+        return true;
+      });
 
     const combinedTerms = Array.from(new Set([...knownVagueTerms, ...issueQuotes]))
       .sort((a, b) => b.length - a.length)

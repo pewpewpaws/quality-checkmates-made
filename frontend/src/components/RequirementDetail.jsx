@@ -32,9 +32,18 @@ export default function RequirementDetail({
   const [showReceipt, setShowReceipt] = useState(false);
 
   // Tab results caches
-  const [duelData, setDuelData] = useState(requirement.interpretation_duel || null);
-  const [blueprintData, setBlueprintData] = useState(requirement.verification_blueprint || null);
+  const [duelData, setDuelData] = useState(requirement?.interpretation_duel || null);
+  const [blueprintData, setBlueprintData] = useState(requirement?.verification_blueprint || null);
   const [rewriteData, setRewriteData] = useState(null);
+
+  // Sync state when requirement prop changes
+  useEffect(() => {
+    setDuelData(requirement?.interpretation_duel || null);
+    setBlueprintData(requirement?.verification_blueprint || null);
+    setRewriteData(null);
+    setPmValueInput(requirement?.sign_off?.pm_target_val || '');
+    setHardwareRationale(requirement?.sign_off?.hardware_rationale || '');
+  }, [requirement?.id]);
 
   if (!requirement) {
     return (

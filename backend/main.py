@@ -227,14 +227,35 @@ def preload_demo_datasets():
     logger.info("Preloaded pitch-ready isolated demo projects: default_project, proj-flight, proj-med.")
 
 
-# Preload on import for immediate state availability across testing and ASGI servers
-preload_demo_datasets()
+def init_workspaces():
+    """Ensure standard project workspaces exist without injecting mock requirements."""
+    if "default_project" not in store._projects:
+        store.create_project(
+            project_id="default_project",
+            project_name="800V Automotive BMS (ISO 26262)",
+            domain="Automotive Safety (ISO 26262 / ASIL-D)",
+            description="Battery management system controlling high-voltage contactor isolation and thermal runaway containment."
+        )
+    if "proj-flight" not in store._projects:
+        store.create_project(
+            project_id="proj-flight",
+            project_name="Commercial Fly-By-Wire Flight Computer",
+            domain="Aerospace Avionics (DO-178C / Level-A)",
+            description="Triple-modular redundant primary flight control computer for fly-by-wire commercial transport aircraft."
+        )
+    if "proj-med" not in store._projects:
+        store.create_project(
+            project_id="proj-med",
+            project_name="Precision Smart Infusion Pump",
+            domain="Medical Devices (IEC 62304 / Class III)",
+            description="Dual-channel precision syringe and volumetric infusion pump with anti-free-flow clamp and ultrasonic air-in-line detection."
+        )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting Requirement Quality Copilot Backend...")
-    preload_demo_datasets()
+    logger.info("Starting Requirement Quality Copilot Backend (Live Qualcomm Cloud AI 100)...")
+    init_workspaces()
     yield
     logger.info("Shutting down Requirement Quality Copilot Backend...")
 

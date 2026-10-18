@@ -189,19 +189,40 @@ export default function Sidebar({
         <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
           {['ALL', 'FLAGGED_TBD', 'PROVISIONAL_PM', 'LOCKED_BASELINE'].map((st) => {
             const isSelected = statusFilter === st;
-            const label = st === 'ALL' ? 'All' : st === 'FLAGGED_TBD' ? 'TBD' : st === 'PROVISIONAL_PM' ? 'Prov' : 'Locked';
+            const provCount = requirements.filter((r) => r.status === 'PROVISIONAL_PM').length;
+            const label = st === 'ALL'
+              ? 'All'
+              : st === 'FLAGGED_TBD'
+              ? 'TBD'
+              : st === 'PROVISIONAL_PM'
+              ? (userRole === 'systems_engineer' && provCount > 0 ? `Sign-Off (${provCount})` : 'Prov')
+              : 'Locked';
+            const isProvHighlight = userRole === 'systems_engineer' && st === 'PROVISIONAL_PM' && provCount > 0;
             return (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className="btn-squircle squircle-pill"
                 style={{
-                  padding: '3px 9px',
+                  padding: '3px 8px',
                   fontSize: '11px',
-                  fontWeight: '500',
-                  background: isSelected ? 'var(--border-medium)' : 'transparent',
-                  color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)',
-                  border: isSelected ? '1px solid var(--border-glass)' : '1px solid transparent',
+                  fontWeight: isSelected || isProvHighlight ? '600' : '500',
+                  background: isSelected
+                    ? 'var(--border-medium)'
+                    : isProvHighlight
+                    ? 'rgba(245, 158, 11, 0.15)'
+                    : 'transparent',
+                  color: isSelected
+                    ? 'var(--text-primary)'
+                    : isProvHighlight
+                    ? '#f59e0b'
+                    : 'var(--text-muted)',
+                  border: isSelected
+                    ? '1px solid var(--border-glass)'
+                    : isProvHighlight
+                    ? '1px solid rgba(245, 158, 11, 0.4)'
+                    : '1px solid transparent',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {label}

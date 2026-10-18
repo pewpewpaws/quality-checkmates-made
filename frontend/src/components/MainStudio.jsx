@@ -21,9 +21,15 @@ export default function MainStudio({
   onIngestRequirements,
 }) {
   const [activeTab, setActiveTab] = useState('studio');
+  const pendingCount = requirements.filter((r) => r.status === 'PROVISIONAL_PM').length;
 
   const tabs = [
-    { id: 'studio', label: 'Inspector', icon: '📋', badge: selectedRequirement?.id || null },
+    {
+      id: 'studio',
+      label: userRole === 'systems_engineer' ? 'Sign-Off Studio' : 'Inspector',
+      icon: userRole === 'systems_engineer' ? '🛠️' : '📋',
+      badge: userRole === 'systems_engineer' && pendingCount > 0 ? `${pendingCount} Pending` : (selectedRequirement?.id || null),
+    },
     { id: 'chat', label: 'Copilot Chat', icon: '💬' },
     { id: 'ingest', label: 'Ingest Documents', icon: '📥' },
     { id: 'conflict', label: 'Conflict Radar', icon: '⚡' },
@@ -116,6 +122,7 @@ export default function MainStudio({
         {activeTab === 'studio' && (
           <DeepInspectorTab
             requirement={selectedRequirement}
+            requirements={requirements}
             activeProjectId={activeProjectId}
             userRole={userRole}
             onRequirementUpdated={onRequirementUpdated}

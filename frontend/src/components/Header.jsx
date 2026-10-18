@@ -111,6 +111,16 @@ export default function Header({
             {tbd} TBD
           </span>
         )}
+
+        {userRole === 'systems_engineer' && provisional > 0 && (
+          <span
+            className="badge-chip badge-provisional"
+            style={{ fontWeight: '600', padding: '3px 8px' }}
+            title="Requirements awaiting Lead Systems Engineer technical sign-off"
+          >
+            📋 {provisional} To Sign Off
+          </span>
+        )}
       </div>
 
       {/* Right Controls: Persona Switcher, Export, Mode */}

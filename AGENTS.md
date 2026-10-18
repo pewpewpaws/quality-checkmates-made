@@ -38,10 +38,12 @@
    - Unstated or ambiguous metrics must remain `[TBD: <parameter_name_and_unit>]`.
    - Propose **Smart Suggested Defaults** with engineering rationales in metadata (`identified_tbds`) as 1-click UI chips, but never bake them into contractual requirement statements.
 
-6. **Dual-Key Governance**:
+6. **Dual-Key Governance & Executive Verification Gate**:
    - Requirements follow a 3-state lifecycle: `🔴 FLAGGED_TBD` $\to$ `🟡 PROVISIONAL_PM` $\to$ `🟢 LOCKED_BASELINE`.
-   - UI features a 1-click Header Persona Switcher (`👔 Product Manager` $\longleftrightarrow$ `🛠️ Lead Systems Engineer`).
-   - Only `LOCKED_BASELINE` requirements with Technical Sign-off may generate blueprints or export to DOORS/Jira.
+   - UI features a 1-click Header Persona Switcher (`👔 Product Manager` $\longleftrightarrow$ `🛠️ Lead Systems Engineer` $\longleftrightarrow$ `🎖️ Executive`).
+   - Unapproved drafts and unquantified `[TBD]` placeholders are strictly shielded from Executive view.
+   - Upon Technical Sign-off by the Lead Systems Engineer (`LOCKED_BASELINE`), an executable **Verification Blueprint** (system preconditions, paired nominal/boundary test cases, and falsifiable PASS/FAIL acceptance criteria) is automatically synthesized and bound to the requirement.
+   - Only `LOCKED_BASELINE` requirements with validated Verification Blueprints reach the Executive lens and become eligible for publication-grade PDF/CSV export.
 
 7. **Verbatim Evidence Grounding & Deterministic Receipts**:
    - Flaw cards must quote exact, case-sensitive substrings (`evidence_quote`) from source text for interactive UI highlighting.

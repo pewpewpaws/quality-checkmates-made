@@ -92,9 +92,7 @@ class RequirementStore:
                     self._requirements[target_pid] = {}
                 self._requirements[target_pid][req.id] = req
 
-        # If database is fresh and has no projects, initialize default baseline
-        if "default_project" not in self._projects:
-            self._init_default_project()
+        # Database is clean — no default projects injected automatically.
 
     def _init_default_project(self):
         default_workspace = ProjectWorkspace(

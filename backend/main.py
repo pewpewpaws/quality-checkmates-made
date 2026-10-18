@@ -255,9 +255,6 @@ def init_workspaces():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting Requirement Quality Copilot Backend (Live Qualcomm Cloud AI 100)...")
-    init_workspaces()
-    if len(store.get_all()) == 0:
-        preload_demo_datasets()
     yield
     logger.info("Shutting down Requirement Quality Copilot Backend...")
 

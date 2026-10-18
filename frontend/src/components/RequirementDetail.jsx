@@ -208,13 +208,13 @@ export default function RequirementDetail({
 
             {/* Status Badge */}
             {requirement.status === 'FLAGGED_TBD' && (
-              <span className="badge-status badge-tbd">🔴 FLAGGED_TBD</span>
+              <span className="badge-status badge-tbd">FLAGGED TBD</span>
             )}
             {requirement.status === 'PROVISIONAL_PM' && (
-              <span className="badge-status badge-provisional">🟡 PROVISIONAL_PM</span>
+              <span className="badge-status badge-provisional">PROVISIONAL</span>
             )}
             {requirement.status === 'LOCKED_BASELINE' && (
-              <span className="badge-status badge-locked">🟢 LOCKED_BASELINE</span>
+              <span className="badge-status badge-locked">LOCKED BASELINE</span>
             )}
           </div>
         </div>
@@ -477,8 +477,9 @@ export default function RequirementDetail({
         {activeTab === 'xray' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {issues.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: '#047857', fontSize: '13px', fontWeight: 600 }}>
-                ✓ No critical flaws identified. Requirement passes baseline audits.
+              <div style={{ textAlign: 'center', padding: '24px', color: '#047857', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <CheckCircle2 size={15} />
+                <span>No critical flaws identified. Requirement passes baseline audits.</span>
               </div>
             ) : (
               issues.map((issue, idx) => (
@@ -661,8 +662,8 @@ export default function RequirementDetail({
                 {/* Intent-Lock Diff Tokens if available */}
                 {rewriteData.intent_lock && (
                   <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#047857', marginBottom: '4px' }}>
-                      Intent-Lock Verification: {rewriteData.intent_lock.passed ? 'PASSED ✓' : 'DRIFT DETECTED ⚠'}
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: rewriteData.intent_lock.passed ? '#047857' : '#B91C1C', marginBottom: '4px' }}>
+                      Intent-Lock Verification: {rewriteData.intent_lock.passed ? 'PASSED' : 'DRIFT DETECTED'}
                     </div>
                     <div style={{ fontSize: '11.5px', color: '#55524B' }}>
                       {rewriteData.intent_lock.audit_summary}

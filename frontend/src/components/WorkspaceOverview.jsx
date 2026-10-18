@@ -232,7 +232,7 @@ export default function WorkspaceOverview({
             <span style={{ fontSize: '12px', color: '#8A857C' }}>/ 100</span>
           </div>
           <div style={{ fontSize: '11px', color: roundedAvgScore >= 80 ? '#047857' : '#B45309', fontWeight: 600 }}>
-            {roundedAvgScore >= 80 ? '🟢 Pitch-Ready Baseline' : '🟡 Needs Parameterization'}
+            {roundedAvgScore >= 80 ? 'Pitch-Ready Baseline' : 'Needs Parameterization'}
           </div>
         </div>
 
@@ -245,21 +245,21 @@ export default function WorkspaceOverview({
             <span 
               className="badge-status badge-tbd" 
               style={{ fontSize: '11px', padding: '3px 7px' }}
-              title="🔴 FLAGGED_TBD: Unresolved parameter placeholders"
+              title="FLAGGED_TBD: Unresolved parameter placeholders"
             >
               {tbdCount} TBD
             </span>
             <span 
               className="badge-status badge-provisional" 
               style={{ fontSize: '11px', padding: '3px 7px' }}
-              title="🟡 PROVISIONAL_PM: Proposed target, pending Lead Systems Engineer sign-off"
+              title="PROVISIONAL_PM: Proposed target, pending Lead Systems Engineer sign-off"
             >
               {provisionalCount} Prov
             </span>
             <span 
               className="badge-status badge-locked" 
               style={{ fontSize: '11px', padding: '3px 7px' }}
-              title="🟢 LOCKED_BASELINE: Formally signed-off with falsifiable test blueprint"
+              title="LOCKED_BASELINE: Formally signed-off with falsifiable test blueprint"
             >
               {lockedCount} Lock
             </span>
@@ -355,9 +355,9 @@ export default function WorkspaceOverview({
             <div style={{ display: 'flex', gap: '4px' }}>
               {[
                 { id: 'ALL', label: 'All' },
-                { id: 'FLAGGED_TBD', label: '🔴 TBD' },
-                { id: 'PROVISIONAL_PM', label: '🟡 Prov' },
-                { id: 'LOCKED_BASELINE', label: '🟢 Lock' }
+                { id: 'FLAGGED_TBD', label: 'TBD' },
+                { id: 'PROVISIONAL_PM', label: 'Provisional' },
+                { id: 'LOCKED_BASELINE', label: 'Locked' }
               ].map(f => (
                 <button
                   key={f.id}
@@ -415,7 +415,9 @@ export default function WorkspaceOverview({
                         backgroundColor: '#FFFFFF'
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FAF8F5'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FFFFFF'}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#FFFFFF';
+                      }}
                     >
                       <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#181715', whiteSpace: 'nowrap' }}>
                         {req.id}
@@ -444,13 +446,13 @@ export default function WorkspaceOverview({
                       </td>
                       <td style={{ padding: '10px 12px', whiteSpace: 'nowrap' }}>
                         {req.status === 'FLAGGED_TBD' && (
-                          <span className="badge-status badge-tbd" style={{ fontSize: '10.5px' }}>🔴 FLAGGED_TBD</span>
+                          <span className="badge-status badge-tbd" style={{ fontSize: '10.5px' }}>FLAGGED TBD</span>
                         )}
                         {req.status === 'PROVISIONAL_PM' && (
-                          <span className="badge-status badge-provisional" style={{ fontSize: '10.5px' }}>🟡 PROVISIONAL_PM</span>
+                          <span className="badge-status badge-provisional" style={{ fontSize: '10.5px' }}>PROVISIONAL</span>
                         )}
                         {req.status === 'LOCKED_BASELINE' && (
-                          <span className="badge-status badge-locked" style={{ fontSize: '10.5px' }}>🟢 LOCKED_BASELINE</span>
+                          <span className="badge-status badge-locked" style={{ fontSize: '10.5px' }}>LOCKED BASELINE</span>
                         )}
                       </td>
                       <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }}>

@@ -197,7 +197,7 @@ export default function ExecutiveVerificationTab({
                 color: isAllLocked ? '#15803D' : '#B45309',
                 border: isAllLocked ? '1px solid #BBF7D0' : '1px solid #FDE68A'
               }}>
-                {isAllLocked ? '🟢 All Requirements Verified & Locked' : '🛡️ Executive Review Shield Active'}
+                {isAllLocked ? 'All Requirements Verified & Locked' : 'Executive Review Shield Active'}
               </span>
               <span style={{ fontSize: '11px', color: '#78716C', fontFamily: 'var(--font-mono)' }}>
                 {project.domain || 'Systems Engineering'}
@@ -266,15 +266,20 @@ export default function ExecutiveVerificationTab({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#78716C' }}>
-            <span>🟢 {lockedCount} Technical Sign-Offs Complete</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircle2 size={13} color="#15803D" />
+              <span>{lockedCount} Technical Sign-Offs Complete</span>
+            </span>
             {pendingCount > 0 && (
-              <span style={{ color: '#B45309', fontWeight: 600 }}>
-                ⏳ {pendingCount} Requirement{pendingCount === 1 ? '' : 's'} Pending Lead Systems Engineer Sign-Off
+              <span style={{ color: '#B45309', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={13} />
+                <span>{pendingCount} Requirement{pendingCount === 1 ? '' : 's'} Pending Sign-Off</span>
               </span>
             )}
             {pendingCount === 0 && (
-              <span style={{ color: '#15803D', fontWeight: 600 }}>
-                ✓ Gate Cleared: Ready for Executive Seal
+              <span style={{ color: '#15803D', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle2 size={13} />
+                <span>Gate Cleared: Ready for Executive Seal</span>
               </span>
             )}
           </div>
@@ -684,8 +689,9 @@ export default function ExecutiveVerificationTab({
                       gap: '8px'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase' }}>
-                          ✓ Nominal Test Case (Positive)
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#166534', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <CheckCircle2 size={13} color="#15803D" />
+                          <span>Nominal Test Case (Positive)</span>
                         </span>
                         <span style={{ fontSize: '10.5px', color: '#15803D' }}>{posTest.id || 'TC-POS'}</span>
                       </div>
@@ -711,8 +717,9 @@ export default function ExecutiveVerificationTab({
                       gap: '8px'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#991B1B', textTransform: 'uppercase' }}>
-                          ⚠️ Boundary / Stress Test (Negative)
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#991B1B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <ShieldAlert size={13} color="#B91C1C" />
+                          <span>Boundary / Stress Test (Negative)</span>
                         </span>
                         <span style={{ fontSize: '10.5px', color: '#B91C1C' }}>{negTest.id || 'TC-BOUND'}</span>
                       </div>

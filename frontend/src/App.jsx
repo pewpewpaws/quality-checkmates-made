@@ -9,6 +9,7 @@ import ExecutiveVerificationTab from './components/ExecutiveVerificationTab';
 import IngestModal from './components/IngestModal';
 import ClickSpark from './components/ClickSpark';
 import DotGrid from './components/DotGrid';
+import { BarChart3, MessageSquare, ShieldCheck, FileText } from 'lucide-react';
 import { api } from './services/api';
 
 export default function App() {
@@ -371,7 +372,8 @@ export default function App() {
                         transition: 'all 0.15s ease'
                       }}
                     >
-                      <span>📊 Workspace Overview</span>
+                      <BarChart3 size={13} />
+                      <span>Workspace Overview</span>
                     </button>
 
                     {role === 'executive' ? (
@@ -394,7 +396,8 @@ export default function App() {
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>🎖️ Executive Master Test Cases & Certification</span>
+                        <ShieldCheck size={14} />
+                        <span>Master Test Cases & Certification</span>
                       </button>
                     ) : (
                       <button
@@ -415,7 +418,8 @@ export default function App() {
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>💬 AI Copilot & Ingest</span>
+                        <MessageSquare size={13} />
+                        <span>AI Copilot & Ingest</span>
                       </button>
                     )}
 
@@ -438,7 +442,8 @@ export default function App() {
                           transition: 'all 0.15s ease'
                         }}
                       >
-                        <span>📋 Requirement {selectedReqId}</span>
+                        <FileText size={13} />
+                        <span>Requirement {selectedReqId}</span>
                       </button>
                     )}
                   </div>

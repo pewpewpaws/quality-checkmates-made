@@ -16,7 +16,7 @@
   "20": "test_phase_0_to_2_e2e.py",
   "21": "schemas.py",
   "22": "RequirementStatus",
-  "23": "add_project_document",
+  "23": "update_project",
   "24": "routes_chat.py",
   "25": "test_live_duplicates_conflicts.py",
   "26": "export_service.py",

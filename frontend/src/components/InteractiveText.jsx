@@ -325,11 +325,16 @@ export default function InteractiveText({
           }}
           title="Click to inspect Grammarly flaw & suggested fix"
         >
-          {span.color === 'red' ? (
-            <span style={{ fontSize: '10px' }}>🔴</span>
-          ) : (
-            <span style={{ fontSize: '10px' }}>🟡</span>
-          )}
+          <span 
+            style={{ 
+              width: '6px', 
+              height: '6px', 
+              borderRadius: '50%', 
+              backgroundColor: span.color === 'red' ? '#EF4444' : '#F59E0B',
+              display: 'inline-block',
+              flexShrink: 0
+            }} 
+          />
           <span>{span.text}</span>
         </span>
 
@@ -450,13 +455,13 @@ export default function InteractiveText({
                   }}
                 >
                   <Lock size={12} />
-                  <span>Approve & Lock Baseline (🟢)</span>
+                  <span>Approve & Lock Baseline</span>
                 </button>
               )}
 
               {span.type === 'provisional' && role !== 'systems_engineer' && (
                 <div style={{ fontSize: '11px', color: '#B45309', background: '#FEF3C7', padding: '4px 8px', borderRadius: '4px', textAlign: 'center', fontWeight: 600 }}>
-                  🟡 Provisional: Switch to Lead Systems Engineer to sign off.
+                  Provisional: Switch to Lead Systems Engineer to sign off.
                 </div>
               )}
             </div>

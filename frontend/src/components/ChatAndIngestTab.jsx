@@ -195,7 +195,7 @@ export default function ChatAndIngestTab({
           ...prev,
           {
             role: 'assistant',
-            content: `⚠️ Ingestion failed: ${err.message}`,
+            content: `Ingestion failed: ${err.message}`,
             generatedReqs: null,
             contextGrounding: null
           }
@@ -237,7 +237,7 @@ export default function ChatAndIngestTab({
         ...prev,
         {
           role: 'assistant',
-          content: `⚠️ Error contacting Qualcomm Cloud AI 100 Copilot: ${err.message}`,
+          content: `Error contacting Qualcomm Cloud AI 100 Copilot: ${err.message}`,
           generatedReqs: null,
           contextGrounding: null
         }
@@ -486,7 +486,7 @@ export default function ChatAndIngestTab({
             {/* Sender Tag */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10.5px', color: '#78716C', padding: '0 4px' }}>
               {m.role === 'user' ? (
-                <span>👔 You ({role === 'product_manager' ? 'PM' : 'Systems Lead'})</span>
+                <span>You ({role === 'product_manager' ? 'PM' : 'Systems Lead'})</span>
               ) : (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: '#181715' }}>
                   <Cpu size={12} className="text-amber-600" />
@@ -566,7 +566,7 @@ export default function ChatAndIngestTab({
                               gap: '4px'
                             }}>
                               <CheckCircle2 size={12} />
-                              <span>✓ In Workspace ({req.savedReqId || req.id})</span>
+                              <span>In Workspace ({req.savedReqId || req.id})</span>
                             </span>
                             {onSelectRequirement && (
                               <button
@@ -737,7 +737,7 @@ export default function ChatAndIngestTab({
               e.currentTarget.style.color = '#57534E';
             }}
           >
-            <span>✨</span>
+            <Sparkles size={12} className="text-stone-500" />
             <span style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p}</span>
           </button>
         ))}

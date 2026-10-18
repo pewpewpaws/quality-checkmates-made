@@ -10,7 +10,9 @@ import {
   ShieldAlert, 
   Clock, 
   CheckCircle2,
-  Filter
+  Filter,
+  BarChart3,
+  MessageSquare
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -191,10 +193,11 @@ export default function Sidebar({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px'
+              gap: '6px'
             }}
           >
-            <span>📊 Overview</span>
+            <BarChart3 size={13} />
+            <span>Overview</span>
           </button>
 
           <button
@@ -212,10 +215,11 @@ export default function Sidebar({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '4px'
+              gap: '6px'
             }}
           >
-            <span>💬 Chat & Ingest</span>
+            <MessageSquare size={13} />
+            <span>Chat & Ingest</span>
           </button>
         </div>
       )}

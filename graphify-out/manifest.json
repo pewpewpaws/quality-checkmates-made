@@ -498,15 +498,15 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1792353080.92583,
-    "seen": 1792353249.056331,
-    "ast_hash": "561d032e0d64e5ddae6c26b857418331",
+    "mtime": 1792354905.459116,
+    "seen": 1792355329.5557535,
+    "ast_hash": "2a653f53df26cd0b9371ca90e64581dc",
     "semantic_hash": ""
   },
   "frontend/src/components/Header.jsx": {
-    "mtime": 1792352960.6801677,
-    "seen": 1792353249.0563366,
-    "ast_hash": "79e1a352554127b471f2266999331140",
+    "mtime": 1792354856.5648324,
+    "seen": 1792355329.55576,
+    "ast_hash": "1a708c4c931df1504281648b6f2191f7",
     "semantic_hash": ""
   },
   "frontend/src/components/IngestModal.jsx": {
@@ -516,15 +516,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/InteractiveText.jsx": {
-    "mtime": 1792352434.7104483,
-    "seen": 1792352577.8238552,
-    "ast_hash": "de66600a1341e4b4960a51c036249f49",
+    "mtime": 1792355191.9943914,
+    "seen": 1792355329.5557623,
+    "ast_hash": "f78943f750c09c00c6013df5d662c58d",
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
-    "mtime": 1792352450.3332767,
-    "seen": 1792352577.8238564,
-    "ast_hash": "9b91a08f6d1f14d3f0e97bac27175d73",
+    "mtime": 1792355156.964718,
+    "seen": 1792355329.5557632,
+    "ast_hash": "77d107076ee999c52f8f4d3adad84cb0",
     "semantic_hash": ""
   },
   "frontend/src/components/ScrambledText.jsx": {
@@ -534,9 +534,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/Sidebar.jsx": {
-    "mtime": 1792348809.4899478,
-    "seen": 1792349118.2368057,
-    "ast_hash": "3662dfad2a4a428140e3f98dcc9c8500",
+    "mtime": 1792354937.8889275,
+    "seen": 1792355329.5557652,
+    "ast_hash": "e0a6654ad5675139ccf7e9663f4ea3af",
     "semantic_hash": ""
   },
   "frontend/src/components/StartProjectHero.jsx": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ChatAndIngestTab.jsx": {
-    "mtime": 1792352166.863236,
-    "seen": 1792352201.2203088,
-    "ast_hash": "9e2bbde30ca2d880abaf9173b28395d5",
+    "mtime": 1792355287.2391202,
+    "seen": 1792355329.555755,
+    "ast_hash": "232d146bc351bb8294b3b7cb6420c47e",
     "semantic_hash": ""
   },
   "frontend/src/components/ClickSpark.jsx": {
@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/WorkspaceOverview.jsx": {
-    "mtime": 1792353045.5630097,
-    "seen": 1792353249.056347,
-    "ast_hash": "3e73ed22dbcf0d84680dfebd7f77cbdc",
+    "mtime": 1792354991.7392101,
+    "seen": 1792355329.5557702,
+    "ast_hash": "8d22f17ca9003279db88b09c37e4790e",
     "semantic_hash": ""
   },
   "AGENTS.md": {
@@ -654,9 +654,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ExecutiveVerificationTab.jsx": {
-    "mtime": 1792352943.8421202,
-    "seen": 1792353249.0563357,
-    "ast_hash": "71d00046073216a1849b966834d32c2b",
+    "mtime": 1792355050.586528,
+    "seen": 1792355329.555759,
+    "ast_hash": "7c593056547afbffb7be15657b730774",
     "semantic_hash": ""
   }
 }

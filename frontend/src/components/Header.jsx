@@ -11,7 +11,10 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Lock,
-  Layers
+  Layers,
+  Briefcase,
+  Wrench,
+  ShieldCheck
 } from 'lucide-react';
 import { api } from '../services/api';
 import StarBorder from './StarBorder';
@@ -31,9 +34,9 @@ export default function Header({
   const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   const roles = [
-    { id: 'product_manager', label: 'Product Manager', icon: '👔', desc: 'Authoring & TBD Value Proposals' },
-    { id: 'systems_engineer', label: 'Lead Systems Engineer', icon: '🛠️', desc: 'Technical Sign-Off & Baseline Lock' },
-    { id: 'executive', label: 'Senior Executive', icon: '🎖️', desc: 'Master Test Cases & Baseline Certification' }
+    { id: 'product_manager', label: 'Product Manager', icon: Briefcase, desc: 'Authoring & TBD Value Proposals' },
+    { id: 'systems_engineer', label: 'Lead Systems Engineer', icon: Wrench, desc: 'Technical Sign-Off & Baseline Lock' },
+    { id: 'executive', label: 'Senior Executive', icon: ShieldCheck, desc: 'Master Test Cases & Baseline Certification' }
   ];
 
   const currentRoleObj = roles.find(r => r.id === role) || roles[0];
@@ -187,9 +190,9 @@ export default function Header({
           <button
             onClick={() => setShowRoleMenu(!showRoleMenu)}
             className="btn-subtle-cream"
-            style={{ padding: '6px 10px', fontSize: '12.5px' }}
+            style={{ padding: '6px 10px', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '7px' }}
           >
-            <span>{currentRoleObj.icon}</span>
+            {currentRoleObj.icon && <currentRoleObj.icon size={14} className="text-stone-700" />}
             <span style={{ fontWeight: 600 }}>{currentRoleObj.label}</span>
             <ChevronDown size={13} style={{ opacity: 0.6 }} />
           </button>
@@ -215,34 +218,37 @@ export default function Header({
               <div style={{ padding: '6px 10px', fontSize: '11px', color: '#8A857C', fontWeight: 600, textTransform: 'uppercase' }}>
                 Governance Persona (RBAC)
               </div>
-              {roles.map((r) => (
-                <div
-                  key={r.id}
-                  onClick={() => {
-                    onRoleChange(r.id);
-                    setShowRoleMenu(false);
-                  }}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    backgroundColor: role === r.id ? '#F4EFEA' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '8px'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
-                  onMouseLeave={(e) => {
-                    if (role !== r.id) e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <span style={{ fontSize: '16px' }}>{r.icon}</span>
-                  <div>
-                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#181715' }}>{r.label}</div>
-                    <div style={{ fontSize: '11px', color: '#8A857C' }}>{r.desc}</div>
+              {roles.map((r) => {
+                const IconComponent = r.icon;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => {
+                      onRoleChange(r.id);
+                      setShowRoleMenu(false);
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      backgroundColor: role === r.id ? '#F4EFEA' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '10px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
+                    onMouseLeave={(e) => {
+                      if (role !== r.id) e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    {IconComponent && <IconComponent size={15} style={{ marginTop: '2px', color: '#57534E', flexShrink: 0 }} />}
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#181715' }}>{r.label}</div>
+                      <div style={{ fontSize: '11px', color: '#8A857C' }}>{r.desc}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

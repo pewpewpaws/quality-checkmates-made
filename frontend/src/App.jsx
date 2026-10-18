@@ -10,7 +10,7 @@ import { api } from './services/api';
 
 export default function App() {
   const [projects, setProjects] = useState([]);
-  const [currentProjectId, setCurrentProjectId] = useState('default_project');
+  const [currentProjectId, setCurrentProjectId] = useState(null);
   const [requirements, setRequirements] = useState([]);
   const [selectedReqId, setSelectedReqId] = useState(null);
   const [role, setRole] = useState('product_manager'); // 'product_manager' | 'systems_engineer' | 'executive'
@@ -29,9 +29,6 @@ export default function App() {
     try {
       const data = await api.getProjects();
       setProjects(data);
-      if (data.length > 0 && !currentProjectId) {
-        setCurrentProjectId(data[0].project_id);
-      }
     } catch (err) {
       console.error('Error fetching projects:', err);
     }

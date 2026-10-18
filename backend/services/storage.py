@@ -619,7 +619,9 @@ class RequirementStore:
             sign_off.state = RequirementStatus.PROVISIONAL_PM
             item.status = RequirementStatus.PROVISIONAL_PM
         elif action == "lock_baseline":
-            if "[TBD:" in item.text or "[TBD]" in item.text:
+            tbd_matches = re.findall(r"\[TBD:[^\]]+\]", item.text)
+            unbound_tbds = [t for t in tbd_matches if "=" not in t]
+            if unbound_tbds and not (sign_off and sign_off.pm_target_val):
                 raise ValueError("Cannot lock baseline: requirement contains unresolved [TBD] parameters. Must be resolved to provisional values first.")
             sign_off.tech_lead_approver = tech_lead_approver or "Lead Systems Engineer"
             sign_off.hardware_rationale = hardware_rationale or "Validated against hardware envelope"

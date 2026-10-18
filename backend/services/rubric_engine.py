@@ -278,13 +278,17 @@ class RubricScoringEngine:
         for m in TBD_PATTERN_REGEX.finditer(text):
             token = m.group(0)
             covered_spans.append((m.start(), m.end()))
-            covered_phrases.add(token.lower())
+            covered_phrases.add(token)
 
-        tbd_matches = list(covered_phrases)
-        if tbd_matches:
-            penalty = min(8.0, len(tbd_matches) * 4.0)
+        unbound_tbds = [t for t in covered_phrases if "=" not in t]
+        provisioned_tbds = [t for t in covered_phrases if "=" in t]
+
+        if unbound_tbds:
+            penalty = min(8.0, len(unbound_tbds) * 4.0)
             score -= penalty
-            receipt.append(f"[Completeness -{penalty:.1f} pts] Unresolved parameter placeholders: {', '.join(tbd_matches)}")
+            receipt.append(f"[Completeness -{penalty:.1f} pts] Unresolved parameter placeholders: {', '.join(unbound_tbds)}")
+        elif provisioned_tbds:
+            receipt.append(f"[Completeness] Provisioned parameter placeholders (Provisional PM 🟡): {', '.join(provisioned_tbds)}")
 
         # Flaw cards: Incompleteness
         incomp_cards = [i for i in issues if i.issue_type.lower() in ("incompleteness", "incomplete")]

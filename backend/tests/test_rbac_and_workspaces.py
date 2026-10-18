@@ -8,8 +8,13 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def reset_store_state():
-    """Ensure clean test isolation across persistent SQLite runs."""
+def reset_store_state(monkeypatch):
+    """Ensure clean test isolation across persistent SQLite runs and fast RBAC verification."""
+    from backend.api import routes_requirements
+    async def mock_extract(text):
+        return []
+    monkeypatch.setattr(routes_requirements.qualcomm, "extract_xray_issues", mock_extract)
+
     test_pids = [
         "proj-surgical-arm",
         "proj-aero-drone",

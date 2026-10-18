@@ -109,9 +109,15 @@ async def chat_synthesize_requirements(
         next_req_index=next_idx
     )
 
-    if payload.save_to_store and reqs:
+    if reqs:
+        from backend.services.rubric_engine import RubricScoringEngine
+        engine = RubricScoringEngine()
         for r in reqs:
             r.project_id = target_project
+            if not r.quality_score:
+                engine.score_requirement(r)
+
+    if payload.save_to_store and reqs:
         store.bulk_add(reqs, project_id=target_project)
 
     return ChatRequirementResponse(

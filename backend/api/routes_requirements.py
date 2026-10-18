@@ -1,3 +1,5 @@
+import re
+import logging
 from typing import List, Optional, Tuple, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Query, Response
 from backend.models.schemas import (
@@ -15,6 +17,7 @@ from backend.services.qualcomm_service import QualcommService
 from backend.services.rubric_engine import rubric_engine
 from backend.services.export_service import export_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/requirements", tags=["Requirements & Dual-Key Governance"])
 qualcomm = QualcommService()
 
@@ -86,13 +89,34 @@ async def list_requirements(
 async def create_requirement(
     req: RequirementStatement,
     allow_duplicate: bool = Query(False, description="Allow duplicate requirement creation (false by default)"),
+    auto_enrich: bool = Query(True, description="Automatically enrich new requirements with AI flaw extraction"),
     role: UserRole = Depends(require_write_permission)
 ):
     """
     Add a new requirement statement.
     Restricted: Executives have read-only access.
-    Strictly prevents duplicate requirement creation by default (HTTP 409).
+    Automatically enriches new requirements using Qualcomm AI 100 flaw extraction and rubric scoring.
     """
+    # 1. Automatic AI Processing for new requirements
+    if auto_enrich and not req.issues:
+        try:
+            req.issues = await qualcomm.extract_xray_issues(req.text)
+        except Exception as e:
+            logger.warning(f"Auto AI X-Ray extraction skipped: {e}")
+
+    if not req.quality_score:
+        req.quality_score = rubric_engine.calculate_score(req.text, req.issues)
+
+    # 2. Check TBD parameter state
+    tbd_matches = re.findall(r"\[TBD:[^\]]+\]", req.text)
+    unbound_tbds = [t for t in tbd_matches if "=" not in t]
+    has_pm_value = bool(req.sign_off and req.sign_off.pm_target_val and req.sign_off.pm_target_val.strip())
+
+    if unbound_tbds and not has_pm_value:
+        req.status = RequirementStatus.FLAGGED_TBD
+    elif req.status in (RequirementStatus.DRAFT, None):
+        req.status = RequirementStatus.PROVISIONAL_PM
+
     try:
         return store.upsert(req, project_id=req.project_id, allow_duplicate=allow_duplicate)
     except ValueError as exc:
@@ -218,12 +242,17 @@ async def update_requirement(
     updated.version = existing.version + 1
 
     # Dual-Key Governance Enforcement:
-    # 1. If text contains [TBD:] or [TBD], requirement must be FLAGGED_TBD (red).
-    # 2. When resolving/changing TBD to a value or from provisioned to a value:
-    #    keep it strictly as PROVISIONAL_PM (yellow).
-    # 3. Only Lead Systems Engineer (Senior Engineer) sign-off can lock baseline (green).
-    has_tbds = ("[TBD:" in updated.text or "[TBD]" in updated.text)
-    if has_tbds:
+    # 1. Unbound [TBD] parameters (without '=') with no pm_target_val -> FLAGGED_TBD (red 🔴).
+    # 2. When PM provides or updates a value for TBD ([TBD: param = value]):
+    #    keep it strictly as PROVISIONAL_PM (yellow 🟡) so it does not confuse the PM.
+    # 3. Only Lead Systems Engineer sign-off can lock baseline (green 🟢).
+    tbd_matches = re.findall(r"\[TBD:[^\]]+\]", updated.text) or (["[TBD]"] if "[TBD]" in updated.text else [])
+    unbound_tbds = [t for t in tbd_matches if "=" not in t]
+    has_pm_value = bool(updated.sign_off and updated.sign_off.pm_target_val and updated.sign_off.pm_target_val.strip())
+
+    text_changed = (updated.text.strip() != existing.text.strip())
+
+    if unbound_tbds and not has_pm_value:
         updated.status = RequirementStatus.FLAGGED_TBD
         if updated.sign_off:
             updated.sign_off.tech_lead_approver = None
@@ -231,15 +260,19 @@ async def update_requirement(
             updated.sign_off.signed_off_at = None
             updated.sign_off.state = RequirementStatus.FLAGGED_TBD
     else:
-        text_changed = (updated.text.strip() != existing.text.strip())
+        # If all TBDs have assigned values (or no TBDs), requirement is strictly PROVISIONAL_PM (yellow)
+        # unless it was already LOCKED_BASELINE and the text did not change at all.
         if text_changed or existing.status != RequirementStatus.LOCKED_BASELINE:
-            # Demote to PROVISIONAL_PM (yellow) if text changed or if attempting to jump directly to LOCKED_BASELINE
             updated.status = RequirementStatus.PROVISIONAL_PM
             if updated.sign_off:
                 updated.sign_off.tech_lead_approver = None
                 updated.sign_off.hardware_rationale = None
                 updated.sign_off.signed_off_at = None
                 updated.sign_off.state = RequirementStatus.PROVISIONAL_PM
+
+    # Automatically recompute deterministic rubric score when text changes
+    if text_changed:
+        updated.quality_score = rubric_engine.calculate_score(updated.text, issues=updated.issues)
 
     try:
         return store.upsert(updated, project_id=existing.project_id, allow_duplicate=allow_duplicate)

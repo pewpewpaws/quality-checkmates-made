@@ -332,16 +332,22 @@ export default function DeepInspectorTab({
     setIsEditingText(false);
   };
 
+  const getUnboundTbds = (text) => {
+    if (!text) return [];
+    const matches = text.match(/\[TBD:[^\]]+\]/g) || (text.includes('[TBD]') ? ['[TBD]'] : []);
+    return matches.filter((m) => !m.includes('='));
+  };
+
   const handleSaveTextEdit = async () => {
     if (!editedText.trim()) return;
     try {
       const textTrimmed = editedText.trim();
       const score = await calculateRubricScore(textTrimmed);
-      const hasRemainingTbd = textTrimmed.includes('[TBD:') || textTrimmed.includes('[TBD]');
-      // Strict Dual-Key Governance:
-      // Even if previously locked/green, any text edit demotes status to PROVISIONAL_PM (yellow)
-      // or FLAGGED_TBD (red if TBDs remain). Senior Engineer approval is strictly cleared.
-      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
+      const remainingUnbound = getUnboundTbds(textTrimmed);
+      // Dual-Key Governance:
+      // If unbound TBDs remain without assigned values -> FLAGGED_TBD (red 🔴).
+      // If all TBDs have assigned values ([TBD: param = val]) -> PROVISIONAL_PM (yellow 🟡).
+      const nextStatus = remainingUnbound.length > 0 ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
 
       const updatedReq = {
         ...requirement,
@@ -362,7 +368,7 @@ export default function DeepInspectorTab({
       onRequirementUpdated(saved);
       setIsEditingText(false);
       setTbdResolvedMessage(
-        hasRemainingTbd
+        remainingUnbound.length > 0
           ? 'Contractual statement updated (Unresolved [TBD] parameters remaining 🔴)'
           : 'Contractual statement updated ➔ Provisional PM 🟡 (Queued for Senior Systems Engineer Sign-Off)'
       );
@@ -386,61 +392,58 @@ export default function DeepInspectorTab({
   const overallScore = scoreObj ? Math.round(scoreObj.overall) : 0;
 
   const getSmartSuggestionsForParam = (paramName) => {
-    const p = (paramName || '').toLowerCase().trim();
+    const rawP = (paramName || '').toLowerCase().trim();
+    const p = rawP.includes('=') ? rawP.split('=')[0].trim() : rawP;
 
     // 0. Explicit vague / unquantified terms mapping to formal TBD placeholders & engineering defaults
     if (p === 'periodically') {
       return [
-        { value: 'every [TBD: transmission interval in ms]', rationale: 'Convert to contractual [TBD] parameter envelope', confidence: 'RECOMMENDED' },
-        { value: 'every 1000ms', rationale: '1 Hz nominal CAN-FD telemetry broadcast rate', confidence: 'HIGH' },
+        { value: 'every 1000ms', rationale: '1 Hz nominal CAN-FD telemetry broadcast rate', confidence: 'RECOMMENDED' },
+        { value: 'every 100ms', rationale: '10 Hz fast telemetry loop deadline', confidence: 'HIGH' },
         { value: 'every 5000ms', rationale: '0.2 Hz low-power telematics transmission cycle', confidence: 'MEDIUM' },
       ];
     }
     if (p === 'as appropriate') {
       return [
-        { value: 'under [TBD: transmission policy]', rationale: 'Convert to contractual [TBD] policy envelope', confidence: 'RECOMMENDED' },
-        { value: 'upon DTC fault trigger or cyclic timer expiry', rationale: 'Deterministic ISO 14229 UDS diagnostic trigger', confidence: 'HIGH' },
-        { value: 'when vehicle ignition state is active', rationale: 'Power-mode gated telemetry transmission', confidence: 'MEDIUM' },
+        { value: 'upon DTC fault trigger or cyclic timer expiry', rationale: 'Deterministic ISO 14229 UDS diagnostic trigger', confidence: 'RECOMMENDED' },
+        { value: 'when vehicle ignition state is active', rationale: 'Power-mode gated telemetry transmission', confidence: 'HIGH' },
+        { value: 'upon pyrotechnic trigger or crash event', rationale: 'ASIL-D crash hazard disconnect policy', confidence: 'HIGH' },
       ];
     }
     if (p === 'quickly') {
       return [
-        { value: 'within [TBD: response duration in ms]', rationale: 'Convert to contractual [TBD] latency envelope', confidence: 'RECOMMENDED' },
-        { value: 'within 10ms', rationale: 'ASIL-D real-time safety response budget', confidence: 'HIGH' },
-        { value: 'within 50ms', rationale: 'Standard cyclic task deadline', confidence: 'MEDIUM' },
+        { value: 'within 10ms', rationale: 'ASIL-D real-time safety response budget', confidence: 'RECOMMENDED' },
+        { value: 'within 25ms', rationale: 'Standard cyclic task deadline', confidence: 'HIGH' },
+        { value: 'within 50ms', rationale: 'CAN-FD bus dispatch ceiling', confidence: 'MEDIUM' },
       ];
     }
     if (p === 'promptly') {
       return [
-        { value: 'within [TBD: timeout duration in ms]', rationale: 'Convert to contractual [TBD] deadline', confidence: 'RECOMMENDED' },
-        { value: 'within 100ms', rationale: 'Sub-system fault broadcast time ceiling', confidence: 'HIGH' },
+        { value: 'within 100ms', rationale: 'Sub-system fault broadcast time ceiling', confidence: 'RECOMMENDED' },
+        { value: 'within 50ms', rationale: 'Fast critical alert dispatch', confidence: 'HIGH' },
       ];
     }
     if (p === 'high reliability') {
       return [
-        { value: 'with [TBD: MTBF target or ASIL level]', rationale: 'Convert to contractual [TBD] reliability metric', confidence: 'RECOMMENDED' },
-        { value: 'with 99.999% availability (ISO 26262 ASIL-D)', rationale: 'Safety-critical automotive integrity level', confidence: 'HIGH' },
-        { value: 'with MTBF exceeding 50,000 operating hours', rationale: 'IEC 60601-1 mission durability benchmark', confidence: 'MEDIUM' },
+        { value: 'with 99.999% availability (ISO 26262 ASIL-D)', rationale: 'Safety-critical automotive integrity level', confidence: 'RECOMMENDED' },
+        { value: 'with MTBF exceeding 50,000 operating hours', rationale: 'IEC 60601-1 mission durability benchmark', confidence: 'HIGH' },
       ];
     }
     if (p === 'high pressure') {
       return [
-        { value: 'when pressure exceeds [TBD: occlusion threshold in kPa]', rationale: 'Convert to contractual [TBD] pressure cutoff', confidence: 'RECOMMENDED' },
-        { value: 'when line pressure exceeds 100 kPa ± 10 kPa', rationale: 'IEC 62304 downstream occlusion alarm threshold', confidence: 'HIGH' },
-        { value: 'when line pressure exceeds 15 psi', rationale: 'Fluidic barrier physical relief threshold', confidence: 'MEDIUM' },
+        { value: 'when line pressure exceeds 100 kPa ± 10 kPa', rationale: 'IEC 62304 downstream occlusion alarm threshold', confidence: 'RECOMMENDED' },
+        { value: 'when line pressure exceeds 15 psi', rationale: 'Fluidic barrier physical relief threshold', confidence: 'HIGH' },
       ];
     }
     if (p === 'critical') {
       return [
-        { value: '[TBD: critical temperature threshold]', rationale: 'Convert to contractual [TBD] thermal limit', confidence: 'RECOMMENDED' },
-        { value: 'pack surface temperature exceeds 55°C', rationale: 'BMS thermal runaway derating threshold', confidence: 'HIGH' },
+        { value: 'pack surface temperature exceeds 55°C', rationale: 'BMS thermal runaway derating threshold', confidence: 'RECOMMENDED' },
         { value: 'junction temperature exceeds 65°C', rationale: 'Inverter silicon-carbide junction protection cutoff', confidence: 'HIGH' },
       ];
     }
     if (p === 'normal load' || p === 'normal conditions') {
       return [
-        { value: 'under [TBD: operating temperature and voltage envelope]', rationale: 'Convert to contractual [TBD] operating conditions', confidence: 'RECOMMENDED' },
-        { value: 'between -20°C and +50°C under 350V–450V bus voltage', rationale: 'Standard automotive environmental qualification envelope', confidence: 'HIGH' },
+        { value: 'between -20°C and +50°C under 350V–450V bus voltage', rationale: 'Standard automotive environmental qualification envelope', confidence: 'RECOMMENDED' },
       ];
     }
 
@@ -487,10 +490,11 @@ export default function DeepInspectorTab({
         { value: '15 psi', rationale: 'Fluidic line safety relief barrier limit', confidence: 'MEDIUM' },
       ];
     }
-    if (p.includes('rate') || p.includes('baud') || p.includes('freq') || p.includes('hz')) {
+    if (p.includes('rate') || p.includes('baud') || p.includes('freq') || p.includes('hz') || p.includes('interval')) {
       return [
-        { value: '500 kbps nominal, 2 Mbps data', rationale: 'Automotive CAN-FD standard bus profile', confidence: 'HIGH' },
-        { value: '100 Hz', rationale: 'High-frequency telemetry sampling rate', confidence: 'MEDIUM' },
+        { value: '100ms', rationale: '10 Hz telemetry update rate', confidence: 'HIGH' },
+        { value: '1000ms', rationale: '1 Hz cyclic broadcast interval', confidence: 'HIGH' },
+        { value: '500 kbps nominal, 2 Mbps data', rationale: 'Automotive CAN-FD standard bus profile', confidence: 'MEDIUM' },
       ];
     }
     if (p.includes('runtime') || p.includes('battery') || p.includes('duration') || p.includes('min')) {
@@ -503,6 +507,7 @@ export default function DeepInspectorTab({
     // Default engineering fallbacks
     return [
       { value: '10ms', rationale: 'Safety-critical real-time response threshold', confidence: 'MEDIUM' },
+      { value: '100ms', rationale: 'Standard telemetry update interval', confidence: 'MEDIUM' },
       { value: '50ms', rationale: 'Standard cyclic task deadline', confidence: 'MEDIUM' },
     ];
   };
@@ -512,16 +517,36 @@ export default function DeepInspectorTab({
     setIsResolvingTbd(true);
     try {
       const valTrimmed = resolvedValue.trim();
-      const newText = requirement.text.replace(targetToken, valTrimmed);
+      let cleanVal = valTrimmed;
+
+      // Extract inner value if already wrapped in [TBD: ... = val] or [TBD: val]
+      if (cleanVal.startsWith('[TBD:') && cleanVal.endsWith(']')) {
+        const inside = cleanVal.slice(5, -1).trim();
+        cleanVal = inside.includes('=') ? inside.split('=').slice(1).join('=').trim() : inside;
+      }
+
+      // Always format as contractual [TBD: <param_name> = <value>] to preserve the TBD envelope!
+      let replacementToken = '';
+      if (targetToken.startsWith('[TBD:') && targetToken.endsWith(']')) {
+        const inner = targetToken.slice(5, -1).trim();
+        const paramName = inner.includes('=') ? inner.split('=')[0].trim() : inner;
+        replacementToken = `[TBD: ${paramName} = ${cleanVal}]`;
+      } else {
+        const cleanParam = targetToken.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '');
+        replacementToken = `[TBD: ${cleanParam || 'param'} = ${cleanVal}]`;
+      }
+
+      const newText = requirement.text.replace(targetToken, replacementToken);
       const newScore = await calculateRubricScore(newText);
-      const hasRemainingTbd = newText.includes('[TBD:') || newText.includes('[TBD]');
+      const remainingUnbound = getUnboundTbds(newText);
 
       // Strict Dual-Key Governance:
-      // Changing TBD from red to something or from provisioned to a selected value:
-      // Keep it strictly yellow (PROVISIONAL_PM) if free of [TBD].
-      // If [TBD] tokens remain, it stays red (FLAGGED_TBD).
-      // It can NEVER become green (LOCKED_BASELINE) until a senior systems engineer explicitly approves it!
-      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
+      // Even if the PM changes or subs a value, it should be yellow (PROVISIONAL_PM) then only.
+      // It should always be a TBD envelope.
+      // So initially suggest a value and keep it like that, and then the PM can edit it
+      // and it stays yellow so it doesn't confuse the PM.
+      // Only Lead Systems Engineer sign-off can make it green (LOCKED_BASELINE).
+      const nextStatus = remainingUnbound.length > 0 ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
 
       const updatedReq = {
         ...requirement,
@@ -531,7 +556,7 @@ export default function DeepInspectorTab({
         sign_off: {
           ...(requirement.sign_off || { requirement_id: requirement.id }),
           pm_author: requirement.sign_off?.pm_author || (userRole === 'product_manager' ? 'PM Author' : 'Product Manager'),
-          pm_target_val: `Bound parameter: ${valTrimmed} (${rationale || 'Specified by engineering envelope'})`,
+          pm_target_val: `Bound parameter: ${replacementToken} (${rationale || 'Engineering envelope'})`,
           tech_lead_approver: null, // Reset senior engineer sign-off!
           hardware_rationale: null,
           signed_off_at: null,
@@ -544,9 +569,9 @@ export default function DeepInspectorTab({
       setActiveTbdToken(null);
       setCustomTbdVal('');
       setTbdResolvedMessage(
-        hasRemainingTbd
-          ? `Updated parameter "${valTrimmed}" (Pending further [TBD] resolution 🔴)`
-          : `Selected value "${valTrimmed}" ➔ Saved as Provisional PM 🟡 (Awaiting Lead Systems Engineer sign-off to Lock Baseline 🟢)`
+        remainingUnbound.length > 0
+          ? `Updated parameter "${replacementToken}" (Pending further [TBD] resolution 🔴)`
+          : `Provisioned parameter "${replacementToken}" ➔ Saved as Provisional PM 🟡 (Awaiting Lead Systems Engineer sign-off to Lock Baseline 🟢)`
       );
       setTimeout(() => setTbdResolvedMessage(''), 6000);
     } catch (err) {
@@ -561,8 +586,8 @@ export default function DeepInspectorTab({
     try {
       const revisedText = requirement.rewrite_suggestion.revised.trim();
       const score = await calculateRubricScore(revisedText);
-      const hasRemainingTbd = revisedText.includes('[TBD:') || revisedText.includes('[TBD]');
-      const nextStatus = hasRemainingTbd ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
+      const remainingUnbound = getUnboundTbds(revisedText);
+      const nextStatus = remainingUnbound.length > 0 ? 'FLAGGED_TBD' : 'PROVISIONAL_PM';
 
       const updatedReq = {
         ...requirement,
@@ -583,15 +608,16 @@ export default function DeepInspectorTab({
       const saved = await updateRequirement(requirement.id, updatedReq, userRole);
       onRequirementUpdated(saved);
       setTbdResolvedMessage(
-        hasRemainingTbd
-          ? 'EARS Statement applied with contractual [TBD] placeholders 🔴'
-          : 'EARS Statement applied ➔ Saved as Provisional PM 🟡 (Awaiting Lead Systems Engineer sign-off 🟢)'
+        remainingUnbound.length > 0
+          ? 'Proposed EARS statement applied (Unresolved [TBD] parameters remaining 🔴)'
+          : 'Proposed EARS statement applied ➔ Provisional PM 🟡 (Queued for Senior Systems Engineer Sign-Off)'
       );
       setTimeout(() => setTbdResolvedMessage(''), 6000);
     } catch (err) {
       alert(`Apply rewrite failed: ${err.message}`);
     }
   };
+
 
   const renderHighlightedText = (text) => {
     // Known ambiguous terms + issue evidence quotes
@@ -633,17 +659,49 @@ export default function DeepInspectorTab({
 
           if (isTbd || isVague) {
             const currentTokenIndex = tokenIndex++;
-            const paramName = isTbd ? part.slice(5, -1).trim() : part.trim();
+            const rawInner = isTbd ? part.slice(5, -1).trim() : part.trim();
+            const hasAssignedValue = isTbd && rawInner.includes('=');
+            const paramName = hasAssignedValue ? rawInner.split('=')[0].trim() : rawInner;
+            const assignedValue = hasAssignedValue ? rawInner.split('=').slice(1).join('=').trim() : null;
             const isOpen = activeTbdToken && activeTbdToken.index === currentTokenIndex;
             const suggestions = getSmartSuggestionsForParam(paramName);
 
-            const chipColor = isTbd ? '#ff6b6b' : '#f59e0b';
-            const chipBg = isOpen
-              ? (isTbd ? 'rgba(235, 87, 87, 0.35)' : 'rgba(245, 158, 11, 0.35)')
-              : (isTbd ? 'rgba(235, 87, 87, 0.16)' : 'rgba(245, 158, 11, 0.16)');
-            const chipBorder = isOpen
-              ? (isTbd ? '1px solid #ff6b6b' : '1px solid #f59e0b')
-              : (isTbd ? '1px solid rgba(235, 87, 87, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)');
+            // Styling strictly reflects Dual-Key Governance state:
+            let chipColor = '#f59e0b';
+            let chipBg = 'rgba(245, 158, 11, 0.16)';
+            let chipBorder = '1px solid rgba(245, 158, 11, 0.35)';
+            let chipIcon = '✨';
+            let chipDisplayText = part;
+
+            if (isTbd) {
+              if (requirement.status === 'LOCKED_BASELINE') {
+                chipColor = '#57c07b';
+                chipBg = isOpen ? 'rgba(87, 192, 123, 0.35)' : 'rgba(87, 192, 123, 0.16)';
+                chipBorder = isOpen ? '1px solid #57c07b' : '1px solid rgba(87, 192, 123, 0.35)';
+                chipIcon = '🟢';
+                chipDisplayText = `[TBD: ${paramName} = ${assignedValue || 'locked'} ✓]`;
+              } else if (hasAssignedValue || requirement.status === 'PROVISIONAL_PM') {
+                // Provisional PM: Parameter has suggested/assigned value and stays Yellow 🟡!
+                chipColor = '#f59e0b';
+                chipBg = isOpen ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.16)';
+                chipBorder = isOpen ? '1px solid #f59e0b' : '1px solid rgba(245, 158, 11, 0.35)';
+                chipIcon = '🟡';
+                chipDisplayText = `[TBD: ${paramName} = ${assignedValue || 'provisional'}]`;
+              } else {
+                // Unbound TBD: Red 🔴
+                chipColor = '#ff6b6b';
+                chipBg = isOpen ? 'rgba(235, 87, 87, 0.35)' : 'rgba(235, 87, 87, 0.16)';
+                chipBorder = isOpen ? '1px solid #ff6b6b' : '1px solid rgba(235, 87, 87, 0.35)';
+                chipIcon = '🔴';
+                chipDisplayText = `[TBD: ${paramName}]`;
+              }
+            } else if (isVague) {
+              chipColor = '#f59e0b';
+              chipBg = isOpen ? 'rgba(245, 158, 11, 0.35)' : 'rgba(245, 158, 11, 0.12)';
+              chipBorder = isOpen ? '1px solid #f59e0b' : '1px dashed rgba(245, 158, 11, 0.4)';
+              chipIcon = '⚠️';
+              chipDisplayText = part;
+            }
 
             return (
               <span key={i} style={{ position: 'relative', display: 'inline-block', margin: '0 2px' }}>
@@ -659,7 +717,7 @@ export default function DeepInspectorTab({
                     background: chipBg,
                     color: chipColor,
                     border: chipBorder,
-                    boxShadow: isOpen ? `0 0 10px ${isTbd ? 'rgba(235, 87, 87, 0.3)' : 'rgba(245, 158, 11, 0.3)'}` : 'none',
+                    boxShadow: isOpen ? `0 0 10px ${chipColor}40` : 'none',
                     padding: '2px 7px',
                     borderRadius: '4px',
                     fontFamily: 'var(--font-mono)',
@@ -670,14 +728,14 @@ export default function DeepInspectorTab({
                     gap: '4px',
                     transition: 'all 0.12s ease',
                   }}
-                  title={isTbd ? "Click to resolve parameter with Grammarly-style Smart Defaults" : `Unquantified term '${part}': Click to replace with a [TBD] parameter or engineering default`}
+                  title={isTbd ? "Click to resolve/edit parameter while preserving the contractual [TBD] envelope" : `Unquantified term '${part}': Click to parameterize as a [TBD] contractual parameter`}
                 >
-                  <span style={{ fontSize: '11px' }}>{isTbd ? '✨' : '⚠️'}</span>
-                  <span>{part}</span>
+                  <span style={{ fontSize: '11px' }}>{chipIcon}</span>
+                  <span>{chipDisplayText}</span>
                   <span style={{ fontSize: '9px', opacity: 0.7 }}>▾</span>
                 </button>
 
-                {/* Grammarly-Style Floating Card Popover */}
+                {/* Floating Card Popover */}
                 {isOpen && (
                   <div
                     onClick={(e) => e.stopPropagation()}
@@ -686,7 +744,7 @@ export default function DeepInspectorTab({
                       top: 'calc(100% + 8px)',
                       left: '0',
                       zIndex: 1000,
-                      width: '350px',
+                      width: '360px',
                       background: '#242426',
                       border: '1px solid rgba(255, 255, 255, 0.16)',
                       borderRadius: '6px',
@@ -699,9 +757,9 @@ export default function DeepInspectorTab({
                     {/* Header */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '14px' }}>{isTbd ? '✨' : '⚠️'}</span>
+                        <span style={{ fontSize: '14px' }}>{chipIcon}</span>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>
-                          {isTbd ? 'Resolve TBD:' : 'Unquantified Parameter:'}{' '}
+                          {isTbd ? (hasAssignedValue ? 'Edit Provisional Parameter:' : 'Resolve TBD Parameter:') : 'Unquantified Parameter:'}{' '}
                           <code style={{ color: chipColor, background: 'rgba(255, 255, 255, 0.08)', padding: '1px 5px', borderRadius: '3px' }}>
                             {paramName}
                           </code>
@@ -725,15 +783,22 @@ export default function DeepInspectorTab({
                     </div>
 
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: '1.4' }}>
-                      {isTbd
-                        ? 'Select a Smart Suggested Default from the engineering envelope, or enter a custom contractual value:'
-                        : `'${paramName}' is ambiguous and unquantified. Convert to a formal contractual [TBD] parameter or apply an engineering default:`}
+                      {hasAssignedValue ? (
+                        <span>
+                          Current provisional value: <strong style={{ color: '#f59e0b' }}>{assignedValue}</strong> 🟡.
+                          Substituting or editing preserves the contractual <code style={{ color: 'var(--text-primary)' }}>[TBD]</code> envelope and remains in Provisional PM state 🟡 until Lead Systems Engineer sign-off.
+                        </span>
+                      ) : isTbd ? (
+                        'Select an engineering suggestion to provision a provisional value in yellow 🟡, or enter a custom contractual value:'
+                      ) : (
+                        `'${paramName}' is ambiguous. Convert to a formal contractual [TBD: ${paramName} = <val>] parameter (Provisional PM 🟡):`
+                      )}
                     </div>
 
-                    {/* Suggested Replacement Chips (Grammarly style 1-click accept) */}
+                    {/* Suggested Replacement Chips (1-click accept) */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
                       <div style={{ fontSize: '10.5px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Smart Suggested Actions
+                        Smart Suggested Actions (Preserves [TBD] 🟡)
                       </div>
                       {suggestions.map((sug, sIdx) => (
                         <div
@@ -754,10 +819,10 @@ export default function DeepInspectorTab({
                         >
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '12.5px', fontWeight: '700', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#57c07b', fontFamily: 'var(--font-mono)' }}>
+                              <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#f59e0b', fontFamily: 'var(--font-mono)' }}>
                                 {sug.value}
                               </span>
-                              <span style={{ fontSize: '9.5px', padding: '1px 4px', background: sug.value.includes('[TBD:') ? 'rgba(235, 87, 87, 0.2)' : 'rgba(46, 133, 81, 0.2)', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#4dab72', borderRadius: '2px' }}>
+                              <span style={{ fontSize: '9.5px', padding: '1px 4px', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', borderRadius: '2px' }}>
                                 {sug.confidence}
                               </span>
                             </div>
@@ -765,7 +830,7 @@ export default function DeepInspectorTab({
                               {sug.rationale}
                             </div>
                           </div>
-                          <span style={{ fontSize: '11px', color: sug.value.includes('[TBD:') ? '#ff7b72' : '#57c07b', fontWeight: '600', paddingLeft: '8px', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: '600', paddingLeft: '8px', whiteSpace: 'nowrap' }}>
                             Apply ↵
                           </span>
                         </div>
@@ -780,7 +845,7 @@ export default function DeepInspectorTab({
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input
                           type="text"
-                          placeholder={isTbd ? "e.g. 15ms or 55°C" : "e.g. every [TBD: interval] or 1000ms"}
+                          placeholder={hasAssignedValue ? `Current: ${assignedValue} (e.g. 50ms)` : (isTbd ? "e.g. 15ms or 55°C" : "e.g. 100ms or 1000ms")}
                           value={customTbdVal}
                           onChange={(e) => setCustomTbdVal(e.target.value)}
                           onKeyDown={(e) => {

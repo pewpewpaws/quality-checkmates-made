@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, Sparkles, Check } from 'lucide-react';
 import { api } from '../services/api';
+import StarBorder from './StarBorder';
 
 export default function IngestModal({ 
   isOpen, 
@@ -183,14 +184,35 @@ export default function IngestModal({
             >
               Cancel
             </button>
-            <button
+            <StarBorder
+              as="button"
               type="submit"
               disabled={loading || !text.trim()}
-              className="btn-subtle-black"
+              color="#ffffff"
+              trailColor="#ffffff"
+              duration={4}
+              direction="clockwise"
+              stars={1}
+              trailLength={0.3}
+              thickness={1}
+              radius={6}
+              glow={0.6}
+              hover="lap"
+              sparkle={false}
+              clickPulse
+              theme="dark"
+              backgroundColor="#181715"
+              textColor="#FAF8F5"
+              style={{
+                padding: '7px 14px',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: loading || !text.trim() ? 'not-allowed' : 'pointer'
+              }}
             >
               <Sparkles size={14} />
               <span>{loading ? 'Auditing on Qualcomm AI 100...' : 'Parse & Audit Requirements'}</span>
-            </button>
+            </StarBorder>
           </div>
         </form>
       </div>

@@ -18,6 +18,7 @@ import {
   XCircle
 } from 'lucide-react';
 import InteractiveText from './InteractiveText';
+import StarBorder from './StarBorder';
 import { api } from '../services/api';
 
 export default function RequirementDetail({ 
@@ -306,14 +307,29 @@ export default function RequirementDetail({
             />
 
             {role === 'product_manager' && (
-              <button
+              <StarBorder
+                as="button"
                 onClick={() => handleSignOff('provisional_pm')}
                 disabled={isSigningOff || !pmValueInput.trim()}
-                className="btn-subtle-black"
-                style={{ fontSize: '11.5px', padding: '5px 10px', alignSelf: 'flex-start', marginTop: '2px' }}
+                color="#ffffff"
+                trailColor="#ffffff"
+                duration={4}
+                direction="clockwise"
+                stars={1}
+                trailLength={0.3}
+                thickness={1}
+                radius={6}
+                glow={0.6}
+                hover="lap"
+                sparkle={false}
+                clickPulse
+                theme="dark"
+                backgroundColor="#181715"
+                textColor="#FAF8F5"
+                style={{ fontSize: '11.5px', padding: '5px 10px', alignSelf: 'flex-start', marginTop: '2px', fontWeight: 600 }}
               >
                 {isSigningOff ? 'Provisioning...' : 'Propose Value (→ Provisional)'}
-              </button>
+              </StarBorder>
             )}
           </div>
 
@@ -466,14 +482,30 @@ export default function RequirementDetail({
                 <p style={{ color: '#55524B', fontSize: '13px', marginBottom: '12px' }}>
                   Generate contract-preserving rewrites using Qualcomm Llama-3.3-70B with zero-fabrication guarantees.
                 </p>
-                <button
+                <StarBorder
+                  as="button"
                   onClick={handleRunRewrite}
                   disabled={isRunningAi}
-                  className="btn-subtle-black"
+                  color="#ffffff"
+                  trailColor="#ffffff"
+                  duration={4}
+                  direction="clockwise"
+                  stars={1}
+                  trailLength={0.3}
+                  thickness={1}
+                  radius={8}
+                  glow={0.6}
+                  hover="lap"
+                  sparkle={false}
+                  clickPulse
+                  theme="dark"
+                  backgroundColor="#181715"
+                  textColor="#FAF8F5"
+                  style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600 }}
                 >
                   {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                   <span>{isRunningAi ? 'Synthesizing Rewrite on Qualcomm AI 100...' : 'Generate Intent-Locked Rewrite'}</span>
-                </button>
+                </StarBorder>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -482,13 +514,28 @@ export default function RequirementDetail({
                     <span style={{ fontSize: '11px', color: '#047857', fontWeight: 600, textTransform: 'uppercase' }}>
                       Revised Statement (Preserved [TBD] Placeholders)
                     </span>
-                    <button
+                    <StarBorder
+                      as="button"
                       onClick={handleApplyRewrite}
-                      className="btn-subtle-black"
-                      style={{ fontSize: '11.5px', padding: '4px 8px' }}
+                      color="#ffffff"
+                      trailColor="#ffffff"
+                      duration={4}
+                      direction="clockwise"
+                      stars={1}
+                      trailLength={0.3}
+                      thickness={1}
+                      radius={6}
+                      glow={0.6}
+                      hover="lap"
+                      sparkle={false}
+                      clickPulse
+                      theme="dark"
+                      backgroundColor="#181715"
+                      textColor="#FAF8F5"
+                      style={{ fontSize: '11.5px', padding: '4px 8px', fontWeight: 600 }}
                     >
                       <Check size={12} /> Apply Rewrite to Requirement
-                    </button>
+                    </StarBorder>
                   </div>
                   <div style={{ fontSize: '13.5px', color: '#181715', fontWeight: 500, lineHeight: 1.5 }}>
                     {rewriteData.revised}
@@ -553,14 +600,30 @@ export default function RequirementDetail({
                 <p style={{ color: '#55524B', fontSize: '13px', marginBottom: '12px' }}>
                   Pit competing interpretations against each other on Qualcomm AI 100 to uncover hidden contractual liabilities.
                 </p>
-                <button
+                <StarBorder
+                  as="button"
                   onClick={handleRunDuel}
                   disabled={isRunningAi}
-                  className="btn-subtle-black"
+                  color="#ffffff"
+                  trailColor="#ffffff"
+                  duration={4}
+                  direction="clockwise"
+                  stars={1}
+                  trailLength={0.3}
+                  thickness={1}
+                  radius={8}
+                  glow={0.6}
+                  hover="lap"
+                  sparkle={false}
+                  clickPulse
+                  theme="dark"
+                  backgroundColor="#181715"
+                  textColor="#FAF8F5"
+                  style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600 }}
                 >
                   {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
                   <span>{isRunningAi ? 'Simulating Interpretation Duel on Qualcomm AI 100...' : 'Simulate Interpretation Duel'}</span>
-                </button>
+                </StarBorder>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -613,14 +676,30 @@ export default function RequirementDetail({
                 <p style={{ color: '#55524B', fontSize: '13px', marginBottom: '12px' }}>
                   Generate nominal and boundary hardware test cases with falsifiable pass/fail criteria on Llama-3.3-70B.
                 </p>
-                <button
+                <StarBorder
+                  as="button"
                   onClick={handleRunBlueprint}
                   disabled={isRunningAi}
-                  className="btn-subtle-black"
+                  color="#ffffff"
+                  trailColor="#ffffff"
+                  duration={4}
+                  direction="clockwise"
+                  stars={1}
+                  trailLength={0.3}
+                  thickness={1}
+                  radius={8}
+                  glow={0.6}
+                  hover="lap"
+                  sparkle={false}
+                  clickPulse
+                  theme="dark"
+                  backgroundColor="#181715"
+                  textColor="#FAF8F5"
+                  style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600 }}
                 >
                   {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <FileCheck size={14} />}
                   <span>{isRunningAi ? 'Synthesizing Test Plan on Qualcomm AI 100...' : 'Generate Verification Blueprint'}</span>
-                </button>
+                </StarBorder>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

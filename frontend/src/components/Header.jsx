@@ -14,6 +14,7 @@ import {
   Layers
 } from 'lucide-react';
 import { api } from '../services/api';
+import StarBorder from './StarBorder';
 
 export default function Header({ 
   currentProject, 
@@ -332,14 +333,29 @@ export default function Header({
         </div>
 
         {/* Quick Actions */}
-        <button
+        <StarBorder
+          as="button"
           onClick={onOpenIngest}
-          className="btn-subtle-black"
-          style={{ padding: '6px 12px' }}
+          color="#ffffff"
+          trailColor="#ffffff"
+          duration={4}
+          direction="clockwise"
+          stars={1}
+          trailLength={0.3}
+          thickness={1}
+          radius={6}
+          glow={0.6}
+          hover="lap"
+          sparkle={false}
+          clickPulse
+          theme="dark"
+          backgroundColor="#181715"
+          textColor="#FAF8F5"
+          style={{ padding: '6px 12px', fontSize: '12.5px', fontWeight: 600 }}
         >
           <Upload size={14} />
           <span>Ingest Specs</span>
-        </button>
+        </StarBorder>
       </div>
     </header>
   );

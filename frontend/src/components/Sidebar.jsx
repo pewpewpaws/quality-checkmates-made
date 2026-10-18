@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import StarBorder from './StarBorder';
 import { 
   Search, 
   Plus, 
@@ -40,11 +41,35 @@ export default function Sidebar({
   const getStatusBadge = (status) => {
     switch (status) {
       case 'FLAGGED_TBD':
-        return <span className="badge-status badge-tbd">TBD</span>;
+        return (
+          <span 
+            className="badge-status badge-tbd" 
+            title="TBD: To Be Defined (Unquantified metric placeholder)"
+            style={{ fontSize: '9.5px', padding: '2px 6px', whiteSpace: 'nowrap' }}
+          >
+            TBD • To Be Defined
+          </span>
+        );
       case 'PROVISIONAL_PM':
-        return <span className="badge-status badge-provisional">Prov</span>;
+        return (
+          <span 
+            className="badge-status badge-provisional" 
+            title="Prov: Provisional (Product Manager target proposed, awaiting engineering sign-off)"
+            style={{ fontSize: '9.5px', padding: '2px 6px', whiteSpace: 'nowrap' }}
+          >
+            Prov • Provisional
+          </span>
+        );
       case 'LOCKED_BASELINE':
-        return <span className="badge-status badge-locked">Locked</span>;
+        return (
+          <span 
+            className="badge-status badge-locked" 
+            title="Lock: Locked Baseline (Lead Systems Engineer signed-off with falsifiable test blueprint)"
+            style={{ fontSize: '9.5px', padding: '2px 6px', whiteSpace: 'nowrap' }}
+          >
+            Locked Baseline
+          </span>
+        );
       default:
         return <span className="badge-status badge-tbd">{status}</span>;
     }
@@ -62,14 +87,29 @@ export default function Sidebar({
           >
             <PanelLeftOpen size={18} />
           </button>
-          <button
+          <StarBorder
+            as="button"
             onClick={onOpenNewProject}
-            className="btn-subtle-black"
-            style={{ padding: '8px', borderRadius: '50%' }}
+            color="#ffffff"
+            trailColor="#ffffff"
+            duration={4}
+            direction="clockwise"
+            stars={1}
+            trailLength={0.3}
+            thickness={1}
+            radius={16}
+            glow={0.6}
+            hover="lap"
+            sparkle={false}
+            clickPulse
+            theme="dark"
+            backgroundColor="#181715"
+            textColor="#FAF8F5"
+            style={{ width: '32px', height: '32px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             title="New Project"
           >
             <Plus size={16} />
-          </button>
+          </StarBorder>
           <div style={{ width: '100%', height: '1px', background: '#E5E0D5' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filteredRequirements.slice(0, 8).map(r => (
@@ -107,7 +147,7 @@ export default function Sidebar({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Folder size={16} className="text-stone-700" />
           <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '-0.01em', color: '#181715' }}>
-            Workspaces & Reqs
+            Workspaces & Requirements
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -154,32 +194,39 @@ export default function Sidebar({
           />
         </div>
 
-        {/* Filter Pills */}
-        <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+        {/* Filter Pills with Full Expansions */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px', marginTop: '8px' }}>
           {[
-            { id: 'ALL', label: 'All' },
-            { id: 'FLAGGED_TBD', label: 'TBD' },
-            { id: 'PROVISIONAL_PM', label: 'Prov' },
-            { id: 'LOCKED_BASELINE', label: 'Lock' }
+            { id: 'ALL', label: 'All', desc: 'All Reqs' },
+            { id: 'FLAGGED_TBD', label: 'TBD', desc: 'To Be Defined' },
+            { id: 'PROVISIONAL_PM', label: 'Prov', desc: 'Provisional' },
+            { id: 'LOCKED_BASELINE', label: 'Lock', desc: 'Locked Baseline' }
           ].map(f => (
             <button
               key={f.id}
               onClick={() => setStatusFilter(f.id)}
               style={{
-                flex: 1,
-                padding: '3px 0',
-                fontSize: '10.5px',
-                fontWeight: 600,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: '5px 8px',
                 border: '1px solid',
                 borderColor: statusFilter === f.id ? '#181715' : '#E5E0D5',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 backgroundColor: statusFilter === f.id ? '#181715' : '#FFFFFF',
-                color: statusFilter === f.id ? '#FAF8F5' : '#55524B',
+                color: statusFilter === f.id ? '#FAF8F5' : '#181715',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                textAlign: 'left'
               }}
+              title={`${f.label} = ${f.desc}`}
             >
-              {f.label}
+              <span style={{ fontSize: '11px', fontWeight: 700 }}>
+                {f.label}
+              </span>
+              <span style={{ fontSize: '9.5px', color: statusFilter === f.id ? '#E5E0D5' : '#78716C', fontWeight: 500, lineHeight: 1.1 }}>
+                {f.desc}
+              </span>
             </button>
           ))}
         </div>
@@ -255,7 +302,7 @@ export default function Sidebar({
 
       {/* Footer Info */}
       <div style={{ padding: '10px 14px', borderTop: '1px solid #E5E0D5', fontSize: '11px', color: '#8A857C', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Total: {requirements.length}</span>
+        <span>Total: {requirements.length} Requirements</span>
         <span>Dual-Key Governed</span>
       </div>
     </aside>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, FolderPlus, FileUp, Shield, Cpu, Layers } from 'lucide-react';
 import ScrambledText from './ScrambledText';
+import StarBorder from './StarBorder';
 
 export default function StartProjectHero({ 
   onCreateProject, 
@@ -164,15 +165,38 @@ export default function StartProjectHero({
               />
             </div>
 
-            <button
+            <StarBorder
+              as="button"
               type="submit"
               disabled={isSubmitting || !projectName.trim()}
-              className="btn-subtle-black"
-              style={{ justifyContent: 'center', marginTop: '4px', padding: '8px 14px' }}
+              color="#ffffff"
+              trailColor="#ffffff"
+              duration={4}
+              direction="clockwise"
+              stars={1}
+              trailLength={0.3}
+              thickness={1}
+              radius={8}
+              glow={0.6}
+              hover="lap"
+              sparkle={false}
+              clickPulse
+              theme="dark"
+              backgroundColor="#181715"
+              textColor="#FAF8F5"
+              style={{
+                width: '100%',
+                justifyContent: 'center',
+                marginTop: '4px',
+                padding: '9px 14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: isSubmitting || !projectName.trim() ? 'not-allowed' : 'pointer'
+              }}
             >
               <FolderPlus size={14} />
               <span>{isSubmitting ? 'Initializing...' : 'Initialize Workspace'}</span>
-            </button>
+            </StarBorder>
           </form>
         </div>
 

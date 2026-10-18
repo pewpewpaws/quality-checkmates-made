@@ -4,6 +4,8 @@ import Sidebar from './components/Sidebar';
 import StartProjectHero from './components/StartProjectHero';
 import RequirementDetail from './components/RequirementDetail';
 import IngestModal from './components/IngestModal';
+import ClickSpark from './components/ClickSpark';
+import DotGrid from './components/DotGrid';
 import { api } from './services/api';
 
 export default function App() {
@@ -14,7 +16,7 @@ export default function App() {
   const [role, setRole] = useState('product_manager'); // 'product_manager' | 'systems_engineer' | 'executive'
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [showStartProject, setShowStartProject] = useState(false);
+  const [showStartProject, setShowStartProject] = useState(true);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -42,25 +44,27 @@ export default function App() {
     }
   }, [currentProjectId, role]);
 
-  const loadRequirements = async (pid, activeRole) => {
+  const loadRequirements = async (pid, activeRole, autoSelect = false) => {
     setLoading(true);
     try {
       const data = await api.getRequirements(pid, activeRole);
-      setRequirements(data);
-      // If we had a selected requirement that still exists in data, keep it; otherwise select first or null
-      if (selectedReqId) {
-        const stillExists = data.find(r => r.id === selectedReqId);
-        if (!stillExists && data.length > 0) {
-          setSelectedReqId(data[0].id);
-        } else if (!stillExists) {
-          setSelectedReqId(null);
-        }
-      } else if (data.length > 0 && !showStartProject) {
-        setSelectedReqId(data[0].id);
+      const reqList = data || [];
+      setRequirements(reqList);
+      if (reqList.length > 0) {
+        setSelectedReqId(prev => {
+          if (prev) {
+            const stillExists = reqList.find(r => r.id === prev);
+            if (stillExists) return prev;
+          }
+          return autoSelect ? reqList[0].id : null;
+        });
+      } else {
+        setSelectedReqId(null);
       }
     } catch (err) {
       console.error('Error loading requirements:', err);
       setRequirements([]);
+      setSelectedReqId(null);
     } finally {
       setLoading(false);
     }
@@ -70,6 +74,7 @@ export default function App() {
   const handleSelectProject = (pid) => {
     setCurrentProjectId(pid);
     setShowStartProject(false);
+    loadRequirements(pid, role, true);
   };
 
   // Select requirement
@@ -108,67 +113,107 @@ export default function App() {
   const currentRequirement = requirements.find(r => r.id === selectedReqId) || null;
 
   return (
-    <div className="app-shell">
-      {/* Left Sidebar */}
-      <Sidebar
-        projects={projects}
-        currentProjectId={currentProjectId}
-        onSelectProject={handleSelectProject}
-        requirements={requirements}
-        selectedReqId={selectedReqId}
-        onSelectRequirement={handleSelectRequirement}
-        onOpenNewProject={() => {
-          setSelectedReqId(null);
-          setShowStartProject(true);
-        }}
-        collapsed={isSidebarCollapsed}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-      />
-
-      {/* Main Canvas */}
-      <div className="main-canvas">
-        {/* Top Header */}
-        <Header
-          currentProject={currentProject}
+    <ClickSpark
+      sparkColor="#fff"
+      shape="line"
+      sparkCount={8}
+      sparkSize={14}
+      sparkRadius={30}
+      duration={500}
+    >
+      <div className="app-shell" style={{ position: 'relative' }}>
+        {/* Left Sidebar */}
+        <Sidebar
           projects={projects}
+          currentProjectId={currentProjectId}
           onSelectProject={handleSelectProject}
-          role={role}
-          onRoleChange={setRole}
+          requirements={requirements}
+          selectedReqId={selectedReqId}
+          onSelectRequirement={handleSelectRequirement}
           onOpenNewProject={() => {
             setSelectedReqId(null);
             setShowStartProject(true);
           }}
-          onOpenIngest={() => setIsIngestModalOpen(true)}
+          collapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
 
-        {/* Center Content Viewport */}
-        <main className="content-viewport">
-          {showStartProject || (!selectedReqId && !loading && requirements.length === 0) ? (
-            <StartProjectHero
-              projects={projects}
-              onSelectProject={handleSelectProject}
-              onCreateProject={handleCreateProject}
-              onOpenIngest={() => setIsIngestModalOpen(true)}
+        {/* Main Canvas */}
+        <div className="main-canvas" style={{ position: 'relative' }}>
+          {/* Main Background DotGrid from React Bits */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 0,
+              pointerEvents: 'none',
+              overflow: 'hidden'
+            }}
+          >
+            <DotGrid
+              baseColor="#E8E2D4"
+              activeColor="#6E6252"
+              shape="circle"
+              dotSize={4.5}
+              gap={19}
+              proximity={140}
+              strength={1}
+              bounce={0.6}
+              tension={0.4}
+              returnDuration={0.8}
+              shockRadius={320}
+              shockStrength={5}
+              swell={0.8}
+              stretch={0.5}
+              glow={0.3}
+              fade={0}
+              intro={true}
             />
-          ) : (
-            <RequirementDetail
-              requirement={currentRequirement}
-              project={currentProject}
-              role={role}
-              onRequirementUpdated={handleRequirementUpdated}
-            />
-          )}
-        </main>
-      </div>
+          </div>
 
-      {/* Document Ingest Modal */}
-      <IngestModal
-        isOpen={isIngestModalOpen}
-        onClose={() => setIsIngestModalOpen(false)}
-        projectId={currentProjectId}
-        role={role}
-        onIngestSuccess={handleIngestSuccess}
-      />
-    </div>
+          {/* Top Header */}
+          <Header
+            currentProject={currentProject}
+            projects={projects}
+            onSelectProject={handleSelectProject}
+            role={role}
+            onRoleChange={setRole}
+            onOpenNewProject={() => {
+              setSelectedReqId(null);
+              setShowStartProject(true);
+            }}
+            onOpenIngest={() => setIsIngestModalOpen(true)}
+          />
+
+          {/* Center Content Viewport */}
+          <main className="content-viewport" style={{ position: 'relative', zIndex: 1 }}>
+            {showStartProject || (!selectedReqId && !loading && requirements.length === 0) ? (
+              <StartProjectHero
+                projects={projects}
+                onSelectProject={handleSelectProject}
+                onCreateProject={handleCreateProject}
+                onOpenIngest={() => setIsIngestModalOpen(true)}
+              />
+            ) : (
+              <RequirementDetail
+                requirement={currentRequirement || requirements[0]}
+                project={currentProject}
+                role={role}
+                onRequirementUpdated={handleRequirementUpdated}
+              />
+            )}
+          </main>
+        </div>
+
+        {/* Document Ingest Modal */}
+        <IngestModal
+          isOpen={isIngestModalOpen}
+          onClose={() => setIsIngestModalOpen(false)}
+          projectId={currentProjectId}
+          role={role}
+          onIngestSuccess={handleIngestSuccess}
+        />
+      </div>
+    </ClickSpark>
   );
 }

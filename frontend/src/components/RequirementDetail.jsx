@@ -28,7 +28,16 @@ export default function RequirementDetail({
   onRequirementUpdated,
   onBackToOverview
 }) {
-  const [activeTab, setActiveTab] = useState('xray'); // 'xray' | 'rewrite' | 'duel' | 'blueprint'
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('copilot_inspector_sub_tab') || 'xray';
+  });
+
+  useEffect(() => {
+    if (activeTab) {
+      localStorage.setItem('copilot_inspector_sub_tab', activeTab);
+    }
+  }, [activeTab]);
+
   const [pmValueInput, setPmValueInput] = useState('');
   const [hardwareRationale, setHardwareRationale] = useState('');
   const [isSigningOff, setIsSigningOff] = useState(false);

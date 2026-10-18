@@ -12,18 +12,68 @@ import { api } from './services/api';
 
 export default function App() {
   const [projects, setProjects] = useState([]);
-  const [currentProjectId, setCurrentProjectId] = useState(null);
-  const [requirements, setRequirements] = useState([]);
-  const [selectedReqId, setSelectedReqId] = useState(null);
-  const [role, setRole] = useState('product_manager'); // 'product_manager' | 'systems_engineer' | 'executive'
-  
-  // Navigation View: 'overview' | 'chat' | 'detail'
-  const [activeView, setActiveView] = useState('overview');
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [showStartProject, setShowStartProject] = useState(true);
+  // Persistent Navigation & Workspace State across Browser Refresh
+  const [currentProjectId, setCurrentProjectId] = useState(() => {
+    return localStorage.getItem('copilot_current_project_id') || null;
+  });
+
+  const [showStartProject, setShowStartProject] = useState(() => {
+    return !localStorage.getItem('copilot_current_project_id');
+  });
+
+  const [activeView, setActiveView] = useState(() => {
+    return localStorage.getItem('copilot_active_view') || 'overview';
+  });
+
+  const [selectedReqId, setSelectedReqId] = useState(() => {
+    return localStorage.getItem('copilot_selected_req_id') || null;
+  });
+
+  const [role, setRole] = useState(() => {
+    return localStorage.getItem('copilot_role') || 'product_manager';
+  });
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('copilot_sidebar_collapsed') === 'true';
+  });
+
+  const [requirements, setRequirements] = useState([]);
   const [isIngestModalOpen, setIsIngestModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Sync state changes to localStorage
+  useEffect(() => {
+    if (currentProjectId) {
+      localStorage.setItem('copilot_current_project_id', currentProjectId);
+    } else {
+      localStorage.removeItem('copilot_current_project_id');
+    }
+  }, [currentProjectId]);
+
+  useEffect(() => {
+    if (activeView) {
+      localStorage.setItem('copilot_active_view', activeView);
+    }
+  }, [activeView]);
+
+  useEffect(() => {
+    if (selectedReqId) {
+      localStorage.setItem('copilot_selected_req_id', selectedReqId);
+    } else {
+      localStorage.removeItem('copilot_selected_req_id');
+    }
+  }, [selectedReqId]);
+
+  useEffect(() => {
+    if (role) {
+      localStorage.setItem('copilot_role', role);
+    }
+  }, [role]);
+
+  useEffect(() => {
+    localStorage.setItem('copilot_sidebar_collapsed', isSidebarCollapsed ? 'true' : 'false');
+  }, [isSidebarCollapsed]);
 
   // 1. Initial Load: Projects
   useEffect(() => {
@@ -34,6 +84,13 @@ export default function App() {
     try {
       const data = await api.getProjects();
       setProjects(data);
+      // Validate saved currentProjectId
+      if (currentProjectId && data.length > 0) {
+        const found = data.find(p => p.project_id === currentProjectId);
+        if (!found) {
+          setCurrentProjectId(data[0].project_id);
+        }
+      }
     } catch (err) {
       console.error('Error fetching projects:', err);
     }
@@ -58,6 +115,11 @@ export default function App() {
             const stillExists = reqList.find(r => r.id === prev);
             if (stillExists) return prev;
           }
+          const savedId = localStorage.getItem('copilot_selected_req_id');
+          if (savedId) {
+            const foundSaved = reqList.find(r => r.id === savedId);
+            if (foundSaved) return savedId;
+          }
           return autoSelect ? reqList[0].id : null;
         });
       } else {
@@ -78,6 +140,11 @@ export default function App() {
     setShowStartProject(false);
     setSelectedReqId(null);
     setActiveView('overview');
+    try {
+      localStorage.setItem('copilot_current_project_id', pid);
+      localStorage.setItem('copilot_active_view', 'overview');
+      localStorage.removeItem('copilot_selected_req_id');
+    } catch (e) {}
     loadRequirements(pid, role, false);
   };
 
@@ -86,14 +153,36 @@ export default function App() {
     setSelectedReqId(id);
     setShowStartProject(false);
     setActiveView('detail');
+    try {
+      localStorage.setItem('copilot_selected_req_id', id);
+      localStorage.setItem('copilot_active_view', 'detail');
+    } catch (e) {}
   };
 
   // Switch view tabs
   const handleSelectView = (view) => {
     setActiveView(view);
+    try {
+      localStorage.setItem('copilot_active_view', view);
+    } catch (e) {}
     if (view === 'overview') {
       setSelectedReqId(null);
+      try {
+        localStorage.removeItem('copilot_selected_req_id');
+      } catch (e) {}
     }
+  };
+
+  // Open New Project Hero screen
+  const handleOpenNewProject = () => {
+    setSelectedReqId(null);
+    setShowStartProject(true);
+    setCurrentProjectId(null);
+    try {
+      localStorage.removeItem('copilot_current_project_id');
+      localStorage.removeItem('copilot_selected_req_id');
+      localStorage.setItem('copilot_active_view', 'overview');
+    } catch (e) {}
   };
 
   // Create project handler
@@ -187,10 +276,7 @@ export default function App() {
           requirements={requirements}
           selectedReqId={selectedReqId}
           onSelectRequirement={handleSelectRequirement}
-          onOpenNewProject={() => {
-            setSelectedReqId(null);
-            setShowStartProject(true);
-          }}
+          onOpenNewProject={handleOpenNewProject}
           collapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           activeView={activeView}
@@ -237,10 +323,7 @@ export default function App() {
             onSelectProject={handleSelectProject}
             role={role}
             onRoleChange={setRole}
-            onOpenNewProject={() => {
-              setSelectedReqId(null);
-              setShowStartProject(true);
-            }}
+            onOpenNewProject={handleOpenNewProject}
             onOpenIngest={() => setIsIngestModalOpen(true)}
           />
 

@@ -38,15 +38,36 @@ export default function ChatAndIngestTab({
     contextGrounding: null
   });
 
+  const getSavedHistory = (pid) => {
+    if (!pid) return null;
+    try {
+      const saved = JSON.parse(localStorage.getItem('copilot_chat_histories') || '{}');
+      if (saved[pid] && Array.isArray(saved[pid]) && saved[pid].length > 0) {
+        return saved[pid];
+      }
+    } catch (e) {
+      console.warn('Error reading chat history from localStorage:', e);
+    }
+    return null;
+  };
+
   const [messages, setMessages] = useState(() => {
-    return chatMessages && chatMessages.length > 0 ? chatMessages : [getDefaultWelcome()];
+    const pid = project?.project_id;
+    const fromStorage = getSavedHistory(pid);
+    if (fromStorage) return fromStorage;
+    if (chatMessages && chatMessages.length > 0) return chatMessages;
+    return [getDefaultWelcome()];
   });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Sync when workspace project changes
   useEffect(() => {
-    if (chatMessages && chatMessages.length > 0) {
+    const pid = project?.project_id;
+    const fromStorage = getSavedHistory(pid);
+    if (fromStorage) {
+      setMessages(fromStorage);
+    } else if (chatMessages && chatMessages.length > 0) {
       setMessages(chatMessages);
     } else {
       setMessages([getDefaultWelcome()]);
@@ -56,8 +77,18 @@ export default function ChatAndIngestTab({
   const updateAndNotifyMessages = (updater) => {
     setMessages(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
+      const pid = project?.project_id;
+      if (pid) {
+        try {
+          const saved = JSON.parse(localStorage.getItem('copilot_chat_histories') || '{}');
+          saved[pid] = next;
+          localStorage.setItem('copilot_chat_histories', JSON.stringify(saved));
+        } catch (e) {
+          console.warn('Could not persist chat history:', e);
+        }
+      }
       if (onUpdateChatMessages) {
-        onUpdateChatMessages(next);
+        setTimeout(() => onUpdateChatMessages(next), 0);
       }
       return next;
     });
@@ -298,6 +329,14 @@ export default function ChatAndIngestTab({
   // Clear entire chat history for this workspace
   const handleClearSession = () => {
     if (window.confirm('Clear conversation history for this workspace?')) {
+      const pid = project?.project_id;
+      if (pid) {
+        try {
+          const saved = JSON.parse(localStorage.getItem('copilot_chat_histories') || '{}');
+          delete saved[pid];
+          localStorage.setItem('copilot_chat_histories', JSON.stringify(saved));
+        } catch (e) {}
+      }
       if (onClearChat) {
         onClearChat();
       }

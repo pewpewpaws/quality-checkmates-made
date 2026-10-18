@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1792350872.8183506,
-    "seen": 1792351102.98242,
-    "ast_hash": "81d4ad439fbfe81fa236dc94ae629fb5",
+    "mtime": 1792352133.847555,
+    "seen": 1792352201.2203074,
+    "ast_hash": "f20ffa8f64df25e8d47891ce6fb3c1ce",
     "semantic_hash": ""
   },
   "frontend/src/components/Header.jsx": {
@@ -522,9 +522,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
-    "mtime": 1792349918.6790183,
-    "seen": 1792349953.8622763,
-    "ast_hash": "1433bf57eff933b920d707f13003ccfa",
+    "mtime": 1792352178.4601223,
+    "seen": 1792352201.2203155,
+    "ast_hash": "923bf31c7e60b35e55f9c70c335a4c0c",
     "semantic_hash": ""
   },
   "frontend/src/components/ScrambledText.jsx": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ChatAndIngestTab.jsx": {
-    "mtime": 1792351007.9130003,
-    "seen": 1792351102.9824212,
-    "ast_hash": "1a19c814b21c764e898a888153b85ee9",
+    "mtime": 1792352166.863236,
+    "seen": 1792352201.2203088,
+    "ast_hash": "9e2bbde30ca2d880abaf9173b28395d5",
     "semantic_hash": ""
   },
   "frontend/src/components/ClickSpark.jsx": {
@@ -636,9 +636,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/WorkspaceOverview.jsx": {
-    "mtime": 1792348707.0291238,
-    "seen": 1792349118.2368097,
-    "ast_hash": "6e76d80e9f0b9e161d40ea61854c1d48",
+    "mtime": 1792352189.0530179,
+    "seen": 1792352201.2203221,
+    "ast_hash": "6c7552b3970b9deea8088c20b6ca3432",
     "semantic_hash": ""
   },
   "AGENTS.md": {

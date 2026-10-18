@@ -35,7 +35,8 @@ export default function WorkspaceOverview({
   if (!project) {
     return (
       <div style={{ textAlign: 'center', padding: '60px 20px', color: '#8A857C' }}>
-        No workspace selected.
+        <div style={{ display: 'inline-block', width: '22px', height: '22px', border: '2px solid #E5E0D5', borderTopColor: '#181715', borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: '12px' }} />
+        <div style={{ fontSize: '13px', fontWeight: 500 }}>Loading workspace overview...</div>
       </div>
     );
   }

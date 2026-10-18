@@ -1,0 +1,23 @@
+# Project SkyGlide: Urban Flying Car PRD & Feature Notes
+Author: Jordan Rivera (Principal Product Manager, Mobility)
+Status: Early Draft for Engineering Review
+
+## Flight Experience & Passenger Comfort
+- The aircraft should take off vertically from city vertiports without producing excessive rotor noise.
+- When transitioning from vertical hover to forward flight, the flight controller needs to make the tilt transition as smooth and quick as possible.
+- The autopilot must never bank too steeply during turns so passenger drinks do not spill.
+- The flight control system shall maintain passenger ride comfort and minimize turbulence during strong wind gusts.
+- The cabin climate control system should cool or warm the interior to a pleasant temperature before passenger boarding.
+
+## Energy, Battery & Charging
+- The high-voltage battery system must provide sufficient flight range for typical metropolitan commutes with ample reserve for emergency diversions.
+- The rapid charger needs to recharge the battery pack fast enough between passenger drop-offs without overheating the cells.
+- If the battery state-of-charge drops to a critical level, the aircraft shall immediately reroute to the nearest safe landing site.
+- The vehicle should charge efficiently while connected to commercial urban vertiport power grids.
+
+## Autonomous Safety & Collision Avoidance
+- The sensor suite must detect other aircraft, construction cranes, and drones from a safe distance and execute an evasive maneuver immediately.
+- In case of catastrophic motor failure, the safety system shall deploy a ballistic parachute fast enough to prevent high-impact ground collision.
+- The vehicle doors must stay locked whenever the aircraft is airborne or while rotor blades are spinning.
+- The ground radar should detect obstacles on the landing pad and stop the taxi wheels within a reasonable distance.
+- The aircraft shall land gently on vertiport landing pads even during sudden crosswinds.

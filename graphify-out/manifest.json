@@ -174,9 +174,9 @@
     "semantic_hash": "2d57f9278133b348d1bd32991d54924a"
   },
   "AGENTS.md": {
-    "mtime": 1792255617.7029047,
-    "seen": 1792256306.4878788,
-    "ast_hash": "a5080c6a1a622d2baf8bab1eb36e6102",
+    "mtime": 1792297397.3029487,
+    "seen": 1792297416.3519795,
+    "ast_hash": "b5926668ed309022c8cd427bbef224e7",
     "semantic_hash": ""
   },
   "HACKATHON.md": {
@@ -609,6 +609,12 @@
     "mtime": 1792296639.4393344,
     "seen": 1792296809.0220065,
     "ast_hash": "d1430e15e02fcd307915c449802a8b05",
+    "semantic_hash": ""
+  },
+  "sample_data/pm_documents/flying_car_pm_notes.txt": {
+    "mtime": 1792296934.7537277,
+    "seen": 1792296964.6735756,
+    "ast_hash": "a43beaad84139395fcc06c0c79ac4050",
     "semantic_hash": ""
   }
 }

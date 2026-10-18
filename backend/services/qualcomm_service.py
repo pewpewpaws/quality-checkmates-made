@@ -88,7 +88,7 @@ TOOL_XRAY = [{
     "type": "function",
     "function": {
         "name": "submit_xray_issues",
-        "description": "Log detected quality issues and verbatim evidence quotes.",
+        "description": "Log detected quality issues, verbatim evidence quotes, and concrete suggested replacement values for ambiguities.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -101,7 +101,8 @@ TOOL_XRAY = [{
                             "severity": {"type": "string", "enum": ["Blocker", "Major", "Minor"]},
                             "evidence_quote": {"type": "string"},
                             "explanation": {"type": "string"},
-                            "suggested_action": {"type": "string"}
+                            "suggested_action": {"type": "string"},
+                            "suggested_value": {"type": "string", "description": "Concrete quantifiable suggested replacement value or metric for this ambiguity (e.g. '< 250 ms' for 'quickly', '>= 99.99%' for 'high reliability', '<= 15 mW' for 'minimal power')"}
                         },
                         "required": ["issue_type", "severity", "evidence_quote", "explanation"]
                     }
@@ -362,6 +363,53 @@ class QualcommService:
             logger.error(f"Qualcomm API ping failed: {e}")
             raise RuntimeError(f"Qualcomm API ping failed: {e}") from e
 
+    @staticmethod
+    def _heuristic_suggested_value(evidence_quote: str, issue_type: str = "") -> Optional[str]:
+        q = (evidence_quote or "").lower().strip()
+        if not q:
+            return None
+
+        lookup = {
+            "quickly": "< 250 ms",
+            "fast": "< 100 ms",
+            "slowly": "> 2000 ms",
+            "immediately": "within 100 ms",
+            "instantly": "< 50 ms",
+            "minimal power": "<= 15 mW",
+            "low power": "<= 25 mW",
+            "minimal": "<= 5%",
+            "high reliability": ">= 99.99% MTBF",
+            "reliable": ">= 99.9% uptime",
+            "periodically": "every 1000 ms",
+            "frequently": "at a frequency >= 10 Hz",
+            "regularly": "every 500 ms",
+            "normal conditions": "20°C to 25°C, 1 atm",
+            "nominal": "nominal ± 5% tolerance",
+            "normal": "within nominal ± 10%",
+            "safe distance": ">= 1.5 meters",
+            "safe": "fail-safe state within 250 ms",
+            "excessive": "> 110% rated maximum",
+            "critical": "critical threshold limit",
+            "super snappy": "<= 50 ms latency, 60 FPS",
+            "snappy": "<= 50 ms latency",
+            "responsive": "<= 100 ms response",
+            "not laggy": "frame rate >= 60 FPS",
+            "user-friendly": "<= 3 user interactions",
+            "securely": "AES-256-GCM encryption",
+            "secure": "TLS 1.3 with AES-256",
+            "where feasible": "[Remove escape clause: mandatory compliance]",
+            "as appropriate": "[Specify deterministic fallback condition]",
+            "if possible": "[Mandatory verification requirement]",
+            "when needed": "[Specify formal condition trigger]"
+        }
+        for k, v in lookup.items():
+            if k in q or q in k:
+                return v
+        if issue_type and issue_type.lower() in ["ambiguity", "unverifiability"]:
+            clean_param = re.sub(r'[^a-zA-Z0-9_]+', '_', q).strip('_')
+            return f"[TBD: {clean_param}_limit]" if clean_param else "[TBD: parameter_limit]"
+        return None
+
     async def extract_xray_issues(self, req_text: str) -> List[IssueCard]:
         """Extract requirement defects using Llama-3.3-70B tool calling."""
         if self.mock_mode:
@@ -375,6 +423,7 @@ class QualcommService:
             "2. NEVER quote the grammatical subject or entity name (e.g., 'The battery management system', 'The module', 'The system') as evidence unless the subject itself is ambiguous.\n"
             "3. NEVER report non-issues (e.g., do NOT report 'The requirement does not over-specify... but it could be argued', or claim that lacking an escape hatch is an escape-hatch flaw).\n"
             "4. evidence_quote MUST be the exact, verbatim, case-sensitive substring of the defective words (e.g. 'periodically', 'as appropriate', 'quickly', 'critical').\n"
+            "5. For every Ambiguity or Unverifiability flaw, provide a concrete quantifiable `suggested_value` (e.g. '< 250 ms', '>= 99.9%', '<= 15 mW').\n"
             "Call submit_xray_issues."
         )
 
@@ -404,12 +453,15 @@ class QualcommService:
                 if not quote:
                     continue
 
+                suggested_val = item.get("suggested_value") or self._heuristic_suggested_value(quote, item.get("issue_type", "Ambiguity"))
+
                 cards.append(IssueCard(
                     issue_type=item.get("issue_type", "Ambiguity"),
                     severity=item.get("severity", "Major"),
                     evidence_quote=quote,
                     explanation=explanation or "Detected specification defect",
-                    suggested_action=item.get("suggested_action", "Clarify exact metric")
+                    suggested_action=item.get("suggested_action", "Clarify exact metric"),
+                    suggested_value=suggested_val
                 ))
 
             # Ground cards and reject ungrounded hallucinations
@@ -1081,7 +1133,8 @@ class QualcommService:
                 severity="Blocker",
                 evidence_quote=exact_quote,
                 explanation=f"Subjective quantifier '{exact_quote}' lacks deterministic boundary or SI metric.",
-                suggested_action=f"Replace '{exact_quote}' with an explicit bounded parameter [TBD: duration_ms]."
+                suggested_action=f"Replace '{exact_quote}' with an explicit bounded parameter [TBD: duration_ms].",
+                suggested_value=self._heuristic_suggested_value(exact_quote, "Ambiguity")
             ))
         if any(w in lower for w in ["where feasible", "as appropriate", "if possible", "when needed"]):
             quote = next((w for w in ["where feasible", "as appropriate", "if possible", "when needed"] if w in lower), "where feasible")
@@ -1092,7 +1145,8 @@ class QualcommService:
                 severity="Major",
                 evidence_quote=exact_quote,
                 explanation="Escape hatch creates non-binding loophole evading conformance testing.",
-                suggested_action="Specify exact fallback trigger criteria or remove permissive clause."
+                suggested_action="Specify exact fallback trigger criteria or remove permissive clause.",
+                suggested_value=self._heuristic_suggested_value(exact_quote, "Escape-hatch")
             ))
         if " and " in lower and len(req_text.split(" and ")) > 2:
             issues.append(IssueCard(
@@ -1100,7 +1154,8 @@ class QualcommService:
                 severity="Major",
                 evidence_quote=" and ",
                 explanation="Compound statement combines multiple distinct functional obligations.",
-                suggested_action="Decompose into distinct atomic requirements."
+                suggested_action="Decompose into distinct atomic requirements.",
+                suggested_value=None
             ))
         if not issues:
             issues.append(IssueCard(
@@ -1108,7 +1163,8 @@ class QualcommService:
                 severity="Minor",
                 evidence_quote=req_text[:min(20, len(req_text))],
                 explanation="Requirement lacks quantifiable pass/fail verification criteria.",
-                suggested_action="Bind requirement to falsifiable threshold limits."
+                suggested_action="Bind requirement to falsifiable threshold limits.",
+                suggested_value="[TBD: metric_threshold]"
             ))
         return evidence_validator.validate_and_ground_cards(issues, req_text)
 

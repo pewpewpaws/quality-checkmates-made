@@ -1,17 +1,17 @@
 # Graph Report - Oi-Thon  (2026-10-19)
 
 ## Corpus Check
-- 90 files · ~98,504 words
+- 90 files · ~99,173 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 5, .csv 3, (none) 2)
 
 ## Summary
-- 749 nodes · 1736 edges · 43 communities (31 shown, 12 thin omitted)
+- 750 nodes · 1739 edges · 31 communities (24 shown, 7 thin omitted)
 - Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 158 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9ea06cdc`
+- Built from commit: `5d39e582`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -20,7 +20,7 @@
 - Apple Design
 - Deterministic Verification & Test Blueprints
 - RequirementStatus
-- Graphify Analysis & Reporting
+- run_cirrascale_graphify.py
 - Qualcomm AI 100 Engineering Directives
 - Document Parsing & Requirement Extraction
 - Live Qualcomm Cloud AI 100 Client
@@ -34,11 +34,8 @@
 - schemas.py
 - 1. Feature Priority Breakdown
 - 2. Multi-Domain Scenario Breakdown
-- qualcomm_service.py
 - test_phase_0_to_2_e2e.py
 - storage.py
-- test_schemas.py
-- add_project_document
 - upload_context_document
 - test_live_duplicates_conflicts.py
 - export_service.py
@@ -46,22 +43,13 @@
 - React + Vite
 - test_phase_3_pipelines.py
 - main.py
-- get_project
-- delete_project
-- update_project
-- aitl_phase_3_eval.py
-- time
 - test_rbac_and_workspaces.py
-- InterpretationDuel
-- VerificationPlan
-- json
-- parse_tool_args
 - reset_store_state
 - update_requirement
 
 ## God Nodes (most connected - your core abstractions)
 1. `RequirementStatement` - 58 edges
-2. `QualcommService` - 53 edges
+2. `QualcommService` - 54 edges
 3. `RequirementStore` - 50 edges
 4. `RequirementStatus` - 45 edges
 5. `UserRole` - 43 edges
@@ -86,7 +74,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (43 total, 12 thin omitted)
+## Communities (31 total, 7 thin omitted)
 
 ### Community 0 - "UserRole"
 Cohesion: 0.11
@@ -98,23 +86,23 @@ Nodes (21): 10. Gesture design details (the "feel" checklist), 11. Frame-level s
 
 ### Community 2 - "Deterministic Verification & Test Blueprints"
 Cohesion: 0.08
-Nodes (10): ProjectContext, ProjectDocumentContext, ProjectWorkspace, RequirementStatement, ExportService, RequirementStore, test_sqlite_write_through_rehydration(), test_requirement_statement_creation() (+2 more)
+Nodes (8): ProjectWorkspace, RequirementStatement, ExportService, RequirementStore, test_sqlite_write_through_rehydration(), test_requirement_statement_creation(), run_extensive_research(), run_sample_file_audit()
 
 ### Community 3 - "RequirementStatus"
 Cohesion: 0.15
 Nodes (5): RequirementStatus, test_dual_key_sign_off_flow(), test_broke_entrepreneur_toy_company_chat_synthesis(), test_mobile_chip_distribution_and_execution_chat_synthesis(), test_pm_plain_language_chat_interaction()
 
-### Community 4 - "Graphify Analysis & Reporting"
-Cohesion: 0.13
-Nodes (5): extract_semantic_chunk(), label_communities_cirrascale(), main(), normalize_id(), parse_tool_call_args()
+### Community 4 - "run_cirrascale_graphify.py"
+Cohesion: 0.08
+Nodes (16): preload_demo_datasets(), setup_and_teardown_test_database(), extract_semantic_chunk(), label_communities_cirrascale(), main(), normalize_id(), parse_tool_call_args(), extract_chat_data() (+8 more)
 
 ### Community 5 - "Qualcomm AI 100 Engineering Directives"
 Cohesion: 0.06
 Nodes (41): AGENTS.md — Development Guidelines & Living Project Tracker, Radical Candor & Brutal Idea Evaluation Rule, Git Commit Workflow Rule, Project Standards & Qualcomm AI 100 Engineering Directives, BAAI/bge-large-en-v1.5, Qualcomm Imagine API Endpoints Reference, Phase 0.5 Empirical Research & Validation Report, Phase 1: Backend Foundation & Conversational Copilot Findings (+33 more)
 
 ### Community 6 - "Document Parsing & Requirement Extraction"
-Cohesion: 0.12
-Nodes (18): parse_file(), DocumentParser, test_parse_csv(), test_parse_explicit_req_tags(), test_parse_numbered_list(), test_reject_tool_commentary_and_sanitize_glyphs(), test_phase_1_parse_aerospace_txt(), test_phase_1_parse_avionics_pdf() (+10 more)
+Cohesion: 0.11
+Nodes (19): parse_file(), parse_text(), DocumentParser, test_parse_csv(), test_parse_explicit_req_tags(), test_parse_numbered_list(), test_reject_tool_commentary_and_sanitize_glyphs(), test_phase_1_parse_aerospace_txt() (+11 more)
 
 ### Community 7 - "Live Qualcomm Cloud AI 100 Client"
 Cohesion: 0.10
@@ -133,8 +121,8 @@ Cohesion: 0.06
 Nodes (19): chat_synthesize_requirements(), IssueCard, RequirementConflictCard, EvidenceValidator, RubricScoringEngine, test_evidence_validator_card_enrichment(), test_no_double_jeopardy_on_substring_and_card_overlap(), test_rubric_engine_consistency_deductions() (+11 more)
 
 ### Community 13 - "QualcommService"
-Cohesion: 0.15
-Nodes (4): ConflictRadarResponse, QualcommService, test_xray_pipeline_extracts_and_grounds_issues(), run_aitl_phase_3_evaluation()
+Cohesion: 0.07
+Nodes (20): Documentation Standards & Continuous Sync Rules, Settings, ConflictRadarResponse, DualKeySignOff, DuelCard, InterpretationDuel, RewriteSuggestion, TbdDefault (+12 more)
 
 ### Community 14 - "StarBorder"
 Cohesion: 0.09
@@ -145,8 +133,8 @@ Cohesion: 0.07
 Nodes (26): dependencies, gsap, lucide-react, react, react-dom, devDependencies, oxlint, @types/react (+18 more)
 
 ### Community 16 - "schemas.py"
-Cohesion: 0.21
-Nodes (17): create_project(), ChatMessageItem, ChatRequirementRequest, ChatRequirementResponse, ConflictRadarRequest, ConflictType, DocumentParseRequest, DocumentParseResponse (+9 more)
+Cohesion: 0.08
+Nodes (27): add_project_document(), create_project(), delete_project(), delete_project_document(), get_project(), list_project_documents(), list_projects(), toggle_project_lock() (+19 more)
 
 ### Community 17 - "1. Feature Priority Breakdown"
 Cohesion: 0.33
@@ -160,20 +148,12 @@ Nodes (9): 1. Executive Summary, 2. Multi-Domain Scenario Breakdown, 3. Key Rese
 Cohesion: 0.12
 Nodes (7): test_phase_0_system_health(), test_phase_1_api_multipart_file_upload(), test_phase_1_chat_copilot_synthesis(), test_phase_2_conflict_radar_contradictions(), test_phase_2_duplicate_detection_and_dual_key_signoff(), test_phase_2_evidence_validator_offsets(), test_phase_2_rubric_scoring_and_receipts()
 
-### Community 21 - "storage.py"
-Cohesion: 0.18
-Nodes (3): get_project_context(), enrich_requirement_with_ai(), parse_text()
-
-### Community 22 - "test_schemas.py"
-Cohesion: 0.24
-Nodes (6): DualKeySignOff, RewriteSuggestion, TbdDefault, test_smart_rewriter_pipeline_intent_lock_and_tbds(), test_dual_key_signoff_defaults(), test_tbd_preservation_and_defaults()
-
 ### Community 25 - "test_live_duplicates_conflicts.py"
 Cohesion: 0.12
 Nodes (5): clean_context_test_projects(), clean_test_workspaces(), test_01_requirement_duplication_check_lexical_and_exact(), test_02_semantically_same_requirements_live_bge_embeddings(), test_03_contradictory_requirements_live_conflict_radar()
 
 ### Community 26 - "export_service.py"
-Cohesion: 0.17
+Cohesion: 0.16
 Nodes (4): test_export_csv_default_project(), test_export_pdf_default_project(), test_export_project_isolation(), test_export_rbac_executive_filtering()
 
 ### Community 27 - ".oxlintrc.json"
@@ -189,38 +169,18 @@ Cohesion: 0.07
 Nodes (14): DiffToken, DiffTokenType, IntentLockReport, IntentLockValidator, test_api_analysis_blueprint_endpoint(), test_api_analysis_duel_endpoint(), test_api_analysis_intent_lock_direct_endpoint(), test_api_analysis_rewrite_endpoint() (+6 more)
 
 ### Community 30 - "main.py"
-Cohesion: 0.20
+Cohesion: 0.18
 Nodes (4): health_check(), init_workspaces(), lifespan(), root()
-
-### Community 31 - "get_project"
-Cohesion: 0.29
-Nodes (3): get_project(), list_project_documents(), list_projects()
-
-### Community 35 - "time"
-Cohesion: 0.56
-Nodes (6): main(), parse_tool_args(), test_interpretation_duel(), test_smart_rewriter(), test_verification_blueprint(), test_xray_extraction()
-
-### Community 37 - "InterpretationDuel"
-Cohesion: 0.38
-Nodes (3): DuelCard, InterpretationDuel, test_interpretation_duel_pipeline_contrast_and_cards()
-
-### Community 38 - "VerificationPlan"
-Cohesion: 0.38
-Nodes (3): TestCase, VerificationPlan, test_verification_blueprint_pipeline_criteria()
-
-### Community 39 - "json"
-Cohesion: 0.52
-Nodes (3): extract_chat_data(), parse_tool_args(), run_aitl_evaluation()
 
 ## Knowledge Gaps
 - **13 isolated node(s):** `@types/react`, `@types/react-dom`, `oxlint`, `Documentation Standards & Continuous Sync Rules`, `Git Commit Workflow Rule` (+8 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 311 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `RequirementStatement` connect `Deterministic Verification & Test Blueprints` to `UserRole`, `aitl_phase_3_eval.py`, `test_rbac_and_workspaces.py`, `Document Parsing & Requirement Extraction`, `Live Qualcomm Cloud AI 100 Client`, `update_requirement`, `routes_analysis.py`, `IssueCard`, `QualcommService`, `schemas.py`, `qualcomm_service.py`, `storage.py`, `test_schemas.py`, `test_live_duplicates_conflicts.py`, `export_service.py`, `test_phase_3_pipelines.py`, `main.py`?**
+- **Why does `RequirementStatement` connect `Deterministic Verification & Test Blueprints` to `UserRole`, `run_cirrascale_graphify.py`, `test_rbac_and_workspaces.py`, `Document Parsing & Requirement Extraction`, `Live Qualcomm Cloud AI 100 Client`, `update_requirement`, `routes_analysis.py`, `IssueCard`, `QualcommService`, `schemas.py`, `storage.py`, `test_live_duplicates_conflicts.py`, `export_service.py`, `test_phase_3_pipelines.py`, `main.py`?**
   _High betweenness centrality (0.098) - this node is a cross-community bridge._
 - **Are the 10 inferred relationships involving `RequirementStatement` (e.g. with `analyze_conflicts()` and `SemanticDuplicateRequest`) actually correct?**
   _`RequirementStatement` has 10 INFERRED edges - model-reasoned connections that need verification._
@@ -228,8 +188,8 @@ _Questions this graph is uniquely positioned to answer:_
   _13 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `UserRole` be split into smaller, more focused modules?**
   _Cohesion score 0.11363636363636363 - nodes in this community are weakly interconnected._
-- **Why does `QualcommService` connect `QualcommService` to `UserRole`, `Deterministic Verification & Test Blueprints`, `RequirementStatus`, `aitl_phase_3_eval.py`, `InterpretationDuel`, `VerificationPlan`, `Live Qualcomm Cloud AI 100 Client`, `routes_analysis.py`, `IssueCard`, `schemas.py`, `qualcomm_service.py`, `storage.py`, `test_schemas.py`, `test_live_duplicates_conflicts.py`, `test_phase_3_pipelines.py`, `main.py`?**
-  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **Why does `QualcommService` connect `QualcommService` to `UserRole`, `Deterministic Verification & Test Blueprints`, `RequirementStatus`, `Live Qualcomm Cloud AI 100 Client`, `routes_analysis.py`, `IssueCard`, `schemas.py`, `storage.py`, `test_live_duplicates_conflicts.py`, `test_phase_3_pipelines.py`, `main.py`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Are the 14 inferred relationships involving `QualcommService` (e.g. with `ConflictRadarResponse` and `DualKeySignOff`) actually correct?**
   _`QualcommService` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Apple Design` be split into smaller, more focused modules?**

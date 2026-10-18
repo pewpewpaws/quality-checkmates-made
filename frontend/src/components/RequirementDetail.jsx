@@ -515,9 +515,39 @@ export default function RequirementDetail({
                     {issue.explanation}
                   </p>
 
-                  {issue.suggested_action && (
-                    <div style={{ fontSize: '11.5px', color: '#047857', fontWeight: 500, marginTop: '2px' }}>
-                      Remedy: {issue.suggested_action}
+                  {(issue.suggested_value || issue.suggested_action) && (
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      background: '#F0FDF4', 
+                      border: '1px solid #BBF7D0', 
+                      borderRadius: '6px', 
+                      padding: '6px 10px', 
+                      marginTop: '4px',
+                      flexWrap: 'wrap',
+                      gap: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#166534' }}>
+                        <Sparkles size={13} className="text-emerald-600" />
+                        <span>
+                          {issue.suggested_value ? (
+                            <>Suggested Value: <strong style={{ fontFamily: 'var(--font-mono)' }}>{issue.suggested_value}</strong></>
+                          ) : (
+                            <>Remedy: {issue.suggested_action}</>
+                          )}
+                        </span>
+                      </div>
+                      {role === 'product_manager' && issue.suggested_value && (
+                        <button
+                          onClick={() => handleAcceptTbdSuggestion(issue.evidence_quote, issue.suggested_value, issue.explanation || `Applied suggested resolution for '${issue.evidence_quote}'.`)}
+                          className="btn-subtle-cream"
+                          style={{ padding: '3px 8px', fontSize: '11px', fontWeight: 600, background: '#FFFFFF', borderColor: '#BBF7D0', color: '#166534', cursor: 'pointer' }}
+                          title="Apply suggested value directly to PM Proposal"
+                        >
+                          <span>Apply to Proposal</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

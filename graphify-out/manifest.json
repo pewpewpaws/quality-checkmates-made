@@ -84,9 +84,9 @@
     "semantic_hash": ""
   },
   "backend/models/schemas.py": {
-    "mtime": 1792346517.925018,
-    "seen": 1792349118.2367651,
-    "ast_hash": "d082895998b2fcfdbb3f3be4876f936c",
+    "mtime": 1792352322.6746523,
+    "seen": 1792352577.8238113,
+    "ast_hash": "d504a84a52a5288452722079d58000f1",
     "semantic_hash": ""
   },
   "backend/services/__init__.py": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
-    "mtime": 1792351461.8667345,
-    "seen": 1792351944.0337923,
-    "ast_hash": "ec41a77158c9e6a176ac90dd6ceed414",
+    "mtime": 1792352389.8659358,
+    "seen": 1792352577.8238199,
+    "ast_hash": "8bfb78ba6b42b4118402e8d0b6398616",
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
@@ -516,15 +516,15 @@
     "semantic_hash": ""
   },
   "frontend/src/components/InteractiveText.jsx": {
-    "mtime": 1792350790.6121156,
-    "seen": 1792351102.9824266,
-    "ast_hash": "d6734d02dcb6ba0573478789c57b04fd",
+    "mtime": 1792352434.7104483,
+    "seen": 1792352577.8238552,
+    "ast_hash": "de66600a1341e4b4960a51c036249f49",
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
-    "mtime": 1792352178.4601223,
-    "seen": 1792352201.2203155,
-    "ast_hash": "923bf31c7e60b35e55f9c70c335a4c0c",
+    "mtime": 1792352450.3332767,
+    "seen": 1792352577.8238564,
+    "ast_hash": "9b91a08f6d1f14d3f0e97bac27175d73",
     "semantic_hash": ""
   },
   "frontend/src/components/ScrambledText.jsx": {

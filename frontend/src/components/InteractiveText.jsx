@@ -158,6 +158,50 @@ export default function InteractiveText({
     }
   }
 
+  // Domain-adaptive heuristic for ambiguities and qualitative defects
+  const getAmbiguitySuggestedValue = (quote) => {
+    const q = (quote || '').toLowerCase().trim();
+    if (!q) return null;
+    const map = {
+      'quickly': '< 250 ms',
+      'fast': '< 100 ms',
+      'slowly': '> 2000 ms',
+      'immediately': 'within 100 ms',
+      'instantly': '< 50 ms',
+      'minimal power': '<= 15 mW',
+      'low power': '<= 25 mW',
+      'minimal': '<= 5%',
+      'high reliability': '>= 99.99% MTBF',
+      'reliable': '>= 99.9% uptime',
+      'periodically': 'every 1000 ms',
+      'frequently': 'at frequency >= 10 Hz',
+      'regularly': 'every 500 ms',
+      'normal conditions': '20°C to 25°C, 1 atm',
+      'nominal': 'nominal ± 5% tolerance',
+      'normal': 'within nominal ± 10%',
+      'safe distance': '>= 1.5 meters',
+      'safe': 'fail-safe state within 250 ms',
+      'excessive': '> 110% rated maximum',
+      'critical': 'critical limit threshold',
+      'super snappy': '<= 50 ms latency, 60 FPS',
+      'snappy': '<= 50 ms latency',
+      'responsive': '<= 100 ms response',
+      'not laggy': 'frame rate >= 60 FPS',
+      'user-friendly': '<= 3 user interactions',
+      'securely': 'AES-256-GCM encryption',
+      'secure': 'TLS 1.3 with AES-256',
+      'where feasible': '[Mandatory compliance: remove escape clause]',
+      'as appropriate': '[Specify deterministic trigger criteria]',
+      'if possible': '[Unconditional verification obligation]',
+      'when needed': '[Define explicit triggering event]'
+    };
+    for (const [key, val] of Object.entries(map)) {
+      if (q.includes(key) || key.includes(q)) return val;
+    }
+    const clean = q.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+    return clean ? `[TBD: ${clean}_limit]` : '<= 100 ms';
+  };
+
   // B. Match Flaw Cards from requirement.issues
   issues.forEach((issue, idx) => {
     const quote = issue.evidence_quote;
@@ -171,6 +215,7 @@ export default function InteractiveText({
         if (!isOverlap(start, end)) {
           claimSpan(start, end);
           const isMinor = issue.severity?.toUpperCase() === 'MINOR';
+          const suggestedVal = issue.suggested_value || getAmbiguitySuggestedValue(quote);
           spans.push({
             id: `flaw-${idx}-${start}`,
             start,
@@ -178,9 +223,13 @@ export default function InteractiveText({
             text: text.slice(start, end),
             type: 'flaw',
             color: isMinor ? 'amber' : 'red',
+            paramName: quote,
             title: `${issue.issue_type || 'Defect'} (${issue.severity || 'Major'})`,
             explanation: issue.explanation || 'Requirement statement contains non-verifiable or ambiguous terms.',
-            suggestedAction: issue.suggested_action || 'Parameterize with falsifiable numeric metric and boundary tolerance.'
+            suggestedAction: issue.suggested_action || 'Parameterize with falsifiable numeric metric and boundary tolerance.',
+            suggestedValue: suggestedVal,
+            rationale: issue.explanation || `Resolved flaw '${quote}'.`,
+            confidence: isMinor ? 'MEDIUM' : 'HIGH'
           });
           break; // Match first occurrence per card
         }
@@ -205,6 +254,7 @@ export default function InteractiveText({
             const penaltyMatch = line.match(/\[([A-Za-z]+)\s+([-\d.]+)\s*pts\]/);
             const dimension = penaltyMatch ? penaltyMatch[1] : 'Rubric';
             const penalty = penaltyMatch ? penaltyMatch[2] : '-5.0';
+            const suggestedVal = getAmbiguitySuggestedValue(quote);
             spans.push({
               id: `rubric-${rIdx}-${start}`,
               start,
@@ -212,9 +262,13 @@ export default function InteractiveText({
               text: text.slice(start, end),
               type: 'rubric_flaw',
               color: 'red',
+              paramName: quote,
               title: `${dimension} Deduction (${penalty} pts)`,
               explanation: line.replace(/^\[[^\]]+\]\s*/, ''),
-              suggestedAction: `Refine '${quote}' with falsifiable quantitative parameters conforming to ISO 29148.`
+              suggestedAction: `Refine '${quote}' with falsifiable quantitative parameters conforming to ISO 29148.`,
+              suggestedValue: suggestedVal,
+              rationale: `Resolved rubric flaw '${quote}' (${penalty} pts penalty).`,
+              confidence: 'MEDIUM'
             });
           }
         }
@@ -355,12 +409,12 @@ export default function InteractiveText({
 
             {/* Inline Action Buttons */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {span.type === 'tbd' && onAcceptSuggestion && (
+              {(span.type === 'tbd' || span.type === 'flaw' || span.type === 'rubric_flaw') && span.suggestedValue && onAcceptSuggestion && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     const val = span.suggestedValue || 'Validated limit';
-                    const rat = span.rationale || `Grounded in ${projectDomain} specification.`;
+                    const rat = span.rationale || `Grounded in ${projectDomain} specification for '${span.paramName}'.`;
                     onAcceptSuggestion(span.paramName, val, rat);
                     setActiveSpanId(null);
                   }}
@@ -368,7 +422,7 @@ export default function InteractiveText({
                   style={{ width: '100%', padding: '6px 10px', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
                   <Sparkles size={12} />
-                  <span>Apply Default to PM Proposal ({span.suggestedValue || 'Recommended'})</span>
+                  <span>Apply Suggested Value to PM Proposal ({span.suggestedValue})</span>
                 </button>
               )}
 

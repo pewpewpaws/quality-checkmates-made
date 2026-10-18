@@ -72,9 +72,9 @@
     "semantic_hash": ""
   },
   "backend/main.py": {
-    "mtime": 1792254680.8267565,
-    "seen": 1792254916.4498904,
-    "ast_hash": "bfedca99de9d90823627facddedce017",
+    "mtime": 1792294052.4009042,
+    "seen": 1792294088.2145512,
+    "ast_hash": "473a1906d57e163108ac7503f32f2fe4",
     "semantic_hash": ""
   },
   "backend/models/__init__.py": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
-    "mtime": 1792259246.2072852,
-    "seen": 1792259463.766904,
-    "ast_hash": "0fb8d48d74fdc95c0949d3ec50afdae3",
+    "mtime": 1792293900.9646504,
+    "seen": 1792294088.214578,
+    "ast_hash": "2ffe99b5f224eff9a03a8851a77eddeb",
     "semantic_hash": ""
   },
   "backend/services/storage.py": {

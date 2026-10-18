@@ -25,7 +25,8 @@ from backend.models.schemas import (
     RequirementStatement,
     RequirementStatus,
     DualKeySignOff,
-    ProjectDocumentContext
+    ProjectDocumentContext,
+    IssueCard
 )
 from backend.services.rubric_engine import rubric_engine
 
@@ -42,6 +43,28 @@ def preload_demo_datasets():
             category="Automotive BMS",
             section="Section 4.2 - Telemetry",
             status=RequirementStatus.FLAGGED_TBD,
+            issues=[
+                IssueCard(
+                    issue_type="Ambiguity",
+                    severity="Major",
+                    evidence_quote="as appropriate",
+                    explanation="The phrase 'as appropriate' is ambiguous and does not provide clear criteria for when the battery management system should transmit telemetry data.",
+                    suggested_action="Clarify exact transmission policy or state trigger",
+                    start_offset=105,
+                    end_offset=119,
+                    is_grounded=True,
+                ),
+                IssueCard(
+                    issue_type="Unverifiability",
+                    severity="Major",
+                    evidence_quote="periodically",
+                    explanation="The term 'periodically' is not verifiable, as it does not specify the exact time interval or sampling rate for transmission.",
+                    suggested_action="Specify exact transmission interval in ms (e.g. every 1000ms)",
+                    start_offset=36,
+                    end_offset=48,
+                    is_grounded=True,
+                )
+            ],
             sign_off=DualKeySignOff(
                 requirement_id="REQ-BMS-001",
                 state=RequirementStatus.FLAGGED_TBD

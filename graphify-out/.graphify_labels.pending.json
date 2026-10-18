@@ -1,9 +1,9 @@
 {
   "0": "UserRole",
   "1": "Apple Design",
-  "3": "RequirementStatus",
+  "3": "test_live_duplicates_conflicts.py",
   "11": "intent_lock.py",
-  "12": "RewriteSuggestion",
+  "12": "IssueCard",
   "13": "schemas.py",
   "14": "storage.py",
   "15": "test_rbac_and_workspaces.py",
@@ -23,10 +23,9 @@
   "29": "update_requirement",
   "30": "package.json",
   "31": "test_rubric_and_evidence.py",
-  "32": "qualcomm_service.py",
+  "32": "rubric_engine.py",
   "33": ".oxlintrc.json",
   "34": "React + Vite",
-  "35": "VerificationPlan",
-  "36": "health_check",
-  "37": "clean_test_workspaces"
+  "35": "storage.py",
+  "36": "main.py"
 }

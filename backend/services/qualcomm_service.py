@@ -368,9 +368,13 @@ class QualcommService:
             return self._mock_xray_issues(req_text)
 
         system_prompt = (
-            "You are a Principal Safety-Critical Requirements Quality Auditor conforming to ISO/IEC/IEEE 29148. "
-            "Analyze the requirement statement for flaws across Ambiguity, Unverifiability, Incompleteness, Non-atomic, Escape-hatch, Over-specification. "
-            "CRITICAL GUARDRAIL: evidence_quote MUST be an EXACT, verbatim, case-sensitive substring from the input text. "
+            "You are a Principal Safety-Critical Requirements Quality Auditor conforming to ISO/IEC/IEEE 29148.\n"
+            "Analyze the requirement statement for genuine defects across: Ambiguity, Unverifiability, Incompleteness, Non-atomic, Escape-hatch, Over-specification.\n\n"
+            "STRICT NEGATIVE CONSTRAINTS:\n"
+            "1. ONLY report flaws that GENUINELY exist. DO NOT force or hallucinate an issue for categories that have no defects. Most requirements only have 1 to 3 real flaws.\n"
+            "2. NEVER quote the grammatical subject or entity name (e.g., 'The battery management system', 'The module', 'The system') as evidence unless the subject itself is ambiguous.\n"
+            "3. NEVER report non-issues (e.g., do NOT report 'The requirement does not over-specify... but it could be argued', or claim that lacking an escape hatch is an escape-hatch flaw).\n"
+            "4. evidence_quote MUST be the exact, verbatim, case-sensitive substring of the defective words (e.g. 'periodically', 'as appropriate', 'quickly', 'critical').\n"
             "Call submit_xray_issues."
         )
 
@@ -390,14 +394,44 @@ class QualcommService:
             
             cards = []
             for item in raw_issues:
+                quote = item.get("evidence_quote", "").strip()
+                explanation = item.get("explanation", "").strip()
+
+                # Filter out obvious hallucinated negative non-issues
+                if "does not over-specify" in explanation.lower() or "does not provide any escape" in explanation.lower():
+                    continue
+
+                if not quote:
+                    continue
+
                 cards.append(IssueCard(
                     issue_type=item.get("issue_type", "Ambiguity"),
                     severity=item.get("severity", "Major"),
-                    evidence_quote=item.get("evidence_quote", req_text[:25]),
-                    explanation=item.get("explanation", "Detected specification defect"),
+                    evidence_quote=quote,
+                    explanation=explanation or "Detected specification defect",
                     suggested_action=item.get("suggested_action", "Clarify exact metric")
                 ))
-            return evidence_validator.validate_and_ground_cards(cards, req_text)
+
+            # Ground cards and reject ungrounded hallucinations
+            grounded = evidence_validator.validate_and_ground_cards(cards, req_text, reject_ungrounded=True)
+
+            # Defensive filter: Drop duplicate subject prefix quotes [0:X] if they don't represent a subject ambiguity
+            cleaned = []
+            seen_spans = set()
+            for c in grounded:
+                span = (c.start_offset, c.end_offset)
+                # If offset is at start covering generic subject and we already have or it's a generic phrase
+                if c.start_offset == 0 and c.end_offset and c.end_offset <= 32:
+                    leading_phrase = req_text[:c.end_offset].lower().strip()
+                    if leading_phrase in ["the battery management system", "the module", "the system", "the controller", "the device"]:
+                        # Skip bogus subject quote
+                        continue
+                if span in seen_spans and c.start_offset == 0:
+                    continue
+                seen_spans.add(span)
+                cleaned.append(c)
+
+            return cleaned if cleaned else grounded
         except Exception as e:
             logger.error(f"Live X-Ray extraction failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 X-Ray extraction error: {e}") from e

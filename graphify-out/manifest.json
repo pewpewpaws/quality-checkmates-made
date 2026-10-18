@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ChatAndIngestTab.jsx": {
-    "mtime": 1792348753.254801,
-    "seen": 1792349118.2367985,
-    "ast_hash": "0962de23ae24a78371861e9694dd861f",
+    "mtime": 1792350145.538869,
+    "seen": 1792350163.9341342,
+    "ast_hash": "09d6392e32c4a29ff41e1158fbaec342",
     "semantic_hash": ""
   },
   "frontend/src/components/ClickSpark.jsx": {

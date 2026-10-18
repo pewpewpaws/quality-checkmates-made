@@ -11,12 +11,12 @@ import {
   Paperclip, 
   FileUp, 
   Layers, 
-  ChevronDown, 
-  ChevronUp, 
   ArrowRight, 
   PlusCircle, 
   FileCheck,
-  Cpu
+  Cpu,
+  X,
+  FileSpreadsheet
 } from 'lucide-react';
 import StarBorder from './StarBorder';
 import { api } from '../services/api';
@@ -31,7 +31,7 @@ export default function ChatAndIngestTab({
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `👋 Connected to Qualcomm Cloud AI 100 Copilot for **${project?.project_name || 'Active Workspace'}**.\n\nYou can chat with me in natural language to formulate EARS-compliant requirements, or use the **Document Ingestor** above to upload PDF, TXT, or CSV specifications directly into this workspace.`,
+      content: `👋 Connected to Qualcomm Cloud AI 100 Copilot for **${project?.project_name || 'Active Workspace'}**.\n\nType a plain-language requirement objective below, or click the **📎 paperclip** (or drag & drop a PDF/TXT/CSV file) to ingest specifications directly into this workspace.`,
       generatedReqs: null,
       contextGrounding: null
     }
@@ -39,14 +39,10 @@ export default function ChatAndIngestTab({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Ingestor State
-  const [showIngestor, setShowIngestor] = useState(true);
-  const [ingestMode, setIngestMode] = useState('file'); // 'file' | 'text'
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [pastedText, setPastedText] = useState('');
+  // Attached File State for the Input Bar
+  const [attachedFile, setAttachedFile] = useState(null); // File object
   const [docCategory, setDocCategory] = useState('Functional');
-  const [isIngesting, setIsIngesting] = useState(false);
-  const [ingestStatus, setIngestStatus] = useState(null); // { type: 'success' | 'error', message: string, count?: number }
+  const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -56,21 +52,108 @@ export default function ChatAndIngestTab({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const quickPrompts = [
-    'When battery cell temperature exceeds 55°C during DC fast charging, derate current within 250ms.',
-    'When CAN bus telemetry heartbeat is lost for more than [TBD: timeout_ms], enter safe derate state.',
-    'The BMS shall continuously monitor isolation resistance between high-voltage bus and chassis ground.'
-  ];
+  // Dynamic domain-adaptive starter prompts
+  const getDomainPrompts = () => {
+    const domain = (project?.domain || '').toLowerCase();
+    const name = (project?.project_name || '').toLowerCase();
+    const combined = `${domain} ${name}`;
 
-  // Send Chat Message
-  const handleSendMessage = async (textToSend = null) => {
-    const text = textToSend || inputMessage;
-    if (!text.trim() || isLoading) return;
+    if (combined.includes('toy') || combined.includes('kid') || combined.includes('consumer')) {
+      return [
+        'The product shall have a unit Bill of Materials (BOM) cost not exceeding [TBD: max_bom_usd].',
+        'When dropped from [TBD: drop_height_meters], the toy enclosure shall remain intact with no sharp edges.',
+        'Audio speech synthesis latency shall not exceed [TBD: speech_latency_ms] after button press.'
+      ];
+    }
+    if (combined.includes('bms') || combined.includes('battery') || combined.includes('automotive') || combined.includes('ev')) {
+      return [
+        'When battery cell temperature exceeds 55°C during DC fast charging, derate current within 250ms.',
+        'When CAN bus telemetry heartbeat is lost for more than [TBD: timeout_ms], enter safe derate state.',
+        'The BMS shall continuously monitor isolation resistance between high-voltage bus and chassis ground.'
+      ];
+    }
+    if (combined.includes('med') || combined.includes('health') || combined.includes('pump')) {
+      return [
+        'When fluid occlusion pressure exceeds threshold, halt pump flow within 250ms and sound alarm.',
+        'Bolus delivery accuracy shall remain within [TBD: volume_tolerance_percent] across full flow range.',
+        'Audible clinical alarm sound pressure shall exceed [TBD: min_alarm_spl_db] at 1 meter distance.'
+      ];
+    }
+    if (combined.includes('fleet') || combined.includes('telematics') || combined.includes('iot')) {
+      return [
+        'Vehicle telematics gateway shall buffer CAN frames locally during cellular disconnection.',
+        'All telemetry dispatched over LTE shall be encrypted using AES-256 with key rotation.',
+        'When cellular connection restores, queued telemetry shall flush within [TBD: flush_window_sec].'
+      ];
+    }
+    return [
+      'When anomalous operating conditions occur, the system shall transition to safe state within [TBD: max_latency_ms].',
+      'The controller shall record all state transitions to persistent non-volatile memory.',
+      'Operational command verification shall reject unauthorized packets and increment fault telemetry.'
+    ];
+  };
 
+  const quickPrompts = getDomainPrompts();
+
+  // Send Message or Ingest Attached File
+  const handleSend = async (textToSend = null) => {
+    const text = textToSend !== null ? textToSend : inputMessage;
+    const fileToIngest = attachedFile;
+
+    if (!text.trim() && !fileToIngest) return;
+    if (isLoading) return;
+
+    // Reset input states
+    setInputMessage('');
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    setIsLoading(true);
+
+    const pid = project?.project_id || 'default_project';
+
+    // CASE 1: Document File Ingestion via Chat Bar
+    if (fileToIngest) {
+      const userMsg = {
+        role: 'user',
+        content: `📎 Ingesting specification document: **${fileToIngest.name}** (${(fileToIngest.size / 1024).toFixed(1)} KB)${text.trim() ? `\n\n${text}` : ''}`,
+        fileAttached: fileToIngest.name
+      };
+      setMessages(prev => [...prev, userMsg]);
+
+      try {
+        const parseRes = await api.parseFile(fileToIngest, docCategory, pid, role);
+        const count = parseRes.total_parsed || (parseRes.requirements ? parseRes.requirements.length : 0);
+
+        if (onRequirementsIngested) {
+          onRequirementsIngested(parseRes.requirements || []);
+        }
+
+        const assistantMsg = {
+          role: 'assistant',
+          content: `📥 **Document Ingestion Completed**: Parsed and enriched **${count} atomic requirements** from \`${fileToIngest.name}\` (Category: ${docCategory}).\n\nAutomatic Qualcomm AI 100 flaw extraction and 100-point deterministic rubric scoring have been applied.`,
+          generatedReqs: parseRes.requirements || [],
+          contextGrounding: `Ingested from ${fileToIngest.name}`
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+      } catch (err) {
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `⚠️ Ingestion failed: ${err.message}`,
+            generatedReqs: null,
+            contextGrounding: null
+          }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // CASE 2: Conversational Prompt Formulation
     const userMsg = { role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
-    setInputMessage('');
-    setIsLoading(true);
 
     try {
       const history = messages.map(m => ({
@@ -80,9 +163,9 @@ export default function ChatAndIngestTab({
 
       const res = await api.sendChatMessage(
         text,
-        project?.project_id || 'default_project',
+        pid,
         history,
-        false, // Don't auto-save; let user click "Add to Workspace"
+        false,
         role
       );
 
@@ -109,297 +192,132 @@ export default function ChatAndIngestTab({
     }
   };
 
-  // Document Ingestion: Extract & Ingest Requirements
-  const handleIngestDocument = async (e) => {
-    if (e) e.preventDefault();
-    if (ingestMode === 'file' && !selectedFile) return;
-    if (ingestMode === 'text' && !pastedText.trim()) return;
-
-    setIsIngesting(true);
-    setIngestStatus(null);
-
-    try {
-      let res;
-      const pid = project?.project_id || 'default_project';
-
-      if (ingestMode === 'file') {
-        res = await api.parseFile(selectedFile, docCategory, pid, role);
-      } else {
-        res = await api.parseText(pastedText, docCategory, pid, role);
-      }
-
-      const count = res.total_parsed || (res.requirements ? res.requirements.length : 0);
-      setIngestStatus({
-        type: 'success',
-        message: `Successfully extracted and ingested ${count} requirement${count === 1 ? '' : 's'} with Qualcomm AI flaw analysis!`,
-        count
-      });
-
-      // Notify parent to refresh requirements list in sidebar/store
-      if (onRequirementsIngested) {
-        onRequirementsIngested(res.requirements || []);
-      }
-
-      // Add a notification card to the chat thread
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: `📥 **Document Ingestion Completed**: Parsed and enriched **${count} atomic requirements** from \`${selectedFile?.name || 'pasted text'}\` (Category: ${docCategory}). Quality scoring and AI flaw extractions are active.`,
-          generatedReqs: res.requirements || [],
-          contextGrounding: `Ingested from ${selectedFile?.name || 'Raw Specification Document'}`
-        }
-      ]);
-
-      // Reset input form
-      setSelectedFile(null);
-      setPastedText('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (err) {
-      setIngestStatus({
-        type: 'error',
-        message: `Ingestion failed: ${err.message}`
-      });
-    } finally {
-      setIsIngesting(false);
-    }
-  };
-
   // Add individual synthesized requirement from chat into workspace
   const handleAddSynthesizedReq = async (reqItem) => {
     try {
       const pid = project?.project_id || 'default_project';
-      // Use parseText with the requirement text to save and score it
       const res = await api.parseText(reqItem.text, reqItem.category || 'Functional', pid, role);
       if (onRequirementsIngested) {
         onRequirementsIngested(res.requirements || []);
       }
-      alert(`Requirement added to workspace!`);
+      alert(`Requirement ${reqItem.id || 'candidate'} added to workspace!`);
     } catch (err) {
       alert(`Could not add requirement: ${err.message}`);
     }
   };
 
+  // Drag & drop handlers for full-canvas document ingestion
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setAttachedFile(e.dataTransfer.files[0]);
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-3mm)', maxWidth: '980px', margin: '0 auto', width: '100%', height: 'calc(100vh - 120px)' }}>
-      
-      {/* Top Header & Ingestor Bar */}
+    <div 
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '12px', 
+        maxWidth: '980px', 
+        margin: '0 auto', 
+        width: '100%', 
+        height: 'calc(100vh - 128px)',
+        position: 'relative'
+      }}
+    >
+      {/* Full-canvas Drag & Drop Overlay */}
+      {isDragging && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(255, 255, 255, 0.92)',
+            backdropFilter: 'blur(4px)',
+            border: '2px dashed #B45309',
+            borderRadius: '12px',
+            zIndex: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            color: '#B45309'
+          }}
+        >
+          <FileUp size={36} className="animate-bounce" />
+          <div style={{ fontSize: '16px', fontWeight: 700 }}>
+            Drop specification file to ingest
+          </div>
+          <div style={{ fontSize: '12px', color: '#78716C' }}>
+            Supports PDF, TXT, CSV, or Markdown specifications
+          </div>
+        </div>
+      )}
+
+      {/* Top Breadcrumb & Status Strip */}
       <div 
-        className="cream-card" 
         style={{ 
-          padding: '16px 20px', 
           display: 'flex', 
-          flexDirection: 'column', 
-          gap: '12px',
-          background: '#FFFFFF',
-          border: '1px solid #E5E0D5',
-          borderRadius: '12px',
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          padding: '6px 4px',
           flexShrink: 0
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#181715', color: '#FAF8F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileUp size={16} />
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#181715', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>Workspace Document Ingestor</span>
-                <span style={{ fontSize: '10.5px', background: '#FEF3C7', color: '#B45309', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
-                  Active Workspace: {project?.project_name || 'BMS'}
-                </span>
-              </div>
-              <div style={{ fontSize: '11.5px', color: '#78716C' }}>
-                Upload PDF, TXT, CSV specs or paste text to parse atomic requirements with Qualcomm Cloud AI 100.
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 700, color: '#181715' }}>
+            <Cpu size={14} className="text-amber-600" />
+            <span>Qualcomm Cloud AI 100 Copilot</span>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {onBackToOverview && (
-              <button
-                onClick={onBackToOverview}
-                className="btn-subtle-cream"
-                style={{ padding: '5px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
-                <span>← Overview</span>
-              </button>
-            )}
-            <button
-              onClick={() => setShowIngestor(!showIngestor)}
-              className="btn-subtle-cream"
-              style={{ padding: '5px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-            >
-              <span>{showIngestor ? 'Hide Ingestor' : 'Show Ingestor'}</span>
-              {showIngestor ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-            </button>
-          </div>
+          <span style={{ fontSize: '10.5px', background: '#FEF3C7', color: '#B45309', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+            {project?.project_name || 'Active Workspace'}
+          </span>
+          <span style={{ fontSize: '11px', color: '#78716C' }}>
+            ({project?.domain || 'Systems Engineering'})
+          </span>
         </div>
 
-        {/* Collapsible Document Ingestor Controls */}
-        {showIngestor && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '10px', borderTop: '1px solid #F0ECE4' }}>
-            {/* Mode & Category Row */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIngestMode('file')}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    borderRadius: '5px',
-                    border: '1px solid',
-                    borderColor: ingestMode === 'file' ? '#181715' : '#E5E0D5',
-                    backgroundColor: ingestMode === 'file' ? '#181715' : '#FFFFFF',
-                    color: ingestMode === 'file' ? '#FAF8F5' : '#57534E',
-                    cursor: 'pointer'
-                  }}
-                >
-                  📁 Upload Document File
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIngestMode('text')}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    borderRadius: '5px',
-                    border: '1px solid',
-                    borderColor: ingestMode === 'text' ? '#181715' : '#E5E0D5',
-                    backgroundColor: ingestMode === 'text' ? '#181715' : '#FFFFFF',
-                    color: ingestMode === 'text' ? '#FAF8F5' : '#57534E',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✍️ Paste Raw Text
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: '#78716C', fontWeight: 600 }}>Category:</span>
-                <select
-                  value={docCategory}
-                  onChange={(e) => setDocCategory(e.target.value)}
-                  style={{
-                    padding: '4px 8px',
-                    fontSize: '11px',
-                    borderRadius: '5px',
-                    border: '1px solid #E5E0D5',
-                    backgroundColor: '#FFFFFF',
-                    color: '#181715',
-                    outline: 'none'
-                  }}
-                >
-                  <option value="Functional">Functional</option>
-                  <option value="Safety">System Safety (ISO 26262)</option>
-                  <option value="Performance">Performance & Latency</option>
-                  <option value="Thermal">Thermal & Environmental</option>
-                  <option value="Interface">Interface & Communication</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Input Form based on mode */}
-            {ingestMode === 'file' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept=".txt,.csv,.pdf,.md"
-                  onChange={(e) => setSelectedFile(e.target.files[0] || null)}
-                  style={{
-                    fontSize: '11.5px',
-                    color: '#57534E',
-                    flex: 1,
-                    padding: '6px 8px',
-                    background: '#FAF8F5',
-                    borderRadius: '6px',
-                    border: '1px dashed #D6CEBE'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleIngestDocument}
-                  disabled={!selectedFile || isIngesting}
-                  className="btn-subtle-black"
-                  style={{ padding: '6px 14px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
-                >
-                  {isIngesting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                  <span>{isIngesting ? 'Ingesting...' : 'Ingest & Parse'}</span>
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <textarea
-                  placeholder="Paste multi-line requirements, numbered lists (e.g. 1. The BMS shall...), or raw PRD notes here..."
-                  value={pastedText}
-                  onChange={(e) => setPastedText(e.target.value)}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '8px 10px',
-                    fontSize: '11.5px',
-                    borderRadius: '6px',
-                    border: '1px solid #E5E0D5',
-                    backgroundColor: '#FAF8F5',
-                    color: '#181715',
-                    outline: 'none',
-                    fontFamily: 'var(--font-mono)'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleIngestDocument}
-                  disabled={!pastedText.trim() || isIngesting}
-                  className="btn-subtle-black"
-                  style={{ alignSelf: 'flex-end', padding: '6px 14px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  {isIngesting ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                  <span>{isIngesting ? 'Ingesting...' : 'Parse & Ingest Text'}</span>
-                </button>
-              </div>
-            )}
-
-            {/* Ingestion Status Notification */}
-            {ingestStatus && (
-              <div
-                style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  fontSize: '11.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  background: ingestStatus.type === 'success' ? '#ECFDF5' : '#FEF2F2',
-                  border: '1px solid',
-                  borderColor: ingestStatus.type === 'success' ? '#A7F3D0' : '#FCA5A5',
-                  color: ingestStatus.type === 'success' ? '#047857' : '#B91C1C'
-                }}
-              >
-                {ingestStatus.type === 'success' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-                <span>{ingestStatus.message}</span>
-              </div>
-            )}
-          </div>
+        {onBackToOverview && (
+          <button
+            onClick={onBackToOverview}
+            className="btn-subtle-cream"
+            style={{ padding: '4px 10px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <span>← Back to Overview</span>
+          </button>
         )}
       </div>
 
-      {/* Chat Messages Log */}
+      {/* Main Chat Messages Stream */}
       <div 
         className="cream-card" 
         style={{ 
           flex: 1, 
           overflowY: 'auto', 
-          padding: '16px 20px', 
+          padding: '20px', 
           display: 'flex', 
           flexDirection: 'column', 
           gap: '16px',
-          background: 'linear-gradient(180deg, #FAF8F5 0%, #FFFFFF 100%)',
+          background: '#FFFFFF',
           border: '1px solid #E5E0D5',
-          borderRadius: '12px'
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
         }}
       >
         {messages.map((m, idx) => (
@@ -414,7 +332,7 @@ export default function ChatAndIngestTab({
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start'
             }}
           >
-            {/* Bubble Header */}
+            {/* Sender Tag */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10.5px', color: '#78716C', padding: '0 4px' }}>
               {m.role === 'user' ? (
                 <span>👔 You ({role === 'product_manager' ? 'PM' : 'Systems Lead'})</span>
@@ -426,16 +344,16 @@ export default function ChatAndIngestTab({
               )}
             </div>
 
-            {/* Message Body */}
+            {/* Bubble Container */}
             <div
               style={{
                 padding: '12px 16px',
                 borderRadius: '10px',
                 fontSize: '12.5px',
                 lineHeight: 1.5,
-                background: m.role === 'user' ? '#181715' : '#FFFFFF',
+                background: m.role === 'user' ? '#181715' : '#FAF8F5',
                 color: m.role === 'user' ? '#FAF8F5' : '#181715',
-                border: m.role === 'user' ? '1px solid #181715' : '1px solid #E5E0D5',
+                border: m.role === 'user' ? '1px solid #181715' : '1px solid #EBE4D8',
                 boxShadow: 'var(--shadow-card)',
                 whiteSpace: 'pre-wrap'
               }}
@@ -443,7 +361,7 @@ export default function ChatAndIngestTab({
               {m.content}
             </div>
 
-            {/* Generated Requirements Cards */}
+            {/* Generated Requirement Cards */}
             {m.generatedReqs && m.generatedReqs.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '4px' }}>
                 {m.generatedReqs.map((req, rIdx) => (
@@ -475,7 +393,7 @@ export default function ChatAndIngestTab({
                         )}
                       </div>
 
-                      {req.id && onSelectRequirement && (
+                      {req.id && onSelectRequirement ? (
                         <button
                           onClick={() => onSelectRequirement(req.id)}
                           className="btn-subtle-cream"
@@ -484,24 +402,21 @@ export default function ChatAndIngestTab({
                           <span>Inspect</span>
                           <ArrowRight size={11} />
                         </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddSynthesizedReq(req)}
+                          className="btn-subtle-black"
+                          style={{ padding: '3px 8px', fontSize: '10.5px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                        >
+                          <PlusCircle size={11} />
+                          <span>Add to Workspace</span>
+                        </button>
                       )}
                     </div>
 
                     <div style={{ fontSize: '12px', color: '#292524', fontFamily: 'var(--font-mono)', background: '#FAF8F5', padding: '8px 10px', borderRadius: '6px', border: '1px solid #EFEAE2' }}>
                       {req.text}
                     </div>
-
-                    {/* Action button if not yet in store */}
-                    {!req.id && (
-                      <button
-                        onClick={() => handleAddSynthesizedReq(req)}
-                        className="btn-subtle-black"
-                        style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <PlusCircle size={12} />
-                        <span>Add to Workspace Requirements</span>
-                      </button>
-                    )}
                   </div>
                 ))}
               </div>
@@ -509,24 +424,43 @@ export default function ChatAndIngestTab({
           </div>
         ))}
 
+        {/* Real-time Qualcomm AI Loading State with animated shimmer */}
         {isLoading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#8A857C', fontSize: '12px', padding: '8px 4px' }}>
-            <Loader2 size={14} className="animate-spin text-amber-600" />
-            <span>Qualcomm Cloud AI 100 is formulating formal EARS requirements...</span>
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px', 
+              background: '#FAF8F5',
+              border: '1px solid #EBE4D8',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              maxWidth: '420px',
+              color: '#181715', 
+              fontSize: '12px' 
+            }}
+          >
+            <div style={{ width: '24px', height: '24px', borderRadius: '6px', background: '#181715', color: '#FAF8F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Cpu size={14} className="text-amber-400 animate-spin" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontWeight: 600 }}>Qualcomm Cloud AI 100</span>
+              <span style={{ fontSize: '11px', color: '#78716C' }}>Synthesizing requirements with Llama-3.3-70B...</span>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested Quick Prompts */}
+      {/* Domain-Adaptive Starter Prompts */}
       <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '2px 0' }}>
         {quickPrompts.map((p, i) => (
           <button
             key={i}
-            onClick={() => handleSendMessage(p)}
+            onClick={() => handleSend(p)}
             style={{
               fontSize: '11px',
-              padding: '4px 8px',
+              padding: '4px 10px',
               background: '#FFFFFF',
               border: '1px solid #E5E0D5',
               borderRadius: '6px',
@@ -535,7 +469,16 @@ export default function ChatAndIngestTab({
               whiteSpace: 'nowrap',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#181715';
+              e.currentTarget.style.color = '#181715';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#E5E0D5';
+              e.currentTarget.style.color = '#57534E';
             }}
           >
             <span>✨</span>
@@ -544,75 +487,159 @@ export default function ChatAndIngestTab({
         ))}
       </div>
 
-      {/* Chat Input Bar */}
+      {/* Unified Chat & Ingestion Input Bar */}
       <div 
         className="cream-card" 
         style={{ 
           padding: '10px 14px', 
           display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px',
+          flexDirection: 'column',
+          gap: '8px',
           background: '#FFFFFF',
           border: '1px solid #E5E0D5',
-          borderRadius: '10px',
-          flexShrink: 0
+          borderRadius: '12px',
+          flexShrink: 0,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
         }}
       >
-        <button
-          onClick={() => setShowIngestor(true)}
-          className="btn-subtle-cream"
-          style={{ padding: '6px 8px' }}
-          title="Upload or Ingest Document"
-        >
-          <Paperclip size={15} />
-        </button>
+        {/* Attached Document Ingestion Chip (if a file is selected) */}
+        {attachedFile && (
+          <div 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              background: '#FAF8F5',
+              border: '1px solid #E5E0D5',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              fontSize: '11.5px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px' }}>📄</span>
+              <span style={{ fontWeight: 600, color: '#181715' }}>{attachedFile.name}</span>
+              <span style={{ color: '#78716C', fontSize: '10.5px' }}>({(attachedFile.size / 1024).toFixed(1)} KB)</span>
+              
+              {/* Category Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+                <span style={{ color: '#78716C', fontSize: '10.5px' }}>Category:</span>
+                <select
+                  value={docCategory}
+                  onChange={(e) => setDocCategory(e.target.value)}
+                  style={{
+                    padding: '2px 6px',
+                    fontSize: '10.5px',
+                    borderRadius: '4px',
+                    border: '1px solid #D6CEBE',
+                    background: '#FFFFFF',
+                    color: '#181715',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="Functional">Functional</option>
+                  <option value="Safety">Safety Critical</option>
+                  <option value="Performance">Performance</option>
+                  <option value="Thermal">Thermal</option>
+                  <option value="Interface">Interface</option>
+                </select>
+              </div>
+            </div>
 
-        <input
-          type="text"
-          placeholder="Ask Copilot or type a plain-language requirement objective... (Press Enter to send)"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
-          }}
-          disabled={isLoading}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            fontSize: '12.5px',
-            color: '#181715',
-            backgroundColor: 'transparent'
-          }}
-        />
+            <button
+              onClick={() => {
+                setAttachedFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: '2px', color: '#8A857C' }}
+              title="Remove file"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
 
-        <StarBorder
-          as="button"
-          onClick={() => handleSendMessage()}
-          disabled={isLoading || !inputMessage.trim()}
-          color="#ffffff"
-          trailColor="#ffffff"
-          duration={4}
-          direction="clockwise"
-          stars={1}
-          trailLength={0.3}
-          thickness={1}
-          radius={6}
-          glow={0.6}
-          hover="lap"
-          sparkle={false}
-          clickPulse
-          theme="dark"
-          backgroundColor="#181715"
-          textColor="#FAF8F5"
-          style={{ padding: '6px 12px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
-        >
-          {isLoading ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-          <span>Send</span>
-        </StarBorder>
+        {/* Input Text Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".txt,.csv,.pdf,.md"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              if (e.target.files && e.target.files[0]) {
+                setAttachedFile(e.target.files[0]);
+              }
+            }}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-subtle-cream"
+            style={{ 
+              padding: '6px 8px',
+              backgroundColor: attachedFile ? '#181715' : 'transparent',
+              color: attachedFile ? '#FAF8F5' : '#57534E',
+              borderColor: attachedFile ? '#181715' : '#E5E0D5'
+            }}
+            title="Attach Specification Document (PDF, TXT, CSV)"
+          >
+            <Paperclip size={15} />
+          </button>
+
+          <input
+            type="text"
+            placeholder={attachedFile ? "Add instruction (optional) and press Ingest Specs..." : "Ask Copilot or type a requirement... (or attach PDF/TXT/CSV)"}
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            disabled={isLoading}
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              fontSize: '12.5px',
+              color: '#181715',
+              backgroundColor: 'transparent'
+            }}
+          />
+
+          <StarBorder
+            as="button"
+            onClick={() => handleSend()}
+            disabled={isLoading || (!inputMessage.trim() && !attachedFile)}
+            color="#ffffff"
+            trailColor="#ffffff"
+            duration={4}
+            direction="clockwise"
+            stars={1}
+            trailLength={0.3}
+            thickness={1}
+            radius={6}
+            glow={0.6}
+            hover="lap"
+            sparkle={false}
+            clickPulse
+            theme="dark"
+            backgroundColor="#181715"
+            textColor="#FAF8F5"
+            style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            {isLoading ? (
+              <Loader2 size={13} className="animate-spin" />
+            ) : attachedFile ? (
+              <Upload size={13} />
+            ) : (
+              <Send size={13} />
+            )}
+            <span>{isLoading ? 'Processing...' : attachedFile ? 'Ingest Specs' : 'Send'}</span>
+          </StarBorder>
+        </div>
       </div>
 
     </div>

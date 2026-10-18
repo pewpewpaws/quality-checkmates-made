@@ -504,33 +504,33 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1792302595.2479517,
-    "seen": 1792303325.2512758,
-    "ast_hash": "bc4f827faa933afe422c2c7023739192",
+    "mtime": 1792303882.8063567,
+    "seen": 1792303983.4668314,
+    "ast_hash": "b68fd6bb7aa0f5866524b464d21d1f57",
     "semantic_hash": ""
   },
   "frontend/src/components/Header.jsx": {
-    "mtime": 1792302480.6626785,
-    "seen": 1792303325.251277,
-    "ast_hash": "63cb9baa76364bbf77d642fd947ae07c",
+    "mtime": 1792303871.7271945,
+    "seen": 1792303983.4668324,
+    "ast_hash": "4cb11d5f218b8eeb925a53ebe79f86f0",
     "semantic_hash": ""
   },
   "frontend/src/components/IngestModal.jsx": {
-    "mtime": 1792302580.7997983,
-    "seen": 1792303325.2512794,
-    "ast_hash": "bc3331ea8577527017f0365ed18c07e5",
+    "mtime": 1792303943.8562243,
+    "seen": 1792303983.4668334,
+    "ast_hash": "2d0eb3589161548ab663ca51a72d1ce6",
     "semantic_hash": ""
   },
   "frontend/src/components/InteractiveText.jsx": {
-    "mtime": 1792302459.083423,
-    "seen": 1792303325.2512803,
-    "ast_hash": "383699128653d5d813c18e4430f87df3",
+    "mtime": 1792303793.8590112,
+    "seen": 1792303983.4668345,
+    "ast_hash": "e0c6253b2a6cb8720b1cf321f38ae46d",
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
-    "mtime": 1792303498.650613,
-    "seen": 1792303534.9034767,
-    "ast_hash": "8c2be8b882efcdfbf1879fa971b76c61",
+    "mtime": 1792303858.4369981,
+    "seen": 1792303983.4668355,
+    "ast_hash": "0f5a648913e029dbbe74c9ed5c93dbe1",
     "semantic_hash": ""
   },
   "frontend/src/components/ScrambledText.jsx": {
@@ -552,9 +552,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/TbdPopover.jsx": {
-    "mtime": 1792302450.2943172,
-    "seen": 1792303325.2512853,
-    "ast_hash": "72c84b91adac9d919fd48285dafe7240",
+    "mtime": 1792303760.5314791,
+    "seen": 1792303983.4668396,
+    "ast_hash": "dc0967a4bfbae04c89c0bba1280ec8b8",
     "semantic_hash": ""
   },
   "frontend/src/main.jsx": {
@@ -564,9 +564,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/api.js": {
-    "mtime": 1792302393.9366164,
-    "seen": 1792303325.251287,
-    "ast_hash": "08a818811545d014c2130691daa4c91d",
+    "mtime": 1792303912.6627862,
+    "seen": 1792303983.4668417,
+    "ast_hash": "2e7c494b60c7a24a4f4a1485c4a42733",
     "semantic_hash": ""
   },
   "frontend/vite.config.js": {

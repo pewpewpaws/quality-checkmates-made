@@ -1,8 +1,8 @@
 {
   "0": "UserRole",
   "1": "Apple Design",
-  "3": "test_live_duplicates_conflicts.py",
-  "8": "test_rbac_and_workspaces.py",
+  "3": "RequirementStatus",
+  "8": "delete_requirement",
   "11": "routes_analysis.py",
   "12": "test_phase_0_to_2_e2e.py",
   "13": "QualcommService",
@@ -17,13 +17,11 @@
   "22": "IssueCard",
   "23": "json",
   "24": "upload_context_document",
-  "25": "test_context_and_duplicates.py",
+  "25": "main.py",
   "26": "export_service.py",
   "27": ".oxlintrc.json",
   "28": "React + Vite",
   "29": "test_phase_3_pipelines.py",
   "30": "get_project_context",
-  "31": "reset_store_state",
-  "32": "update_requirement",
-  "36": "main.py"
+  "32": "update_requirement"
 }

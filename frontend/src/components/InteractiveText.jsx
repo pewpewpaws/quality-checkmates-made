@@ -4,7 +4,14 @@ import TbdPopover from './TbdPopover';
 /**
  * Parses requirement text and converts [TBD: ...] placeholders into interactive popover chips.
  */
-export default function InteractiveText({ text, projectDomain, onAcceptSuggestion, evidenceQuote }) {
+export default function InteractiveText({ 
+  text, 
+  projectDomain, 
+  requirementId,
+  identifiedTbds = [],
+  onAcceptSuggestion, 
+  evidenceQuote 
+}) {
   if (!text) return null;
 
   // Regex to match [TBD: ...] or [TBD]
@@ -19,6 +26,8 @@ export default function InteractiveText({ text, projectDomain, onAcceptSuggestio
             <TbdPopover
               key={index}
               tbdString={part}
+              requirementId={requirementId}
+              identifiedTbds={identifiedTbds}
               projectDomain={projectDomain}
               onAcceptSuggestion={onAcceptSuggestion}
             />

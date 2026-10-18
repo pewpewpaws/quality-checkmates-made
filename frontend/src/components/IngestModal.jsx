@@ -36,16 +36,19 @@ export default function IngestModal({
     }
   };
 
-  const sampleSpecs = [
-    {
-      label: 'Sample BMS Telemetry',
-      text: `REQ-BMS-101: The battery controller shall periodically transmit cell voltages to the BMS master.\nREQ-BMS-102: The thermal protection circuit must quickly shut down contactors if critical heat is reached.`
-    },
-    {
-      label: 'Sample Avionics Slew',
-      text: `REQ-AERO-201: The pitch trim motor shall slew within [TBD: latency_ms] after stick deflection.\nREQ-AERO-202: The flight management computer should maintain stable glidepath under turbulent conditions.`
+  const [projectDocs, setProjectDocs] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && projectId) {
+      api.getProject(projectId)
+        .then(proj => {
+          if (proj && proj.documents) {
+            setProjectDocs(proj.documents);
+          }
+        })
+        .catch(() => {});
     }
-  ];
+  }, [isOpen, projectId]);
 
   return (
     <div
@@ -99,23 +102,29 @@ export default function IngestModal({
           </div>
         )}
 
-        {/* Quick Samples */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', color: '#8A857C', fontWeight: 600, textTransform: 'uppercase' }}>
-            Quick Insert:
-          </span>
-          {sampleSpecs.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setText(s.text)}
-              className="btn-subtle-cream"
-              style={{ fontSize: '11px', padding: '3px 8px' }}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        {/* Project Context Documents from Backend */}
+        {projectDocs && projectDocs.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', color: '#8A857C', fontWeight: 600, textTransform: 'uppercase' }}>
+              Attached Specs ({projectDocs.length}):
+            </span>
+            {projectDocs.map((doc) => (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => {
+                  setText(doc.content);
+                  if (doc.category) setCategory(doc.category);
+                }}
+                className="btn-subtle-cream"
+                style={{ fontSize: '11px', padding: '3px 8px' }}
+                title={doc.title}
+              >
+                {doc.title}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleParse} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

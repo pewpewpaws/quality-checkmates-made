@@ -13,7 +13,9 @@ import {
   GitBranch,
   Layers,
   ArrowRight,
-  BookOpen
+  Loader2,
+  Check,
+  XCircle
 } from 'lucide-react';
 import InteractiveText from './InteractiveText';
 import { api } from '../services/api';
@@ -31,16 +33,16 @@ export default function RequirementDetail({
   const [isRunningAi, setIsRunningAi] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
 
-  // Tab results caches
-  const [duelData, setDuelData] = useState(requirement?.interpretation_duel || null);
-  const [blueprintData, setBlueprintData] = useState(requirement?.verification_blueprint || null);
-  const [rewriteData, setRewriteData] = useState(null);
+  // Real backend analysis caches
+  const [duelData, setDuelData] = useState(requirement?.duel || null);
+  const [blueprintData, setBlueprintData] = useState(requirement?.verification_plan || null);
+  const [rewriteData, setRewriteData] = useState(requirement?.rewrite_suggestion || null);
 
   // Sync state when requirement prop changes
   useEffect(() => {
-    setDuelData(requirement?.interpretation_duel || null);
-    setBlueprintData(requirement?.verification_blueprint || null);
-    setRewriteData(null);
+    setDuelData(requirement?.duel || null);
+    setBlueprintData(requirement?.verification_plan || null);
+    setRewriteData(requirement?.rewrite_suggestion || null);
     setPmValueInput(requirement?.sign_off?.pm_target_val || '');
     setHardwareRationale(requirement?.sign_off?.hardware_rationale || '');
   }, [requirement?.id]);
@@ -64,14 +66,15 @@ export default function RequirementDetail({
     setHardwareRationale(rationale);
   };
 
-  // Sign-off action handler
+  // Sign-off action handler targeting real backend transitions: provisional_pm or lock_baseline
   const handleSignOff = async (actionType) => {
     setIsSigningOff(true);
     try {
       const payload = {
-        action: actionType,
+        action: actionType, // 'provisional_pm' | 'lock_baseline' | 'flag_tbd' | 'reject'
         pm_target_val: pmValueInput || signOff.pm_target_val || 'Validated threshold',
-        pm_author: role === 'PRODUCT_MANAGER' ? 'Product Manager' : signOff.pm_author,
+        pm_author: role === 'product_manager' ? 'Product Manager' : (signOff.pm_author || 'Product Manager'),
+        tech_lead_approver: role === 'systems_engineer' ? 'Lead Systems Engineer' : (signOff.tech_lead_approver || 'Lead Systems Engineer'),
         hardware_rationale: hardwareRationale || signOff.hardware_rationale || 'Bench tested and verified compliant.'
       };
 
@@ -86,12 +89,15 @@ export default function RequirementDetail({
     }
   };
 
-  // AI Pipeline triggers
+  // Real AI Pipeline triggers on Qualcomm Cloud AI 100
   const handleRunDuel = async () => {
     setIsRunningAi(true);
     try {
       const res = await api.runDuel(requirement.id);
       setDuelData(res);
+      if (onRequirementUpdated) {
+        onRequirementUpdated({ ...requirement, duel: res });
+      }
     } catch (e) {
       alert(e.message);
     } finally {
@@ -104,6 +110,9 @@ export default function RequirementDetail({
     try {
       const res = await api.runBlueprint(requirement.id);
       setBlueprintData(res);
+      if (onRequirementUpdated) {
+        onRequirementUpdated({ ...requirement, verification_plan: res });
+      }
     } catch (e) {
       alert(e.message);
     } finally {
@@ -116,10 +125,28 @@ export default function RequirementDetail({
     try {
       const res = await api.runRewrite(requirement.id);
       setRewriteData(res);
+      if (onRequirementUpdated) {
+        onRequirementUpdated({ ...requirement, rewrite_suggestion: res });
+      }
     } catch (e) {
       alert(e.message);
     } finally {
       setIsRunningAi(false);
+    }
+  };
+
+  const handleApplyRewrite = async () => {
+    if (!rewriteData?.revised) return;
+    try {
+      const updated = await api.updateRequirement(requirement.id, {
+        ...requirement,
+        text: rewriteData.revised
+      }, role);
+      if (onRequirementUpdated) {
+        onRequirementUpdated(updated);
+      }
+    } catch (e) {
+      alert(`Could not apply rewrite: ${e.message}`);
     }
   };
 
@@ -177,6 +204,8 @@ export default function RequirementDetail({
           </div>
           <InteractiveText
             text={requirement.text}
+            requirementId={requirement.id}
+            identifiedTbds={rewriteData?.identified_tbds || requirement.rewrite_suggestion?.identified_tbds || []}
             projectDomain={project?.domain || 'Engineering Specification'}
             onAcceptSuggestion={handleAcceptTbdSuggestion}
           />
@@ -242,7 +271,7 @@ export default function RequirementDetail({
             Dual-Key Governance Gate
           </span>
           <span style={{ fontSize: '11px', color: '#8A857C' }}>
-            Strict Separation of Duties
+            State: {requirement.status}
           </span>
         </div>
 
@@ -261,29 +290,29 @@ export default function RequirementDetail({
             <input
               type="text"
               placeholder="e.g. <= 10ms or Derate by 50%"
-              value={pmValueInput || signOff.pm_target_val || ''}
+              value={pmValueInput}
               onChange={(e) => setPmValueInput(e.target.value)}
-              disabled={role !== 'PRODUCT_MANAGER'}
+              disabled={role !== 'product_manager'}
               style={{
                 width: '100%',
                 padding: '6px 8px',
                 fontSize: '12px',
                 borderRadius: '5px',
                 border: '1px solid #E5E0D5',
-                backgroundColor: role === 'PRODUCT_MANAGER' ? '#FFFFFF' : '#F4EFEA',
+                backgroundColor: role === 'product_manager' ? '#FFFFFF' : '#F4EFEA',
                 outline: 'none',
                 color: '#181715'
               }}
             />
 
-            {role === 'PRODUCT_MANAGER' && (
+            {role === 'product_manager' && (
               <button
-                onClick={() => handleSignOff('PM_PROPOSE')}
-                disabled={isSigningOff || !pmValueInput}
+                onClick={() => handleSignOff('provisional_pm')}
+                disabled={isSigningOff || !pmValueInput.trim()}
                 className="btn-subtle-black"
                 style={{ fontSize: '11.5px', padding: '5px 10px', alignSelf: 'flex-start', marginTop: '2px' }}
               >
-                Propose Value (→ Provisional)
+                {isSigningOff ? 'Provisioning...' : 'Propose Value (→ Provisional)'}
               </button>
             )}
           </div>
@@ -302,29 +331,36 @@ export default function RequirementDetail({
             <input
               type="text"
               placeholder="Hardware test bench rationale..."
-              value={hardwareRationale || signOff.hardware_rationale || ''}
+              value={hardwareRationale}
               onChange={(e) => setHardwareRationale(e.target.value)}
-              disabled={role !== 'SYSTEMS_ENGINEER'}
+              disabled={role !== 'systems_engineer'}
               style={{
                 width: '100%',
                 padding: '6px 8px',
                 fontSize: '12px',
                 borderRadius: '5px',
                 border: '1px solid #E5E0D5',
-                backgroundColor: role === 'SYSTEMS_ENGINEER' ? '#FFFFFF' : '#F4EFEA',
+                backgroundColor: role === 'systems_engineer' ? '#FFFFFF' : '#F4EFEA',
                 outline: 'none',
                 color: '#181715'
               }}
             />
 
-            {role === 'SYSTEMS_ENGINEER' && (
+            {role === 'systems_engineer' && (
               <button
-                onClick={() => handleSignOff('TECH_LEAD_SIGNOFF')}
+                onClick={() => handleSignOff('lock_baseline')}
                 disabled={isSigningOff || requirement.status !== 'PROVISIONAL_PM'}
                 className="btn-subtle-black"
-                style={{ fontSize: '11.5px', padding: '5px 10px', alignSelf: 'flex-start', marginTop: '2px', backgroundColor: '#047857', borderColor: '#047857' }}
+                style={{ 
+                  fontSize: '11.5px', 
+                  padding: '5px 10px', 
+                  alignSelf: 'flex-start', 
+                  marginTop: '2px', 
+                  backgroundColor: requirement.status === 'PROVISIONAL_PM' ? '#047857' : '#9CA3AF', 
+                  borderColor: requirement.status === 'PROVISIONAL_PM' ? '#047857' : '#9CA3AF' 
+                }}
               >
-                <CheckCircle2 size={12} /> Sign-Off Baseline (→ Locked)
+                <CheckCircle2 size={12} /> {isSigningOff ? 'Signing off...' : 'Sign-Off Baseline (→ Locked)'}
               </button>
             )}
           </div>
@@ -422,7 +458,7 @@ export default function RequirementDetail({
           </div>
         )}
 
-        {/* Tab 2: Smart Rewriter */}
+        {/* Tab 2: Smart Rewriter with Intent-Lock */}
         {activeTab === 'rewrite' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {!rewriteData ? (
@@ -435,15 +471,24 @@ export default function RequirementDetail({
                   disabled={isRunningAi}
                   className="btn-subtle-black"
                 >
-                  <Sparkles size={14} />
-                  <span>{isRunningAi ? 'Synthesizing Rewrite...' : 'Generate Intent-Locked Rewrite'}</span>
+                  {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  <span>{isRunningAi ? 'Synthesizing Rewrite on Qualcomm AI 100...' : 'Generate Intent-Locked Rewrite'}</span>
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '12px' }}>
-                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: 600, textTransform: 'uppercase', marginBottom: '4px' }}>
-                    Revised Statement (Preserved [TBD])
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '11px', color: '#047857', fontWeight: 600, textTransform: 'uppercase' }}>
+                      Revised Statement (Preserved [TBD] Placeholders)
+                    </span>
+                    <button
+                      onClick={handleApplyRewrite}
+                      className="btn-subtle-black"
+                      style={{ fontSize: '11.5px', padding: '4px 8px' }}
+                    >
+                      <Check size={12} /> Apply Rewrite to Requirement
+                    </button>
                   </div>
                   <div style={{ fontSize: '13.5px', color: '#181715', fontWeight: 500, lineHeight: 1.5 }}>
                     {rewriteData.revised}
@@ -452,7 +497,47 @@ export default function RequirementDetail({
 
                 {rewriteData.rationale && (
                   <div style={{ fontSize: '12px', color: '#55524B' }}>
-                    <strong>Rationale:</strong> {rewriteData.rationale}
+                    <strong>Engineering Rationale:</strong> {rewriteData.rationale}
+                  </div>
+                )}
+
+                {/* Identified TBDs List */}
+                {rewriteData.identified_tbds && rewriteData.identified_tbds.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#181715' }}>
+                      Smart Suggested Defaults ({rewriteData.identified_tbds.length}):
+                    </div>
+                    {rewriteData.identified_tbds.map((tbd, idx) => (
+                      <div key={idx} style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '6px', padding: '8px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color: '#B91C1C' }}>
+                            [TBD: {tbd.parameter_name}] → {tbd.suggested_value}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#55524B' }}>
+                            {tbd.rationale}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleAcceptTbdSuggestion(tbd.parameter_name, tbd.suggested_value, tbd.rationale)}
+                          className="btn-subtle-cream"
+                          style={{ fontSize: '11px', padding: '3px 8px' }}
+                        >
+                          Use Value
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Intent-Lock Diff Tokens if available */}
+                {rewriteData.intent_lock && (
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#047857', marginBottom: '4px' }}>
+                      Intent-Lock Verification: {rewriteData.intent_lock.passed ? 'PASSED ✓' : 'DRIFT DETECTED ⚠'}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#55524B' }}>
+                      {rewriteData.intent_lock.audit_summary}
+                    </div>
                   </div>
                 )}
               </div>
@@ -473,27 +558,46 @@ export default function RequirementDetail({
                   disabled={isRunningAi}
                   className="btn-subtle-black"
                 >
-                  <GitBranch size={14} />
-                  <span>{isRunningAi ? 'Simulating Interpretation Duel...' : 'Simulate Interpretation Duel'}</span>
+                  {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
+                  <span>{isRunningAi ? 'Simulating Interpretation Duel on Qualcomm AI 100...' : 'Simulate Interpretation Duel'}</span>
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3mm)' }}>
-                <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '12px' }}>
-                  <div style={{ fontSize: '11px', color: '#047857', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
-                    Perspective A (Strict Nominal)
-                  </div>
-                  <div style={{ fontSize: '12.5px', color: '#181715', lineHeight: 1.4 }}>
-                    {duelData.interpretation_a}
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11.5px', color: '#55524B' }}>
+                  <span>Flaw Trigger: <strong>"{duelData.flaw_quote || requirement.text.slice(0, 30)}"</strong> ({duelData.flaw_type || 'Ambiguity'})</span>
+                  <span style={{ fontWeight: 600, color: '#B45309' }}>Contrast Divergence: {(duelData.contrast_score * 100).toFixed(0)}%</span>
                 </div>
 
-                <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '12px' }}>
-                  <div style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
-                    Perspective B (Permissive / Boundary)
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-3mm)' }}>
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ fontSize: '11px', color: '#047857', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px' }}>
+                      {duelData.card_a?.title || 'Perspective A (Nominal)'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#8A857C', marginBottom: '6px' }}>
+                      Stance: {duelData.card_a?.stance}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#181715', lineHeight: 1.4, marginBottom: '6px' }}>
+                      <strong>Technical Spec:</strong> {duelData.card_a?.technical_spec}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#55524B' }}>
+                      <strong>Impact:</strong> {duelData.card_a?.architectural_impact}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12.5px', color: '#181715', lineHeight: 1.4 }}>
-                    {duelData.interpretation_b}
+
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ fontSize: '11px', color: '#B91C1C', fontWeight: 700, textTransform: 'uppercase', marginBottom: '2px' }}>
+                      {duelData.card_b?.title || 'Perspective B (Permissive)'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#8A857C', marginBottom: '6px' }}>
+                      Stance: {duelData.card_b?.stance}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#181715', lineHeight: 1.4, marginBottom: '6px' }}>
+                      <strong>Technical Spec:</strong> {duelData.card_b?.technical_spec}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#55524B' }}>
+                      <strong>Impact:</strong> {duelData.card_b?.architectural_impact}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -514,30 +618,72 @@ export default function RequirementDetail({
                   disabled={isRunningAi}
                   className="btn-subtle-black"
                 >
-                  <FileCheck size={14} />
-                  <span>{isRunningAi ? 'Synthesizing Test Cases...' : 'Generate Verification Blueprint'}</span>
+                  {isRunningAi ? <Loader2 size={14} className="animate-spin" /> : <FileCheck size={14} />}
+                  <span>{isRunningAi ? 'Synthesizing Test Plan on Qualcomm AI 100...' : 'Generate Verification Blueprint'}</span>
                 </button>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ fontSize: '12px', color: '#55524B' }}>
-                  <strong>Recommended Method:</strong> {blueprintData.method || 'Hardware-in-the-Loop (HIL) Test'}
+                  <strong>Verification Method:</strong> {blueprintData.verification_method || 'Test'}
                 </div>
-                {blueprintData.test_cases?.map((tc, idx) => (
-                  <div key={idx} style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#181715' }}>
-                      {tc.title || `Test Case #${idx + 1}`}
+
+                {/* Preconditions */}
+                {blueprintData.preconditions && blueprintData.preconditions.length > 0 && (
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '6px', padding: '8px 10px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#55524B' }}>Preconditions:</div>
+                    <ul style={{ paddingLeft: '16px', fontSize: '11.5px', color: '#55524B', marginTop: '2px' }}>
+                      {blueprintData.preconditions.map((p, idx) => (
+                        <li key={idx}>{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Positive Nominal Test Case */}
+                {blueprintData.positive_test_case && (
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#047857' }}>
+                      Nominal Test: {blueprintData.positive_test_case.name}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#181715', marginTop: '2px' }}>
+                      <strong>Stimulus:</strong> {blueprintData.positive_test_case.stimulus}
                     </div>
                     <div style={{ fontSize: '11.5px', color: '#55524B', marginTop: '2px' }}>
-                      {tc.description}
+                      <strong>Expected:</strong> {blueprintData.positive_test_case.expected_response}
                     </div>
-                    {tc.pass_criteria && (
-                      <div style={{ fontSize: '11px', color: '#047857', fontWeight: 600, marginTop: '4px' }}>
-                        Pass Criterion: {tc.pass_criteria}
-                      </div>
-                    )}
                   </div>
-                ))}
+                )}
+
+                {/* Negative Boundary Test Case */}
+                {blueprintData.negative_boundary_test_case && (
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#B91C1C' }}>
+                      Boundary Case: {blueprintData.negative_boundary_test_case.name}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#181715', marginTop: '2px' }}>
+                      <strong>Stimulus:</strong> {blueprintData.negative_boundary_test_case.stimulus}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#55524B', marginTop: '2px' }}>
+                      <strong>Expected:</strong> {blueprintData.negative_boundary_test_case.expected_response}
+                    </div>
+                  </div>
+                )}
+
+                {/* Falsifiable Pass/Fail Acceptance Criteria */}
+                {blueprintData.acceptance_criteria && (
+                  <div style={{ background: '#FAF8F5', border: '1px solid #EBE6DC', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#181715', textTransform: 'uppercase' }}>
+                      Acceptance Criteria
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#047857' }}>
+                      <strong>PASS:</strong> {blueprintData.acceptance_criteria.pass_condition}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#B91C1C' }}>
+                      <strong>FAIL:</strong> {blueprintData.acceptance_criteria.fail_condition}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

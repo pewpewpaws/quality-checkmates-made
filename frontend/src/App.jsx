@@ -11,7 +11,7 @@ export default function App() {
   const [currentProjectId, setCurrentProjectId] = useState('default_project');
   const [requirements, setRequirements] = useState([]);
   const [selectedReqId, setSelectedReqId] = useState(null);
-  const [role, setRole] = useState('PRODUCT_MANAGER'); // 'PRODUCT_MANAGER' | 'SYSTEMS_ENGINEER' | 'EXECUTIVE'
+  const [role, setRole] = useState('product_manager'); // 'product_manager' | 'systems_engineer' | 'executive'
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showStartProject, setShowStartProject] = useState(false);

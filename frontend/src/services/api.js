@@ -19,7 +19,7 @@ export const api = {
     return res.json();
   },
 
-  async createProject(payload, role = 'PRODUCT_MANAGER') {
+  async createProject(payload, role = 'product_manager') {
     const res = await fetch(`${API_BASE}/projects`, {
       method: 'POST',
       headers: {
@@ -36,7 +36,7 @@ export const api = {
   },
 
   // Requirements
-  async getRequirements(projectId = 'default_project', role = 'PRODUCT_MANAGER') {
+  async getRequirements(projectId = 'default_project', role = 'product_manager') {
     const res = await fetch(`${API_BASE}/requirements?project_id=${encodeURIComponent(projectId)}`, {
       headers: { 'X-User-Role': role }
     });
@@ -50,7 +50,7 @@ export const api = {
     return res.json();
   },
 
-  async updateRequirement(id, data, role = 'PRODUCT_MANAGER') {
+  async updateRequirement(id, data, role = 'product_manager') {
     const res = await fetch(`${API_BASE}/requirements/${id}`, {
       method: 'PUT',
       headers: {
@@ -66,7 +66,7 @@ export const api = {
     return res.json();
   },
 
-  async signOff(id, actionPayload, role = 'PRODUCT_MANAGER') {
+  async signOff(id, actionPayload, role = 'product_manager') {
     const res = await fetch(`${API_BASE}/requirements/${id}/sign-off`, {
       method: 'POST',
       headers: {
@@ -124,7 +124,7 @@ export const api = {
   },
 
   // Document Ingestion
-  async parseText(text, category = 'Functional', projectId = 'default_project', role = 'PRODUCT_MANAGER') {
+  async parseText(text, category = 'Functional', projectId = 'default_project', role = 'product_manager') {
     const res = await fetch(`${API_BASE}/parse/text`, {
       method: 'POST',
       headers: {
@@ -141,7 +141,7 @@ export const api = {
   },
 
   // Conversational Copilot Drafting
-  async chatDraft(userPrompt, projectId = 'default_project', role = 'PRODUCT_MANAGER') {
+  async chatDraft(userPrompt, projectId = 'default_project', role = 'product_manager') {
     const res = await fetch(`${API_BASE}/chat/draft`, {
       method: 'POST',
       headers: {

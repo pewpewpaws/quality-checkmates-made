@@ -60,9 +60,9 @@
     "semantic_hash": ""
   },
   "backend/api/routes_requirements.py": {
-    "mtime": 1792346517.9204745,
-    "seen": 1792349118.2367606,
-    "ast_hash": "8a9d04aad5d321214e3b4a65e3e9f0f2",
+    "mtime": 1792350820.0849779,
+    "seen": 1792351102.982377,
+    "ast_hash": "98191a8def42bf167686db74db120a77",
     "semantic_hash": ""
   },
   "backend/config.py": {
@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
-    "mtime": 1792346517.929176,
-    "seen": 1792349118.2367725,
-    "ast_hash": "7892867ed57c9cca359eef8785741d84",
+    "mtime": 1792351050.7886174,
+    "seen": 1792351102.9823897,
+    "ast_hash": "bc1821944cdecfb78b40048771953925",
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
@@ -498,9 +498,9 @@
     "semantic_hash": ""
   },
   "frontend/src/App.jsx": {
-    "mtime": 1792348855.9481218,
-    "seen": 1792349118.2367973,
-    "ast_hash": "49334b2a5d0e0f49b7ee5832a304dfc0",
+    "mtime": 1792350872.8183506,
+    "seen": 1792351102.98242,
+    "ast_hash": "81d4ad439fbfe81fa236dc94ae629fb5",
     "semantic_hash": ""
   },
   "frontend/src/components/Header.jsx": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/InteractiveText.jsx": {
-    "mtime": 1792349899.839944,
-    "seen": 1792349953.8622754,
-    "ast_hash": "d1fe4bb65a7adbd6e3a68da3efbf18a0",
+    "mtime": 1792350790.6121156,
+    "seen": 1792351102.9824266,
+    "ast_hash": "d6734d02dcb6ba0573478789c57b04fd",
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
@@ -558,9 +558,9 @@
     "semantic_hash": ""
   },
   "frontend/src/services/api.js": {
-    "mtime": 1792348611.807703,
-    "seen": 1792349118.2368116,
-    "ast_hash": "30d5c4b53f0b2b664cf71cc4dbe76574",
+    "mtime": 1792350565.4790938,
+    "seen": 1792351102.9824376,
+    "ast_hash": "5c6c0eefa99739ab6b68eb96392a56f0",
     "semantic_hash": ""
   },
   "frontend/vite.config.js": {
@@ -612,9 +612,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/ChatAndIngestTab.jsx": {
-    "mtime": 1792350145.538869,
-    "seen": 1792350163.9341342,
-    "ast_hash": "09d6392e32c4a29ff41e1158fbaec342",
+    "mtime": 1792351007.9130003,
+    "seen": 1792351102.9824212,
+    "ast_hash": "1a19c814b21c764e898a888153b85ee9",
     "semantic_hash": ""
   },
   "frontend/src/components/ClickSpark.jsx": {

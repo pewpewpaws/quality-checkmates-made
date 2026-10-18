@@ -968,15 +968,18 @@ class QualcommService:
             "Your objective is to translate their request into formal, atomic, verifiable requirements strictly grounded in the provided Project Documentation Context.\n\n"
             f"PROJECT CONTEXT & ENGINEERING CHARTER:\n{project_context}\n\n"
             "CRITICAL MANDATES:\n"
-            "1. ZERO-FABRICATION RULE: NEVER hardcode assumed numbers, durations, or limits in requirement text. "
-            "Every requirement statement MUST parameterize every unstated metric, threshold, duration, or subjective quality (e.g. 'loudly', 'quickly', 'promptly') as: `[TBD: <parameter_name_and_unit>]`. Every requirement text MUST contain at least one `[TBD: ...]` token.\n"
+            "1. ZERO-FABRICATION RULE WITH EXPLICIT PM VALUE PRESERVATION: "
+            "NEVER invent or hallucinate unstated numbers, durations, or limits. "
+            "HOWEVER, if the PM ALREADY explicitly stated concrete parameter values, colors, or thresholds in their prompt (e.g. 'I want the toy to be red' -> 'The toy exterior color shall be red', or 'derate current by 50%' -> 'the controller shall derate current by 50%'), you MUST include their explicit parameter value directly into the requirement text without converting it into an artificial [TBD] token. "
+            "Requirements with explicit PM values without unstated limits are marked as PROVISIONAL_PM. "
+            "Only metrics, thresholds, or qualities that are UNSTATED, ambiguous, or subjective (e.g. 'quickly', 'lightweight', 'safe', 'adequate') MUST be parameterized as: `[TBD: <parameter_name_and_unit>]` with status FLAGGED_TBD.\n"
             "2. SMART SUGGESTED DEFAULTS: For each `[TBD]` token, you MUST propose a realistic default in `identified_tbds` "
             "citing specific numbers or baselines directly from the Project Context or relevant safety standards.\n"
             "3. ATOMIC DECOMPOSITION: Decompose multiple distinct actions, safeguards, or alerts into separate atomic requirements with distinct functional categories. Every single requirement MUST have its own `identified_tbds`.\n"
             "4. STRICT EARS SYNTAX: Use mandatory modal verb 'shall' (e.g. 'When <trigger>, the system shall <action>'). "
             "Never retain weak conversational phrasing ('should', 'we need to', 'make sure').\n"
             "5. CONVERSATIONAL EXPLANATION: In `agent_reply`, explain your engineering rationale directly to the PM, "
-            "referencing why specific thresholds were flagged as [TBD] and which project charter constraints were applied.\n"
+            "referencing why specific thresholds were adopted or flagged as [TBD] and which project charter constraints were applied.\n"
             "Call submit_chat_requirements."
         )
 
@@ -1020,12 +1023,37 @@ class QualcommService:
                         confidence=t.get("confidence", "MEDIUM") if t.get("confidence") in ["HIGH", "MEDIUM", "LOW"] else "MEDIUM"
                     ))
                 statement_text = r.get("text", "")
+
+                # If requirement contains unresolved [TBD] tokens, it is FLAGGED_TBD.
+                # If the PM supplied all concrete values, it is PROVISIONAL_PM.
+                has_unresolved_tbd = bool(re.search(r"\[TBD(?::\s*[^\]=]+)?\]", statement_text))
+                req_status = RequirementStatus.FLAGGED_TBD if has_unresolved_tbd else RequirementStatus.PROVISIONAL_PM
+
+                sign_off_obj = None
+                if req_status == RequirementStatus.PROVISIONAL_PM:
+                    from backend.models.schemas import DualKeySignOff
+                    target_val = pm_message
+                    color_match = re.search(r"\b(red|blue|green|yellow|black|white|orange|purple|gray|grey)\b", pm_message, re.IGNORECASE)
+                    metric_match = re.search(r"(\d+(?:\.\d+)?\s*(?:%|°C|ms|s|kg|g|V|A|W|kW|m|mm|cm|dB)?)", pm_message)
+                    if color_match:
+                        target_val = color_match.group(1).lower()
+                    elif metric_match and metric_match.group(1).strip():
+                        target_val = metric_match.group(1).strip()
+
+                    sign_off_obj = DualKeySignOff(
+                        requirement_id=f"REQ-CHAT-{idx:03d}",
+                        pm_author="Product Manager",
+                        pm_target_val=target_val,
+                        state=RequirementStatus.PROVISIONAL_PM
+                    )
+
                 req_statements.append(RequirementStatement(
                     id=f"REQ-CHAT-{idx:03d}",
                     text=statement_text,
                     category=r.get("category", "Functional"),
                     section=r.get("section", "Chat Synthesis"),
-                    status=RequirementStatus.FLAGGED_TBD,
+                    status=req_status,
+                    sign_off=sign_off_obj,
                     rewrite_suggestion=RewriteSuggestion(
                         original=pm_message,
                         revised=statement_text,
@@ -1218,6 +1246,38 @@ class QualcommService:
                 "All thresholds are preserved as `[TBD]` with Smart Suggested Defaults grounded in your charter."
             )
             grounding = "Grounded in Project Charter: 800V BMS thermal loop (55°C limit during 350kW fast charging, ISO 26262 ASIL-D)."
+            return agent_reply, reqs, grounding
+
+        if "red" in lower and ("toy" in lower or "color" in lower):
+            from backend.models.schemas import DualKeySignOff
+            reqs = [
+                RequirementStatement(
+                    id=f"REQ-CHAT-{next_req_index:03d}",
+                    text="The toy exterior color shall be red.",
+                    category="Product Description",
+                    section="Section 1.0 - Product Specifications",
+                    status=RequirementStatus.PROVISIONAL_PM,
+                    sign_off=DualKeySignOff(
+                        requirement_id=f"REQ-CHAT-{next_req_index:03d}",
+                        pm_author="Product Manager",
+                        pm_target_val="red",
+                        state=RequirementStatus.PROVISIONAL_PM
+                    ),
+                    rewrite_suggestion=RewriteSuggestion(
+                        original=pm_message,
+                        revised="The toy exterior color shall be red.",
+                        rationale="PM explicitly specified product color ('red'). Synthesized as PROVISIONAL_PM proposal awaiting Lead Systems Engineer technical sign-off.",
+                        identified_tbds=[]
+                    )
+                )
+            ]
+            agent_reply = (
+                "You specified an explicit product color ('red'). "
+                "I formulated this directly into a formal EARS requirement statement ('The toy exterior color shall be red.') "
+                "without inserting an artificial [TBD] placeholder. "
+                "Because this is a PM specification proposal, it is categorized as **🟡 PROVISIONAL_PM** awaiting Lead Systems Engineer baseline sign-off."
+            )
+            grounding = "Grounded in PM explicit input: color = red."
             return agent_reply, reqs, grounding
 
         if "broke" in lower or "toy" in lower:

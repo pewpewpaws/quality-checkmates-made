@@ -129,6 +129,43 @@ export default function App() {
     loadRequirements(currentProjectId, role);
   };
 
+  // Chat history persistence per workspace (survives tab switches and browser refresh)
+  const [chatHistories, setChatHistories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('copilot_chat_histories');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const handleUpdateChatMessages = (pid, newMessages) => {
+    if (!pid) return;
+    setChatHistories(prev => {
+      const updated = { ...prev, [pid]: newMessages };
+      try {
+        localStorage.setItem('copilot_chat_histories', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not persist chat history:', e);
+      }
+      return updated;
+    });
+  };
+
+  const handleClearChat = (pid) => {
+    if (!pid) return;
+    setChatHistories(prev => {
+      const updated = { ...prev };
+      delete updated[pid];
+      try {
+        localStorage.setItem('copilot_chat_histories', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Could not clear chat history in localStorage:', e);
+      }
+      return updated;
+    });
+  };
+
   const currentProject = projects.find(p => p.project_id === currentProjectId) || null;
   const currentRequirement = requirements.find(r => r.id === selectedReqId) || null;
 
@@ -314,6 +351,9 @@ export default function App() {
                   <ChatAndIngestTab
                     project={currentProject}
                     role={role}
+                    chatMessages={chatHistories[currentProjectId] || null}
+                    onUpdateChatMessages={(msgs) => handleUpdateChatMessages(currentProjectId, msgs)}
+                    onClearChat={() => handleClearChat(currentProjectId)}
                     onRequirementsIngested={handleRequirementsIngested}
                     onSelectRequirement={handleSelectRequirement}
                     onBackToOverview={() => handleSelectView('overview')}

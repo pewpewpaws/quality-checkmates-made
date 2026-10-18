@@ -24,20 +24,44 @@ import { api } from '../services/api';
 export default function ChatAndIngestTab({
   project,
   role,
+  chatMessages = null,
+  onUpdateChatMessages,
+  onClearChat,
   onRequirementsIngested,
   onSelectRequirement,
   onBackToOverview
 }) {
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: `👋 Connected to Qualcomm Cloud AI 100 Copilot for **${project?.project_name || 'Active Workspace'}**.\n\nType a plain-language requirement objective below, or click the **📎 paperclip** (or drag & drop a PDF/TXT/CSV file) to ingest specifications directly into this workspace.`,
-      generatedReqs: null,
-      contextGrounding: null
-    }
-  ]);
+  const getDefaultWelcome = () => ({
+    role: 'assistant',
+    content: `👋 Connected to Qualcomm Cloud AI 100 Copilot for **${project?.project_name || 'Active Workspace'}**.\n\nType a plain-language requirement objective below, or click the **📎 paperclip** (or drag & drop a PDF/TXT/CSV file) to ingest specifications directly into this workspace.`,
+    generatedReqs: null,
+    contextGrounding: null
+  });
+
+  const [messages, setMessages] = useState(() => {
+    return chatMessages && chatMessages.length > 0 ? chatMessages : [getDefaultWelcome()];
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Sync when workspace project changes
+  useEffect(() => {
+    if (chatMessages && chatMessages.length > 0) {
+      setMessages(chatMessages);
+    } else {
+      setMessages([getDefaultWelcome()]);
+    }
+  }, [project?.project_id]);
+
+  const updateAndNotifyMessages = (updater) => {
+    setMessages(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (onUpdateChatMessages) {
+        onUpdateChatMessages(next);
+      }
+      return next;
+    });
+  };
 
   // Attached File State for the Input Bar
   const [attachedFile, setAttachedFile] = useState(null); // File object
@@ -118,7 +142,7 @@ export default function ChatAndIngestTab({
         content: `📎 Ingesting specification document: **${fileToIngest.name}** (${(fileToIngest.size / 1024).toFixed(1)} KB)${text.trim() ? `\n\n${text}` : ''}`,
         fileAttached: fileToIngest.name
       };
-      setMessages(prev => [...prev, userMsg]);
+      updateAndNotifyMessages(prev => [...prev, userMsg]);
 
       try {
         const parseRes = await api.parseFile(fileToIngest, docCategory, pid, role);
@@ -134,9 +158,9 @@ export default function ChatAndIngestTab({
           generatedReqs: parseRes.requirements || [],
           contextGrounding: `Ingested from ${fileToIngest.name}`
         };
-        setMessages(prev => [...prev, assistantMsg]);
+        updateAndNotifyMessages(prev => [...prev, assistantMsg]);
       } catch (err) {
-        setMessages(prev => [
+        updateAndNotifyMessages(prev => [
           ...prev,
           {
             role: 'assistant',
@@ -153,7 +177,7 @@ export default function ChatAndIngestTab({
 
     // CASE 2: Conversational Prompt Formulation
     const userMsg = { role: 'user', content: text };
-    setMessages(prev => [...prev, userMsg]);
+    updateAndNotifyMessages(prev => [...prev, userMsg]);
 
     try {
       const history = messages.map(m => ({
@@ -176,9 +200,9 @@ export default function ChatAndIngestTab({
         contextGrounding: res.context_grounding || null
       };
 
-      setMessages(prev => [...prev, assistantMsg]);
+      updateAndNotifyMessages(prev => [...prev, assistantMsg]);
     } catch (err) {
-      setMessages(prev => [
+      updateAndNotifyMessages(prev => [
         ...prev,
         {
           role: 'assistant',
@@ -192,17 +216,92 @@ export default function ChatAndIngestTab({
     }
   };
 
-  // Add individual synthesized requirement from chat into workspace
-  const handleAddSynthesizedReq = async (reqItem) => {
+  // Add individual synthesized requirement from chat into workspace (Keep action)
+  const handleKeepCandidate = async (reqItem, msgIdx, reqIdx) => {
     try {
       const pid = project?.project_id || 'default_project';
-      const res = await api.parseText(reqItem.text, reqItem.category || 'Functional', pid, role);
+      const payload = {
+        id: reqItem.id && !reqItem.id.startsWith('CANDIDATE-') && !reqItem.id.startsWith('REQ-CHAT-') ? reqItem.id : undefined,
+        text: reqItem.text,
+        category: reqItem.category || 'Functional',
+        section: reqItem.section || 'Chat Ingestion',
+        status: reqItem.status || 'PROVISIONAL_PM',
+        project_id: pid,
+        sign_off: reqItem.sign_off || {
+          pm_author: 'Product Manager',
+          pm_target_val: reqItem.sign_off?.pm_target_val || 'red',
+          state: reqItem.status || 'PROVISIONAL_PM'
+        },
+        rewrite_suggestion: reqItem.rewrite_suggestion || null,
+        quality_score: reqItem.quality_score || null,
+        issues: reqItem.issues || []
+      };
+
+      const created = await api.createRequirement(payload, role);
       if (onRequirementsIngested) {
-        onRequirementsIngested(res.requirements || []);
+        onRequirementsIngested([created]);
       }
-      alert(`Requirement ${reqItem.id || 'candidate'} added to workspace!`);
+
+      // Mark candidate card as KEPT with persistent ID in message stream
+      updateAndNotifyMessages(prev => {
+        const next = [...prev];
+        if (next[msgIdx] && next[msgIdx].generatedReqs && next[msgIdx].generatedReqs[reqIdx]) {
+          const reqsCopy = [...next[msgIdx].generatedReqs];
+          reqsCopy[reqIdx] = {
+            ...reqsCopy[reqIdx],
+            actionStatus: 'KEPT',
+            savedReqId: created.id,
+            id: created.id,
+            status: created.status
+          };
+          next[msgIdx] = { ...next[msgIdx], generatedReqs: reqsCopy };
+        }
+        return next;
+      });
     } catch (err) {
       alert(`Could not add requirement: ${err.message}`);
+    }
+  };
+
+  // Reject candidate requirement
+  const handleRejectCandidate = (msgIdx, reqIdx) => {
+    updateAndNotifyMessages(prev => {
+      const next = [...prev];
+      if (next[msgIdx] && next[msgIdx].generatedReqs && next[msgIdx].generatedReqs[reqIdx]) {
+        const reqsCopy = [...next[msgIdx].generatedReqs];
+        reqsCopy[reqIdx] = {
+          ...reqsCopy[reqIdx],
+          actionStatus: 'REJECTED'
+        };
+        next[msgIdx] = { ...next[msgIdx], generatedReqs: reqsCopy };
+      }
+      return next;
+    });
+  };
+
+  // Undo reject candidate requirement
+  const handleUndoRejectCandidate = (msgIdx, reqIdx) => {
+    updateAndNotifyMessages(prev => {
+      const next = [...prev];
+      if (next[msgIdx] && next[msgIdx].generatedReqs && next[msgIdx].generatedReqs[reqIdx]) {
+        const reqsCopy = [...next[msgIdx].generatedReqs];
+        reqsCopy[reqIdx] = {
+          ...reqsCopy[reqIdx],
+          actionStatus: null
+        };
+        next[msgIdx] = { ...next[msgIdx], generatedReqs: reqsCopy };
+      }
+      return next;
+    });
+  };
+
+  // Clear entire chat history for this workspace
+  const handleClearSession = () => {
+    if (window.confirm('Clear conversation history for this workspace?')) {
+      if (onClearChat) {
+        onClearChat();
+      }
+      setMessages([getDefaultWelcome()]);
     }
   };
 
@@ -293,15 +392,28 @@ export default function ChatAndIngestTab({
           </span>
         </div>
 
-        {onBackToOverview && (
-          <button
-            onClick={onBackToOverview}
-            className="btn-subtle-cream"
-            style={{ padding: '4px 10px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '4px' }}
-          >
-            <span>← Back to Overview</span>
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {messages.length > 1 && (
+            <button
+              onClick={handleClearSession}
+              className="btn-subtle-cream"
+              title="Clear conversation history for this workspace"
+              style={{ padding: '4px 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', color: '#78716C' }}
+            >
+              <span>🧹 Clear Chat</span>
+            </button>
+          )}
+
+          {onBackToOverview && (
+            <button
+              onClick={onBackToOverview}
+              className="btn-subtle-cream"
+              style={{ padding: '4px 10px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              <span>← Back to Overview</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Chat Messages Stream */}
@@ -364,61 +476,166 @@ export default function ChatAndIngestTab({
             {/* Generated Requirement Cards */}
             {m.generatedReqs && m.generatedReqs.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '4px' }}>
-                {m.generatedReqs.map((req, rIdx) => (
-                  <div
-                    key={rIdx}
-                    style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #EBE4D8',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: '#181715' }}>
-                          {req.id || `CANDIDATE-${rIdx + 1}`}
-                        </span>
-                        <span style={{ fontSize: '10px', background: '#F4EFEA', padding: '1px 6px', borderRadius: '4px', color: '#57534E' }}>
-                          {req.category || 'Synthesized'}
-                        </span>
-                        {req.status && (
-                          <span className={`badge-status ${req.status === 'FLAGGED_TBD' ? 'badge-tbd' : req.status === 'PROVISIONAL_PM' ? 'badge-provisional' : 'badge-locked'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
-                            {req.status}
+                {m.generatedReqs.map((req, rIdx) => {
+                  const isKept = req.actionStatus === 'KEPT';
+                  const isRejected = req.actionStatus === 'REJECTED';
+
+                  return (
+                    <div
+                      key={rIdx}
+                      style={{
+                        background: isRejected ? '#FBF9F7' : isKept ? '#F0FDF4' : '#FFFFFF',
+                        border: '1px solid',
+                        borderColor: isRejected ? '#E7E0D8' : isKept ? '#86EFAC' : '#EBE4D8',
+                        borderRadius: '8px',
+                        padding: '12px 14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        opacity: isRejected ? 0.65 : 1,
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 700, color: '#181715' }}>
+                            {req.id || `CANDIDATE-${rIdx + 1}`}
                           </span>
+                          <span style={{ fontSize: '10px', background: '#F4EFEA', padding: '1px 6px', borderRadius: '4px', color: '#57534E' }}>
+                            {req.category || 'Synthesized'}
+                          </span>
+                          {req.status && (
+                            <span className={`badge-status ${req.status === 'FLAGGED_TBD' ? 'badge-tbd' : req.status === 'PROVISIONAL_PM' ? 'badge-provisional' : 'badge-locked'}`} style={{ fontSize: '9px', padding: '1px 5px' }}>
+                              {req.status}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* PM Governance Decision Controls: Keep vs Reject */}
+                        {isKept ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 700, 
+                              color: '#047857', 
+                              background: '#D1FAE5', 
+                              padding: '3px 8px', 
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <CheckCircle2 size={12} />
+                              <span>✓ In Workspace ({req.savedReqId || req.id})</span>
+                            </span>
+                            {onSelectRequirement && (
+                              <button
+                                onClick={() => onSelectRequirement(req.savedReqId || req.id)}
+                                className="btn-subtle-cream"
+                                style={{ padding: '3px 8px', fontSize: '10.5px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                              >
+                                <span>Inspect</span>
+                                <ArrowRight size={11} />
+                              </button>
+                            )}
+                          </div>
+                        ) : isRejected ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 600, 
+                              color: '#991B1B', 
+                              background: '#FEE2E2', 
+                              padding: '3px 8px', 
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              <X size={12} />
+                              <span>✕ Rejected by PM</span>
+                            </span>
+                            <button
+                              onClick={() => handleUndoRejectCandidate(idx, rIdx)}
+                              style={{ 
+                                background: 'transparent', 
+                                border: 'none', 
+                                color: '#78716C', 
+                                textDecoration: 'underline', 
+                                fontSize: '10.5px', 
+                                cursor: 'pointer',
+                                padding: '2px 4px'
+                              }}
+                            >
+                              Undo
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              onClick={() => handleRejectCandidate(idx, rIdx)}
+                              title="Reject candidate requirement"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                borderRadius: '5px',
+                                border: '1px solid #FECACA',
+                                background: '#FFF1F2',
+                                color: '#DC2626',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <X size={11} />
+                              <span>Reject</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleKeepCandidate(req, idx, rIdx)}
+                              title="Keep and add as formal requirement into workspace"
+                              style={{
+                                padding: '3px 10px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                borderRadius: '5px',
+                                border: '1px solid #181715',
+                                background: '#181715',
+                                color: '#FAF8F5',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <CheckCircle2 size={11} className="text-emerald-400" />
+                              <span>Keep (Add to Workspace)</span>
+                            </button>
+                          </div>
                         )}
                       </div>
 
-                      {req.id && onSelectRequirement ? (
-                        <button
-                          onClick={() => onSelectRequirement(req.id)}
-                          className="btn-subtle-cream"
-                          style={{ padding: '3px 8px', fontSize: '10.5px', display: 'flex', alignItems: 'center', gap: '3px' }}
-                        >
-                          <span>Inspect</span>
-                          <ArrowRight size={11} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleAddSynthesizedReq(req)}
-                          className="btn-subtle-black"
-                          style={{ padding: '3px 8px', fontSize: '10.5px', display: 'flex', alignItems: 'center', gap: '3px' }}
-                        >
-                          <PlusCircle size={11} />
-                          <span>Add to Workspace</span>
-                        </button>
-                      )}
+                      <div style={{ 
+                        fontSize: '12px', 
+                        color: isRejected ? '#78716C' : '#292524', 
+                        fontFamily: 'var(--font-mono)', 
+                        background: isRejected ? '#F5F1EB' : '#FAF8F5', 
+                        padding: '8px 10px', 
+                        borderRadius: '6px', 
+                        border: '1px solid #EFEAE2',
+                        textDecoration: isRejected ? 'line-through' : 'none'
+                      }}>
+                        {req.text}
+                      </div>
                     </div>
-
-                    <div style={{ fontSize: '12px', color: '#292524', fontFamily: 'var(--font-mono)', background: '#FAF8F5', padding: '8px 10px', borderRadius: '6px', border: '1px solid #EFEAE2' }}>
-                      {req.text}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

@@ -97,7 +97,18 @@ async def create_requirement(
     Restricted: Executives have read-only access.
     Automatically enriches new requirements using Qualcomm AI 100 flaw extraction and rubric scoring.
     """
-    # 1. Automatic AI Processing for new requirements
+    # 1. Ensure clean canonical requirement ID if temporary or missing
+    target_project = req.project_id or "default_project"
+    if not req.id or req.id.startswith("CANDIDATE-") or req.id.startswith("REQ-CHAT-"):
+        existing_reqs = store.get_all(project_id=target_project)
+        idx = len(existing_reqs) + 1
+        new_id = f"REQ-{idx:03d}"
+        while store.get_by_id(new_id, project_id=target_project):
+            idx += 1
+            new_id = f"REQ-{idx:03d}"
+        req.id = new_id
+
+    # 2. Automatic AI Processing for new requirements
     if auto_enrich and not req.issues:
         try:
             req.issues = await qualcomm.extract_xray_issues(req.text)
@@ -107,18 +118,30 @@ async def create_requirement(
     if not req.quality_score:
         req.quality_score = rubric_engine.calculate_score(req.text, req.issues)
 
-    # 2. Check TBD parameter state
+    # 3. Check TBD parameter state & preserve provisional PM values
     tbd_matches = re.findall(r"\[TBD:[^\]]+\]", req.text)
     unbound_tbds = [t for t in tbd_matches if "=" not in t]
     has_pm_value = bool(req.sign_off and req.sign_off.pm_target_val and req.sign_off.pm_target_val.strip())
 
     if unbound_tbds and not has_pm_value:
         req.status = RequirementStatus.FLAGGED_TBD
-    elif req.status in (RequirementStatus.DRAFT, None):
+    elif req.status in (RequirementStatus.DRAFT, None, RequirementStatus.PROVISIONAL_PM):
         req.status = RequirementStatus.PROVISIONAL_PM
+        if not req.sign_off:
+            from backend.models.schemas import DualKeySignOff
+            # Extract color or explicit value from text
+            color_match = re.search(r"\b(red|blue|green|yellow|black|white|orange|purple|gray|grey)\b", req.text, re.IGNORECASE)
+            metric_match = re.search(r"(\d+(?:\.\d+)?\s*(?:%|°C|ms|s|kg|g|V|A|W|kW|m|mm|cm|dB)?)", req.text)
+            val = color_match.group(1).lower() if color_match else (metric_match.group(1).strip() if metric_match else "")
+            req.sign_off = DualKeySignOff(
+                requirement_id=req.id,
+                pm_author="Product Manager",
+                pm_target_val=val,
+                state=RequirementStatus.PROVISIONAL_PM
+            )
 
     try:
-        return store.upsert(req, project_id=req.project_id, allow_duplicate=allow_duplicate)
+        return store.upsert(req, project_id=target_project, allow_duplicate=allow_duplicate)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
 

@@ -1,17 +1,17 @@
 # Graph Report - Oi-Thon  (2026-10-19)
 
 ## Corpus Check
-- 90 files · ~95,329 words
+- 90 files · ~96,811 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 13 file(s) not represented in the graph (top: .css 5, .csv 3, (none) 2)
 
 ## Summary
-- 749 nodes · 1730 edges · 43 communities (31 shown, 12 thin omitted)
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 156 edges (avg confidence: 0.92)
+- 749 nodes · 1736 edges · 43 communities (31 shown, 12 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 158 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f6f30983`
+- Built from commit: `9824b10a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -61,7 +61,7 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `RequirementStatement` - 58 edges
-2. `QualcommService` - 52 edges
+2. `QualcommService` - 53 edges
 3. `RequirementStore` - 50 edges
 4. `RequirementStatus` - 45 edges
 5. `UserRole` - 43 edges
@@ -165,7 +165,7 @@ Cohesion: 0.18
 Nodes (3): get_project_context(), enrich_requirement_with_ai(), parse_text()
 
 ### Community 22 - "test_schemas.py"
-Cohesion: 0.22
+Cohesion: 0.24
 Nodes (6): DualKeySignOff, RewriteSuggestion, TbdDefault, test_smart_rewriter_pipeline_intent_lock_and_tbds(), test_dual_key_signoff_defaults(), test_tbd_preservation_and_defaults()
 
 ### Community 25 - "test_live_duplicates_conflicts.py"
@@ -221,7 +221,7 @@ Nodes (3): extract_chat_data(), parse_tool_args(), run_aitl_evaluation()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `RequirementStatement` connect `Deterministic Verification & Test Blueprints` to `UserRole`, `aitl_phase_3_eval.py`, `test_rbac_and_workspaces.py`, `Document Parsing & Requirement Extraction`, `Live Qualcomm Cloud AI 100 Client`, `update_requirement`, `routes_analysis.py`, `IssueCard`, `QualcommService`, `schemas.py`, `qualcomm_service.py`, `storage.py`, `test_schemas.py`, `test_live_duplicates_conflicts.py`, `export_service.py`, `test_phase_3_pipelines.py`, `main.py`?**
-  _High betweenness centrality (0.099) - this node is a cross-community bridge._
+  _High betweenness centrality (0.098) - this node is a cross-community bridge._
 - **Are the 10 inferred relationships involving `RequirementStatement` (e.g. with `analyze_conflicts()` and `SemanticDuplicateRequest`) actually correct?**
   _`RequirementStatement` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `@types/react`, `@types/react-dom`, `oxlint` to the rest of the system?**
@@ -229,8 +229,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `UserRole` be split into smaller, more focused modules?**
   _Cohesion score 0.11363636363636363 - nodes in this community are weakly interconnected._
 - **Why does `QualcommService` connect `QualcommService` to `UserRole`, `Deterministic Verification & Test Blueprints`, `RequirementStatus`, `aitl_phase_3_eval.py`, `InterpretationDuel`, `VerificationPlan`, `Live Qualcomm Cloud AI 100 Client`, `routes_analysis.py`, `IssueCard`, `schemas.py`, `qualcomm_service.py`, `storage.py`, `test_schemas.py`, `test_live_duplicates_conflicts.py`, `test_phase_3_pipelines.py`, `main.py`?**
-  _High betweenness centrality (0.061) - this node is a cross-community bridge._
-- **Are the 13 inferred relationships involving `QualcommService` (e.g. with `ConflictRadarResponse` and `DuelCard`) actually correct?**
-  _`QualcommService` has 13 INFERRED edges - model-reasoned connections that need verification._
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **Are the 14 inferred relationships involving `QualcommService` (e.g. with `ConflictRadarResponse` and `DualKeySignOff`) actually correct?**
+  _`QualcommService` has 14 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Apple Design` be split into smaller, more focused modules?**
   _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._

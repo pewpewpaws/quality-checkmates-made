@@ -102,6 +102,62 @@ export default function InteractiveText({
     }
   }
 
+  // A2. Match explicit provisional PM target parameter in text if status is PROVISIONAL_PM
+  if (status === 'PROVISIONAL_PM') {
+    let targetSpan = null;
+    const rawVal = signOff?.pm_target_val ? signOff.pm_target_val.trim() : '';
+    const lowerText = text.toLowerCase();
+
+    // 1. Direct match with rawVal if provided
+    if (rawVal) {
+      const lowerVal = rawVal.toLowerCase();
+      const pos = lowerText.indexOf(lowerVal);
+      if (pos !== -1 && !isOverlap(pos, pos + lowerVal.length)) {
+        targetSpan = { start: pos, end: pos + lowerVal.length, val: text.slice(pos, pos + lowerVal.length) };
+      } else {
+        // 2. Token match: extract key informative words from rawVal (e.g., "red" from "i want the toy to be red")
+        const stopwords = new Set(['i', 'want', 'the', 'to', 'be', 'a', 'an', 'shall', 'should', 'is', 'it', 'for', 'with', 'that', 'this', 'we', 'need', 'must', 'can', 'our']);
+        const tokens = rawVal.toLowerCase().split(/[\s,.;:!?]+/).filter(w => !stopwords.has(w) && w.length >= 2);
+        for (const token of tokens) {
+          const tPos = lowerText.indexOf(token);
+          if (tPos !== -1 && !isOverlap(tPos, tPos + token.length)) {
+            targetSpan = { start: tPos, end: tPos + token.length, val: text.slice(tPos, tPos + token.length) };
+            break;
+          }
+        }
+      }
+    }
+
+    // 3. Fallback: match specific predicate or attribute after "shall be" or "shall" (e.g., "red")
+    if (!targetSpan) {
+      const shallBeMatch = /\bshall\s+(?:be\s+)?([a-zA-Z0-9_°%#-]+)/i.exec(text);
+      if (shallBeMatch && shallBeMatch[1]) {
+        const valWord = shallBeMatch[1];
+        const valPos = text.toLowerCase().lastIndexOf(valWord.toLowerCase());
+        if (valPos !== -1 && !isOverlap(valPos, valPos + valWord.length)) {
+          targetSpan = { start: valPos, end: valPos + valWord.length, val: text.slice(valPos, valPos + valWord.length) };
+        }
+      }
+    }
+
+    if (targetSpan) {
+      claimSpan(targetSpan.start, targetSpan.end);
+      spans.push({
+        id: `prov-val-${targetSpan.start}`,
+        start: targetSpan.start,
+        end: targetSpan.end,
+        text: text.slice(targetSpan.start, targetSpan.end),
+        type: 'provisional',
+        color: 'amber',
+        paramName: 'pm_specification',
+        title: 'Provisional PM Parameter',
+        suggestedValue: targetSpan.val,
+        rationale: signOff?.hardware_rationale || `PM proposed concrete parameter '${targetSpan.val}'. Awaiting Lead Systems Engineer baseline approval.`,
+        confidence: 'HIGH'
+      });
+    }
+  }
+
   // B. Match Flaw Cards from requirement.issues
   issues.forEach((issue, idx) => {
     const quote = issue.evidence_quote;

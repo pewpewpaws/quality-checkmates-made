@@ -44,6 +44,22 @@ export const api = {
     return res.json();
   },
 
+  async createRequirement(reqData, role = 'product_manager') {
+    const res = await fetch(`${API_BASE}/requirements`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Role': role
+      },
+      body: JSON.stringify(reqData)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create requirement');
+    }
+    return res.json();
+  },
+
   async getRequirement(id) {
     const res = await fetch(`${API_BASE}/requirements/${id}`);
     if (!res.ok) throw new Error(`Failed to fetch requirement ${id}`);

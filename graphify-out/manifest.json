@@ -528,9 +528,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {
-    "mtime": 1792302566.0446396,
-    "seen": 1792303325.2512815,
-    "ast_hash": "b880cfa9e6305216e48d4802c4160c87",
+    "mtime": 1792303498.650613,
+    "seen": 1792303534.9034767,
+    "ast_hash": "8c2be8b882efcdfbf1879fa971b76c61",
     "semantic_hash": ""
   },
   "frontend/src/components/ScrambledText.jsx": {

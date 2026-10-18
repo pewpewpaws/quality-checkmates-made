@@ -215,3 +215,43 @@ def test_api_score_stored_requirement():
 
     # Clean up project
     store.delete_project(pid)
+
+
+def test_no_double_jeopardy_on_substring_and_card_overlap():
+    """Verify that 'as appropriate' and 'appropriate' or overlapping cards do not double/triple-charge."""
+    text = "The battery management system shall periodically transmit telemetry data to the central cloud repository as appropriate."
+    issues = [
+        IssueCard(
+            issue_type="Ambiguity",
+            severity="Major",
+            evidence_quote="as appropriate",
+            explanation="The phrase 'as appropriate' is ambiguous",
+            suggested_action="Clarify metric",
+            start_offset=105,
+            end_offset=119,
+            is_grounded=True
+        ),
+        IssueCard(
+            issue_type="Unverifiability",
+            severity="Major",
+            evidence_quote="periodically",
+            explanation="The term 'periodically' is not verifiable",
+            suggested_action="Specify exact ms",
+            start_offset=36,
+            end_offset=48,
+            is_grounded=True
+        )
+    ]
+    score = rubric_engine.calculate_score(text, issues)
+    
+    # Clarity must only be penalized once (-8.0 for 'as appropriate'), NOT -8 -5 -5 (-18.0)
+    assert score.clarity == 17.0
+    # Verifiability must only be penalized once (-6.0 for 'periodically')
+    assert score.verifiability == 19.0
+    # Total score: 100 - 8 (as appropriate) - 6 (periodically) = 86.0
+    assert score.overall == 86.0
+    
+    # Receipts must contain exactly one deduction for 'as appropriate'
+    clarity_deductions = [r for r in score.receipt if "Clarity -" in r]
+    assert len(clarity_deductions) == 1
+    assert "as appropriate" in clarity_deductions[0]

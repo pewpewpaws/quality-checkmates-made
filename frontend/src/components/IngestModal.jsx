@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Upload, FileText, Sparkles, Check } from 'lucide-react';
 import { api } from '../services/api';
 import StarBorder from './StarBorder';
@@ -14,6 +14,19 @@ export default function IngestModal({
   const [category, setCategory] = useState('Safety Critical');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [projectDocs, setProjectDocs] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && projectId) {
+      api.getProject(projectId)
+        .then(proj => {
+          if (proj && proj.documents) {
+            setProjectDocs(proj.documents);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, projectId]);
 
   if (!isOpen) return null;
 
@@ -36,20 +49,6 @@ export default function IngestModal({
       setLoading(false);
     }
   };
-
-  const [projectDocs, setProjectDocs] = useState([]);
-
-  useEffect(() => {
-    if (isOpen && projectId) {
-      api.getProject(projectId)
-        .then(proj => {
-          if (proj && proj.documents) {
-            setProjectDocs(proj.documents);
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isOpen, projectId]);
 
   return (
     <div

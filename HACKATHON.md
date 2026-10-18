@@ -23,7 +23,7 @@ Most AI projects at hackathons make the fatal mistake of building a **generic ch
 
 | Differentiator | Why It Wows Judges | What We Built / Proof |
 | :--- | :--- | :--- |
-| **1. Agent-in-the-Loop Prompt Optimization Harness** | Proves we didn't just write a prompt in 5 minutes; we built an automated LLMOps testing suite. | Evaluated against `golden_requirements.json` on Qualcomm AI100: **100% Grounded Quotes**, **100% Zero-Fabrication**, **85% Recall**. |
+| **1. Agent-in-the-Loop Prompt Optimization Harness (v2.5)** | Proves we didn't just write a prompt in 5 minutes; we built an automated LLMOps testing suite covering critical edge cases. | Evaluated across 10 multi-domain & edge-case scenarios on Qualcomm AI100: **100% Grounded Quotes**, **100% Zero-Fabrication**, **100% Atomic Run-on Decomposition**, **100% Escape Hatch Elimination**, and **Explicit PM Value Preservation**. |
 | **2. Interpretation Duel (Visual Showstopper)** | Instead of just saying *"this is vague"*, the UI renders **two competing, equally plausible engineering interpretations** side-by-side. | Forces stakeholders to make an explicit choice (e.g. time-based vs count-based log retention) before code is written. |
 | **3. Intent-Locked Semantic Diff Validator** | Detects subtle semantic drift in rewrites that sound more polite but change legal/technical meaning. | Flags dropped negations (*"shall not"* $\to$ *"shall"*), altered obligation words, or modified units. |
 | **4. Explainable 100-Point Rubric Receipts** | Every point deducted comes from documented mathematical penalties (Clarity, Verifiability, Completeness, Atomicity, Consistency). | Engineers get auditable itemized receipts, not an unexplained black-box score. |

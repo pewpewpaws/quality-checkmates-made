@@ -90,3 +90,29 @@ Tested and verified against Qualcomm's official tutorial `rag_with_chromadb.html
 - **$\ge 0.98$**: Exact Verbatim Duplicate
 - **$0.82 – 0.97$**: Semantic Paraphrased Duplicate (e.g. 0.9209 detected between temperature disconnect statements)
 - **$\le 0.70$**: Distinct & Unrelated Requirements (e.g. 0.6608 max cross-similarity on clean avionics spec)
+
+---
+
+## 6. Prompt v2.5: Agent-In-The-Loop (AITL) Edge-Case Optimization
+
+Tested across 10 empirical scenarios on live Qualcomm Cloud AI 100 hardware (`Llama-3.3-70B` via `ImagineClient`):
+
+| Test Case | Scenario Domain | Key Challenge / Edge Case | AITL Outcome |
+| :--- | :--- | :--- | :--- |
+| **`CASE-1-BMS`** | 800V Automotive BMS | Non-atomic run-on + unstated threshold | **100% PASS** (2 atomic EARS reqs + 55°C default) |
+| **`CASE-2-AEB`** | Autonomous Braking | Negative condition + false positive suppression | **100% PASS** (2 atomic reqs, 0 fake TBDs) |
+| **`CASE-3-MED`** | Infusion Safety | IEC 60601-2-24 acoustic alarm + pressure cutoff | **100% PASS** (15 psi & 75 dB grounded defaults) |
+| **`CASE-4-IOT`** | Connected Telematics | Offline eMMC buffering + queue flush | **100% PASS** (Atomic flush & buffer requirements) |
+| **`CASE-5-COLOR-EXPLICIT`** | Robotic Toy | Explicit PM target ("exterior color shall be red") | **100% PASS** (Zero artificial TBDs; "red" preserved) |
+| **`CASE-6-NUMERIC-EXPLICIT`** | Fast Charging | Explicit PM metrics ("80% in 15 minutes") | **100% PASS** (Preserved exact 80% & 15m; strict "shall") |
+| **`CASE-7-COMPOUND-RUNON`** | Industrial Drive | 4-clause run-on (buzzer, fan, app warning, motor cut) | **100% PASS** (Decomposed into exactly 4 atomic reqs) |
+| **`CASE-8-SUBJECTIVE-SLANG`** | Digital Cockpit | Vague slang ("super snappy, responsive, not laggy") | **100% PASS** (50ms response & 60 FPS defaults) |
+| **`CASE-9-ESCAPE-HATCH`** | Warehouse AGV | Escape clauses ("whenever feasible", "in demo mode") | **100% PASS** (Stripped loopholes; ISO 3691-4 limits) |
+| **`CASE-10-NEGATIVE-PROHIBITION`** | Autonomous UAV | Strict prohibition ("must never fly above 400 feet") | **100% PASS** (EARS modal "shall not"; FAA Part 107 grounded) |
+
+### Key Architectural Directives in Prompt v2.5:
+1. **Explicit PM Values are Canonical**: When a PM explicitly provides a target (e.g. "red", "80% in 15 min"), the rewriter preserves it verbatim. No artificial `[TBD]` tokens are injected into contractual statements.
+2. **Strict Atomic Decomposition**: Multiple actuators/alerts connected by "and" are split into distinct requirement objects in the tool call schema array.
+3. **Escape Hatch Stripping**: Loophole phrases ("whenever feasible", "unless in demo mode") are removed in favor of unconditional, falsifiable assertions.
+4. **Modal Rigor**: Mandatory replacement of weak words with "shall" or "shall not".
+

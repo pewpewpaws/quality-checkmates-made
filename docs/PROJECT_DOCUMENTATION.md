@@ -201,14 +201,32 @@ Scores are mathematically calculated from deductions across 5 core dimensions:
   - Implement Evidence Validator with character span offsets (`start_offset`, `end_offset`).
   - Implement Vector Duplicate Detection & Clustering using `bge-large`.
   - Documented in [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md).
+- [x] **Milestone 1.5: Multi-Project Workspaces & Hierarchical Executive RBAC**
+  - Implement Multi-Project Store Namespaces and isolated document/requirement trees.
+  - Implement Boundary Charter Locking (HTTP 423) and 3-Tier Persona Filters.
+  - Documented in [`docs/findings/phase_1_5_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_5_findings.md).
+- [x] **Milestone 2: Deterministic Engine & Embeddings**
+  - Implement 100-point rubric scoring engine with deterministic receipts.
+  - Implement Evidence Validator with character span offsets (`start_offset`, `end_offset`).
+  - Implement Vector Duplicate Detection & Clustering using `bge-large`.
+  - Documented in [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md).
+- [x] **Milestone 2.5: Requirement Baseline Export Engine**
+  - Implement RFC 4180 CSV export with UTF-8 BOM.
+  - Implement publication-grade structured engineering specification PDF generator with ReportLab.
+  - Documented in [`docs/findings/phase_2_5_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_5_findings.md).
 - [x] **Milestone 3: AI Core Features (X-Ray, Rewriter, Conflict, Duel, Blueprint)**
   - Integrate `Llama-3.3-70B` tool calling for X-Ray issue extraction.
   - Integrate Smart Rewriter with Intent-Lock validation.
-  - Integrate Interpretation Duel generator.
+  - Integrate Interpretation Duel generator with `Llama-3.1-8B` $\to$ `Llama-3.3-70B` cascade.
   - Integrate Verification Blueprint generator.
-- [ ] **Milestone 4: Modern Web Frontend**
-  - Build interactive UI in React + Vite with dark-mode aesthetic.
-  - Connect full end-to-end user workflow: Input $\to$ Audit $\to$ Duel $\to$ Rewrite $\to$ Verification Plan.
-- [ ] **Milestone 5: Demo Polish & Sample Datasets**
-  - Prepare preloaded realistic requirement datasets (e.g., IoT Device, Medical Device, Automotive Telemetry).
-  - Verify offline/fallback demo readiness.
+  - Documented in [`docs/findings/phase_3_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_3_findings.md).
+- [x] **Milestone 4: Modern Web Frontend (Antigravity 2.0)**
+  - Build interactive UI in React + Vite with Antigravity 2.0 dark-mode glassmorphism and squircle geometry.
+  - Build 60 FPS iridescent organic background canvas (`GeminiBackground.jsx`).
+  - Build 1-click Header Persona Switcher (`👔 PM` $\longleftrightarrow$ `🛠️ Lead Systems Engineer` $\longleftrightarrow$ `🎖️ Executive`) with live RBAC shielding.
+  - Build Executive Master Test Cases & Formal Baseline Certification Screen.
+  - Documented in [`docs/findings/phase_4_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_4_findings.md).
+- [ ] **Milestone 5: Demo Polish & On-Site Venue Integration**
+  - Wire live Qualcomm Cloud AI 100 backend endpoints to frontend on-site at the venue.
+  - Preload realistic requirement datasets (IoT Telemetry, Automotive BMS, Medical Device).
+  - Verify complete end-to-end user workflow under 3 minutes for live stage presentation.

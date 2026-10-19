@@ -133,7 +133,7 @@ Keep documentation synchronized in these specific locations:
 | **Rubric Scoring & Math** | [`docs/project/architecture.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/project/architecture.md) |
 | **Feature Priorities & Milestones** | [`docs/PROJECT_DOCUMENTATION.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/PROJECT_DOCUMENTATION.md) & [`AGENTS.md`](file:///home/anair/Desktop/Coding/Oi-Thon/AGENTS.md) |
 | **Model Configs / Benchmarks** | [`docs/models/benchmark_results.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/models/benchmark_results.md) |
-| **Empirical Research & Phase Findings** | [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md), [`docs/findings/phase_1_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md), & [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md) |
+| **Empirical Research & Phase Findings** | [`phase_0_5`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md), [`phase_1`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_findings.md), [`phase_1_5`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_5_findings.md), [`phase_2`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md), [`phase_2_5`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_5_findings.md), [`phase_3`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_3_findings.md), & [`phase_4`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_4_findings.md) |
 | **Pitch Strategy, Differentiators & Ideas** | [`HACKATHON.md`](file:///home/anair/Desktop/Coding/Oi-Thon/HACKATHON.md) |
 | **Code Architecture & Dependency Graph** | [`graphify-out/graph.json`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/graph.json) & [`graphify-out/GRAPH_REPORT.md`](file:///home/anair/Desktop/Coding/Oi-Thon/graphify-out/GRAPH_REPORT.md) via `graphify update .` |
 
@@ -161,9 +161,6 @@ Keep documentation synchronized in these specific locations:
   - [x] **Conversational Requirement Copilot**: **100.0% AITL Success Rate** across all 4 multi-domain scenarios (BMS, AEB, Med Pump, IoT Gateway) with strict EARS modal syntax, zero-fabrication `[TBD]` preservation, and top-level schema compatibility on `Llama-3.3-70B`.
 - [x] Exported verified prompt templates (v2.4) to [`docs/prompts/optimized_prompts.json`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/prompts/optimized_prompts.json).
 - [x] Documented full research findings in [`docs/findings/phase_0_5_research_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_0_5_research_findings.md).
-
-
-
 
 ---
 
@@ -197,6 +194,7 @@ Keep documentation synchronized in these specific locations:
   - 🎖️ `Senior Manager / Executive`: Strict read-only lens restricted exclusively to PM-Approved (`PROVISIONAL_PM` 🟡) or Signed-off (`LOCKED_BASELINE` 🟢) documents, shielding leadership from raw drafts.
 - [x] Implemented SQLite write-through persistence layer (`backend/data/quality_copilot.db`) with zero-mock live execution.
 - [x] Added automated test suite verifying cross-project isolation, executive visibility shielding, and dual-key RBAC separation of duties (31/31 passing tests).
+- [x] Documented full multi-project & RBAC architecture in [`docs/findings/phase_1_5_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_1_5_findings.md).
 
 ---
 
@@ -209,6 +207,18 @@ Keep documentation synchronized in these specific locations:
 - [x] Added REST endpoints (`POST /api/analysis/score`, `GET/POST /api/requirements/{id}/score`).
 - [x] Updated `docs/project/architecture.md` with final deduction math and receipt structure.
 - [x] Verified complete unit and integration test suite (50/50 tests passing).
+- [x] Documented full rubric engine & neural clustering findings in [`docs/findings/phase_2_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_findings.md).
+
+---
+
+### ✅ Phase 2.5: Requirement Baseline Export Engine (COMPLETED)
+- [x] Implemented RFC 4180 CSV export with UTF-8 BOM (`ExportService.to_csv`).
+- [x] Implemented publication-grade structured engineering specification PDF generator with ReportLab (`ExportService.to_pdf`).
+- [x] Added REST endpoints: `GET /api/requirements/export/csv` and `GET /api/requirements/export/pdf`.
+- [x] Integrated Hierarchical RBAC visibility shielding (Executive role shields raw drafts and unapproved TBDs).
+- [x] Preloaded distinct isolated demo projects (`default_project`, `proj-flight`, `proj-med`) with domain architecture charters, dual-key sign-offs, and rubric scores.
+- [x] Added automated test suite (`backend/tests/test_export.py`) verifying CSV headers, PDF signatures, project isolation, and RBAC filters (4/4 passing).
+- [x] Documented export engine & report architecture in [`docs/findings/phase_2_5_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_2_5_findings.md).
 
 ---
 
@@ -220,16 +230,7 @@ Keep documentation synchronized in these specific locations:
 - [x] Implemented Verification Blueprint generator on `Llama-3.3-70B` (preconditions, paired nominal/boundary test cases, falsifiable PASS/FAIL acceptance criteria).
 - [x] Added REST routes for all Phase 3 AI pipelines (`/api/analysis/xray`, `/api/analysis/duel`, `/api/analysis/rewrite`, `/api/analysis/intent-lock`, `/api/analysis/blueprint`, `/api/analysis/conflicts`).
 - [x] Verified full unit, integration, and AITL test suites across Qualcomm Cloud AI 100 live hardware.
-
----
-
-### ✅ Phase 2.5: Requirement Baseline Export Engine (COMPLETED)
-- [x] Implemented RFC 4180 CSV export with UTF-8 BOM (`ExportService.to_csv`).
-- [x] Implemented publication-grade structured engineering specification PDF generator with ReportLab (`ExportService.to_pdf`).
-- [x] Added REST endpoints: `GET /api/requirements/export/csv` and `GET /api/requirements/export/pdf`.
-- [x] Integrated Hierarchical RBAC visibility shielding (Executive role shields raw drafts and unapproved TBDs).
-- [x] Preloaded distinct isolated demo projects (`default_project`, `proj-flight`, `proj-med`) with domain architecture charters, dual-key sign-offs, and rubric scores.
-- [x] Added automated test suite (`backend/tests/test_export.py`) verifying CSV headers, PDF signatures, project isolation, and RBAC filters (4/4 passing).
+- [x] Documented AI pipelines & Qualcomm scorecard in [`docs/findings/phase_3_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_3_findings.md).
 
 ---
 
@@ -245,6 +246,7 @@ Keep documentation synchronized in these specific locations:
   - Qualcomm AI 100 synthesized Master Test Suite with paired nominal positive & boundary stress test cases, preconditions, and falsifiable acceptance criteria upon 100% `LOCKED_BASELINE`.
   - Senior Executive formal baseline certification deck with approver signature, release directives, and gold certification seal.
   - Integrated with REST endpoints `GET /api/projects/{id}/master-test-suite` and `POST /api/projects/{id}/executive-certify`.
+- [x] Documented frontend architecture & UX tokens in [`docs/findings/phase_4_findings.md`](file:///home/anair/Desktop/Coding/Oi-Thon/docs/findings/phase_4_findings.md).
 
 ---
 

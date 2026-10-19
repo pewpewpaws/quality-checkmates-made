@@ -283,44 +283,7 @@ export default function WorkspaceOverview({
         </div>
       </div>
 
-      {/* 3. Ingestion & AI Copilot Action Hero Banner */}
-      <div 
-        style={{ 
-          background: '#FAF8F5', 
-          border: '1px dashed #D6CEBE', 
-          borderRadius: '10px', 
-          padding: '16px 20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          gap: '16px'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '8px', background: '#181715', color: '#FAF8F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={18} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#181715' }}>
-              Conversational Copilot & Document Ingestion
-            </span>
-            <span style={{ fontSize: '12px', color: '#57534E' }}>
-              Type requirements in plain English, or upload PDF, TXT, CSV specs to parse atomic requirements with automatic Qualcomm AI flaw extraction.
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={onOpenChat}
-          className="btn-subtle-cream"
-          style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
-        >
-          <span>Open Chat & Ingest</span>
-          <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* 4. Requirements Matrix Table Preview */}
+      {/* 3. Requirements Matrix Table Preview */}
       <div className="cream-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '18px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

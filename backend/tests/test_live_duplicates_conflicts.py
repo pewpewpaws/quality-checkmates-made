@@ -23,6 +23,8 @@ def clean_test_workspaces():
     yield
     for pid in pids:
         store.delete_project(pid)
+    req_qc.mock_mode = True
+    ana_qc.mock_mode = True
 
 
 # ==============================================================================

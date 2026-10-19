@@ -11,6 +11,15 @@ client = TestClient(app)
 qualcomm.mock_mode = True
 
 
+import pytest
+
+@pytest.fixture(autouse=True)
+def ensure_chat_mock():
+    qualcomm.mock_mode = True
+    yield
+    qualcomm.mock_mode = True
+
+
 def test_get_initial_project_context():
     resp = client.get("/api/chat/context")
     assert resp.status_code == 200

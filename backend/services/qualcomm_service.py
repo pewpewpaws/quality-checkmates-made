@@ -694,9 +694,6 @@ class QualcommService:
         except Exception as e:
             logger.error(f"Live Verification Blueprint failed: {e}")
             raise RuntimeError(f"Qualcomm AI100 Blueprint error: {e}") from e
-        except Exception as e:
-            logger.error(f"Live Verification Blueprint failed: {e}")
-            raise RuntimeError(f"Qualcomm AI100 Blueprint error: {e}") from e
 
     async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """Generate dense vector embeddings using BAAI/bge-large-en-v1.5."""

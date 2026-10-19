@@ -32,6 +32,15 @@ analysis_qualcomm.mock_mode = True
 req_qualcomm.mock_mode = True
 
 
+@pytest.fixture(autouse=True)
+def ensure_mock_mode():
+    analysis_qualcomm.mock_mode = True
+    req_qualcomm.mock_mode = True
+    yield
+    analysis_qualcomm.mock_mode = True
+    req_qualcomm.mock_mode = True
+
+
 # ==============================================================================
 # 1. INTENT-LOCK DETERMINISTIC ENGINE TESTS
 # ==============================================================================

@@ -364,51 +364,21 @@ class QualcommService:
             raise RuntimeError(f"Qualcomm API ping failed: {e}") from e
 
     @staticmethod
-    def _heuristic_suggested_value(evidence_quote: str, issue_type: str = "") -> Optional[str]:
-        q = (evidence_quote or "").lower().strip()
+    def _format_default_tbd(evidence_quote: str, issue_type: str = "") -> Optional[str]:
+        """
+        Format a zero-fabrication TBD placeholder parameter for unquantified defects
+        when the AI does not synthesize a domain-specific value.
+        Strictly avoids inventing or hardcoding arbitrary numerical constants.
+        """
+        q = (evidence_quote or "").strip()
         if not q:
             return None
-
-        lookup = {
-            "quickly": "< 250 ms",
-            "fast": "< 100 ms",
-            "slowly": "> 2000 ms",
-            "immediately": "within 100 ms",
-            "instantly": "< 50 ms",
-            "minimal power": "<= 15 mW",
-            "low power": "<= 25 mW",
-            "minimal": "<= 5%",
-            "high reliability": ">= 99.99% MTBF",
-            "reliable": ">= 99.9% uptime",
-            "periodically": "every 1000 ms",
-            "frequently": "at a frequency >= 10 Hz",
-            "regularly": "every 500 ms",
-            "normal conditions": "20°C to 25°C, 1 atm",
-            "nominal": "nominal ± 5% tolerance",
-            "normal": "within nominal ± 10%",
-            "safe distance": ">= 1.5 meters",
-            "safe": "fail-safe state within 250 ms",
-            "excessive": "> 110% rated maximum",
-            "critical": "critical threshold limit",
-            "super snappy": "<= 50 ms latency, 60 FPS",
-            "snappy": "<= 50 ms latency",
-            "responsive": "<= 100 ms response",
-            "not laggy": "frame rate >= 60 FPS",
-            "user-friendly": "<= 3 user interactions",
-            "securely": "AES-256-GCM encryption",
-            "secure": "TLS 1.3 with AES-256",
-            "where feasible": "[Remove escape clause: mandatory compliance]",
-            "as appropriate": "[Specify deterministic fallback condition]",
-            "if possible": "[Mandatory verification requirement]",
-            "when needed": "[Specify formal condition trigger]"
-        }
-        for k, v in lookup.items():
-            if k in q or q in k:
-                return v
-        if issue_type and issue_type.lower() in ["ambiguity", "unverifiability"]:
-            clean_param = re.sub(r'[^a-zA-Z0-9_]+', '_', q).strip('_')
-            return f"[TBD: {clean_param}_limit]" if clean_param else "[TBD: parameter_limit]"
-        return None
+        clean_param = re.sub(r'[^a-zA-Z0-9_]+', '_', q).strip('_').lower()
+        if not clean_param:
+            return None
+        if issue_type and issue_type.lower() in ["escape-hatch", "escape_hatch"]:
+            return f"[Remove non-binding clause: '{q}']"
+        return f"[TBD: {clean_param}]"
 
     async def extract_xray_issues(self, req_text: str) -> List[IssueCard]:
         """Extract requirement defects using Llama-3.3-70B tool calling."""
@@ -453,7 +423,9 @@ class QualcommService:
                 if not quote:
                     continue
 
-                suggested_val = item.get("suggested_value") or self._heuristic_suggested_value(quote, item.get("issue_type", "Ambiguity"))
+                suggested_val = item.get("suggested_value")
+                if not suggested_val or not str(suggested_val).strip():
+                    suggested_val = self._format_default_tbd(quote, item.get("issue_type", "Ambiguity"))
 
                 cards.append(IssueCard(
                     issue_type=item.get("issue_type", "Ambiguity"),
@@ -1134,7 +1106,7 @@ class QualcommService:
                 evidence_quote=exact_quote,
                 explanation=f"Subjective quantifier '{exact_quote}' lacks deterministic boundary or SI metric.",
                 suggested_action=f"Replace '{exact_quote}' with an explicit bounded parameter [TBD: duration_ms].",
-                suggested_value=self._heuristic_suggested_value(exact_quote, "Ambiguity")
+                suggested_value=self._format_default_tbd(exact_quote, "Ambiguity")
             ))
         if any(w in lower for w in ["where feasible", "as appropriate", "if possible", "when needed"]):
             quote = next((w for w in ["where feasible", "as appropriate", "if possible", "when needed"] if w in lower), "where feasible")
@@ -1146,7 +1118,7 @@ class QualcommService:
                 evidence_quote=exact_quote,
                 explanation="Escape hatch creates non-binding loophole evading conformance testing.",
                 suggested_action="Specify exact fallback trigger criteria or remove permissive clause.",
-                suggested_value=self._heuristic_suggested_value(exact_quote, "Escape-hatch")
+                suggested_value=self._format_default_tbd(exact_quote, "Escape-hatch")
             ))
         if " and " in lower and len(req_text.split(" and ")) > 2:
             issues.append(IssueCard(

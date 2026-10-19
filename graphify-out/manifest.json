@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "backend/services/qualcomm_service.py": {
-    "mtime": 1792352389.8659358,
-    "seen": 1792352577.8238199,
-    "ast_hash": "8bfb78ba6b42b4118402e8d0b6398616",
+    "mtime": 1792374493.5064204,
+    "seen": 1792374545.837411,
+    "ast_hash": "ee4d58ef6901fa5cba90557ac282d7cf",
     "semantic_hash": ""
   },
   "backend/services/storage.py": {
@@ -516,9 +516,9 @@
     "semantic_hash": ""
   },
   "frontend/src/components/InteractiveText.jsx": {
-    "mtime": 1792355191.9943914,
-    "seen": 1792355329.5557623,
-    "ast_hash": "f78943f750c09c00c6013df5d662c58d",
+    "mtime": 1792374525.4242132,
+    "seen": 1792374545.8374486,
+    "ast_hash": "cc0d0a24cefe4adaba78dfeded04b089",
     "semantic_hash": ""
   },
   "frontend/src/components/RequirementDetail.jsx": {

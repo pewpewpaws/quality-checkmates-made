@@ -158,48 +158,12 @@ export default function InteractiveText({
     }
   }
 
-  // Domain-adaptive heuristic for ambiguities and qualitative defects
-  const getAmbiguitySuggestedValue = (quote) => {
-    const q = (quote || '').toLowerCase().trim();
+  // Zero-fabrication TBD placeholder formatter for unquantified defects
+  const formatTbdPlaceholder = (quote) => {
+    const q = (quote || '').trim();
     if (!q) return null;
-    const map = {
-      'quickly': '< 250 ms',
-      'fast': '< 100 ms',
-      'slowly': '> 2000 ms',
-      'immediately': 'within 100 ms',
-      'instantly': '< 50 ms',
-      'minimal power': '<= 15 mW',
-      'low power': '<= 25 mW',
-      'minimal': '<= 5%',
-      'high reliability': '>= 99.99% MTBF',
-      'reliable': '>= 99.9% uptime',
-      'periodically': 'every 1000 ms',
-      'frequently': 'at frequency >= 10 Hz',
-      'regularly': 'every 500 ms',
-      'normal conditions': '20°C to 25°C, 1 atm',
-      'nominal': 'nominal ± 5% tolerance',
-      'normal': 'within nominal ± 10%',
-      'safe distance': '>= 1.5 meters',
-      'safe': 'fail-safe state within 250 ms',
-      'excessive': '> 110% rated maximum',
-      'critical': 'critical limit threshold',
-      'super snappy': '<= 50 ms latency, 60 FPS',
-      'snappy': '<= 50 ms latency',
-      'responsive': '<= 100 ms response',
-      'not laggy': 'frame rate >= 60 FPS',
-      'user-friendly': '<= 3 user interactions',
-      'securely': 'AES-256-GCM encryption',
-      'secure': 'TLS 1.3 with AES-256',
-      'where feasible': '[Mandatory compliance: remove escape clause]',
-      'as appropriate': '[Specify deterministic trigger criteria]',
-      'if possible': '[Unconditional verification obligation]',
-      'when needed': '[Define explicit triggering event]'
-    };
-    for (const [key, val] of Object.entries(map)) {
-      if (q.includes(key) || key.includes(q)) return val;
-    }
-    const clean = q.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
-    return clean ? `[TBD: ${clean}_limit]` : '<= 100 ms';
+    const clean = q.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+    return clean ? `[TBD: ${clean}]` : '[TBD: parameter_value]';
   };
 
   // B. Match Flaw Cards from requirement.issues
@@ -215,7 +179,7 @@ export default function InteractiveText({
         if (!isOverlap(start, end)) {
           claimSpan(start, end);
           const isMinor = issue.severity?.toUpperCase() === 'MINOR';
-          const suggestedVal = issue.suggested_value || getAmbiguitySuggestedValue(quote);
+          const suggestedVal = issue.suggested_value || formatTbdPlaceholder(quote);
           spans.push({
             id: `flaw-${idx}-${start}`,
             start,
@@ -254,7 +218,7 @@ export default function InteractiveText({
             const penaltyMatch = line.match(/\[([A-Za-z]+)\s+([-\d.]+)\s*pts\]/);
             const dimension = penaltyMatch ? penaltyMatch[1] : 'Rubric';
             const penalty = penaltyMatch ? penaltyMatch[2] : '-5.0';
-            const suggestedVal = getAmbiguitySuggestedValue(quote);
+            const suggestedVal = formatTbdPlaceholder(quote);
             spans.push({
               id: `rubric-${rIdx}-${start}`,
               start,

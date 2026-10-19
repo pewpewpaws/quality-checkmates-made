@@ -253,115 +253,119 @@ export default function Header({
           )}
         </div>
 
-        {/* Export Button */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            className="btn-subtle-cream"
-            style={{ padding: '6px 10px' }}
-          >
-            <FileDown size={14} />
-            <span>Export</span>
-            <ChevronDown size={13} style={{ opacity: 0.6 }} />
-          </button>
-
-          {showExportMenu && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                right: 0,
-                width: '210px',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E5E0D5',
-                borderRadius: '10px',
-                boxShadow: 'var(--shadow-popover)',
-                zIndex: 100,
-                padding: '6px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px'
-              }}
+        {/* Export Button: Only when a workspace is selected */}
+        {currentProject && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="btn-subtle-cream"
+              style={{ padding: '6px 10px' }}
             >
-              <a
-                href={api.getExportPdfUrl(currentProject?.project_id || 'default_project')}
-                target="_blank"
-                rel="noreferrer"
-                download
-                onClick={() => setShowExportMenu(false)}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  color: '#181715',
-                  fontSize: '12.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <FileText size={15} className="text-red-600" />
-                <div>
-                  <div style={{ fontWeight: 600 }}>Engineering PDF</div>
-                  <div style={{ fontSize: '10.5px', color: '#8A857C' }}>Formal DOORS Specification</div>
-                </div>
-              </a>
+              <FileDown size={14} />
+              <span>Export</span>
+              <ChevronDown size={13} style={{ opacity: 0.6 }} />
+            </button>
 
-              <a
-                href={api.getExportCsvUrl(currentProject?.project_id || 'default_project')}
-                target="_blank"
-                rel="noreferrer"
-                download
-                onClick={() => setShowExportMenu(false)}
+            {showExportMenu && (
+              <div
                 style={{
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  textDecoration: 'none',
-                  color: '#181715',
-                  fontSize: '12.5px',
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '210px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #E5E0D5',
+                  borderRadius: '10px',
+                  boxShadow: 'var(--shadow-popover)',
+                  zIndex: 100,
+                  padding: '6px',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  flexDirection: 'column',
+                  gap: '2px'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <FileSpreadsheet size={15} className="text-emerald-700" />
-                <div>
-                  <div style={{ fontWeight: 600 }}>RFC 4180 CSV</div>
-                  <div style={{ fontSize: '10.5px', color: '#8A857C' }}>Jira & ALM Compatibility</div>
-                </div>
-              </a>
-            </div>
-          )}
-        </div>
+                <a
+                  href={api.getExportPdfUrl(currentProject.project_id)}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    color: '#181715',
+                    fontSize: '12.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <FileText size={15} className="text-red-600" />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Engineering PDF</div>
+                    <div style={{ fontSize: '10.5px', color: '#8A857C' }}>Formal DOORS Specification</div>
+                  </div>
+                </a>
 
-        {/* Quick Actions */}
-        <StarBorder
-          as="button"
-          onClick={onOpenIngest}
-          color="#ffffff"
-          trailColor="#ffffff"
-          duration={4}
-          direction="clockwise"
-          stars={1}
-          trailLength={0.3}
-          thickness={1}
-          radius={6}
-          glow={0.6}
-          hover="lap"
-          sparkle={false}
-          clickPulse
-          theme="dark"
-          backgroundColor="#181715"
-          textColor="#FAF8F5"
-          style={{ padding: '6px 12px', fontSize: '12.5px', fontWeight: 600 }}
-        >
-          <Upload size={14} />
-          <span>Ingest Specs</span>
-        </StarBorder>
+                <a
+                  href={api.getExportCsvUrl(currentProject.project_id)}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  onClick={() => setShowExportMenu(false)}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    color: '#181715',
+                    fontSize: '12.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4EFEA'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <FileSpreadsheet size={15} className="text-emerald-700" />
+                  <div>
+                    <div style={{ fontWeight: 600 }}>RFC 4180 CSV</div>
+                    <div style={{ fontSize: '10.5px', color: '#8A857C' }}>Jira & ALM Compatibility</div>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Actions: Ingest Specs only when a workspace is selected AND only for PM and Lead Systems Engineer */}
+        {currentProject && (role === 'product_manager' || role === 'systems_engineer') && (
+          <StarBorder
+            as="button"
+            onClick={onOpenIngest}
+            color="#ffffff"
+            trailColor="#ffffff"
+            duration={4}
+            direction="clockwise"
+            stars={1}
+            trailLength={0.3}
+            thickness={1}
+            radius={6}
+            glow={0.6}
+            hover="lap"
+            sparkle={false}
+            clickPulse
+            theme="dark"
+            backgroundColor="#181715"
+            textColor="#FAF8F5"
+            style={{ padding: '6px 12px', fontSize: '12.5px', fontWeight: 600 }}
+          >
+            <Upload size={14} />
+            <span>Ingest Specs</span>
+          </StarBorder>
+        )}
       </div>
     </header>
   );

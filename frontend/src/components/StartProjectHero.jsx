@@ -246,16 +246,6 @@ export default function StartProjectHero({
               </div>
             ))}
           </div>
-
-          {/* Ingest Specs shortcut */}
-          <button
-            onClick={onOpenIngest}
-            className="btn-subtle-cream"
-            style={{ justifyContent: 'center', padding: '8px 12px' }}
-          >
-            <FileUp size={14} />
-            <span>Parse & Ingest Document Instead</span>
-          </button>
         </div>
       </div>
     </div>
